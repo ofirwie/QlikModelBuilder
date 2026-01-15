@@ -1,0 +1,58 @@
+{
+  "name": "qlik-model-builder",
+  "displayName": "Qlik Model Builder",
+  "description": "Visual wizard for building Qlik Sense data models with incremental load",
+  "version": "0.1.0",
+  "publisher": "ofirwie",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "qmb.openWizard",
+        "title": "Open Model Builder Wizard",
+        "category": "Qlik"
+      },
+      {
+        "command": "qmb.newProject",
+        "title": "New Data Model Project",
+        "category": "Qlik"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "qlik-model-builder",
+          "title": "Qlik Model Builder",
+          "icon": "media/qlik-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "qlik-model-builder": [
+        {
+          "type": "webview",
+          "id": "qmb.wizardView",
+          "name": "Model Builder"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0"
+  }
+}
