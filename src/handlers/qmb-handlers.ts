@@ -10,6 +10,7 @@ import {
   WizardStepId,
   IncrementalStrategy,
 } from '../wizard/index.js';
+import { getQmbQlikService } from '../services/qmb/index.js';
 
 /**
  * Handle QMB tool calls
@@ -51,12 +52,33 @@ export async function handleQmbTool(
       // Space Management
       // ============================================================
       case 'qmb_list_spaces': {
-        // TODO: Implement actual Qlik API call
-        return success('Space listing not yet implemented. Will connect to Qlik Cloud API.');
+        const qlikService = getQmbQlikService();
+        if (!qlikService.isInitialized()) {
+          return error('Qlik service not initialized. Make sure you are connected to Qlik Cloud.');
+        }
+        const typeFilter = args.type as 'all' | 'shared' | 'managed' | 'personal' | undefined;
+        const spaces = await qlikService.listSpaces({ type: typeFilter });
+
+        if (spaces.length === 0) {
+          return success('No spaces found.');
+        }
+
+        const spaceList = spaces.map(s => `- ${s.name} (${s.type}) [ID: ${s.id}]`).join('\n');
+        return success(`Found ${spaces.length} spaces:\n\n${spaceList}`);
       }
 
       case 'qmb_select_space': {
         const spaceId = args.spaceId as string;
+        const qlikService = getQmbQlikService();
+
+        if (qlikService.isInitialized()) {
+          const space = await qlikService.getSpace(spaceId);
+          if (space) {
+            wizard.selectSpace(spaceId, space.name, space.type as 'shared' | 'managed' | 'personal');
+            return success(`Space selected: ${space.name} (${space.type})`);
+          }
+        }
+
         wizard.selectSpace(spaceId, 'Selected Space', 'shared');
         return success(`Space selected: ${spaceId}`);
       }
@@ -65,20 +87,56 @@ export async function handleQmbTool(
         const name = args.name as string;
         const type = args.type as 'shared' | 'managed';
         const description = args.description as string | undefined;
+
+        const qlikService = getQmbQlikService();
+        if (qlikService.isInitialized()) {
+          try {
+            const newSpace = await qlikService.createSpace({ name, type, description });
+            wizard.selectSpace(newSpace.id, newSpace.name, newSpace.type as 'shared' | 'managed');
+            return success(`Space created and selected: ${newSpace.name} (${newSpace.type}) [ID: ${newSpace.id}]`);
+          } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            return error(`Failed to create space: ${message}`);
+          }
+        }
+
         wizard.createNewSpace(name, type, description);
-        return success(`New space configured: ${name} (${type})`);
+        return success(`Space configured (will be created on deploy): ${name} (${type})`);
       }
 
       // ============================================================
       // Connection Management
       // ============================================================
       case 'qmb_list_connections': {
-        // TODO: Implement actual Qlik API call
-        return success('Connection listing not yet implemented. Will connect to Qlik Cloud API.');
+        const qlikService = getQmbQlikService();
+        if (!qlikService.isInitialized()) {
+          return error('Qlik service not initialized. Make sure you are connected to Qlik Cloud.');
+        }
+
+        const state = wizard.getState();
+        const spaceId = state.space?.id;
+        const connections = await qlikService.listConnections({ spaceId });
+
+        if (connections.length === 0) {
+          return success('No connections found.' + (spaceId ? ` (in space ${state.space?.name})` : ''));
+        }
+
+        const connList = connections.map(c => `- ${c.name} (${c.type}) [ID: ${c.id}]`).join('\n');
+        return success(`Found ${connections.length} connections:\n\n${connList}`);
       }
 
       case 'qmb_select_connection': {
         const connectionId = args.connectionId as string;
+        const qlikService = getQmbQlikService();
+
+        if (qlikService.isInitialized()) {
+          const conn = await qlikService.getConnection(connectionId);
+          if (conn) {
+            wizard.selectConnection(connectionId, conn.name);
+            return success(`Connection selected: ${conn.name} (${conn.type})`);
+          }
+        }
+
         wizard.selectConnection(connectionId, 'Selected Connection');
         return success(`Connection selected: ${connectionId}`);
       }
@@ -86,32 +144,112 @@ export async function handleQmbTool(
       case 'qmb_create_connection': {
         const name = args.name as string;
         const type = args.type as string;
-        wizard.setConnection({
+        const connectionConfig = {
           name,
           type: type as any,
           server: args.server as string | undefined,
           database: args.database as string | undefined,
           username: args.username as string | undefined,
           password: args.password as string | undefined,
-        });
-        return success(`Connection configured: ${name} (${type})`);
+        };
+
+        wizard.setConnection(connectionConfig);
+        return success(`Connection configured: ${name} (${type})\n\nNote: Connection will be created in Qlik when you deploy.`);
       }
 
       case 'qmb_api_wizard': {
-        return success('API Connection Wizard started.\n\nPlease provide:\n1. Base URL\n2. Authentication type (none, api_key, bearer, basic, oauth2)\n3. Auth credentials\n4. Additional headers');
+        const baseUrl = args.baseUrl as string | undefined;
+        const authType = args.authType as string | undefined;
+
+        let response = 'API Connection Wizard\n\n';
+
+        if (!baseUrl) {
+          response += 'Step 1: What is the Base URL of the API?\n';
+          response += 'Example: https://api.example.com/v1\n\n';
+          response += 'Use qmb_api_wizard with baseUrl parameter to continue.';
+        } else if (!authType) {
+          response += `Base URL: ${baseUrl}\n\n`;
+          response += 'Step 2: Select authentication type:\n';
+          response += '- none: No authentication required\n';
+          response += '- api_key: API Key in header or query\n';
+          response += '- bearer: Bearer token\n';
+          response += '- basic: Username/password\n';
+          response += '- oauth2: OAuth 2.0 flow\n\n';
+          response += 'Use qmb_api_wizard with authType parameter to continue.';
+        } else {
+          wizard.setConnection({
+            name: 'API_Connection',
+            type: 'rest_api',
+            baseUrl,
+            authType: authType as any,
+          });
+          response += `API Connection configured:\n- URL: ${baseUrl}\n- Auth: ${authType}\n\n`;
+          response += 'Use qmb_create_connection to finalize with credentials.';
+        }
+
+        return success(response);
       }
 
       case 'qmb_test_connection': {
-        // TODO: Implement actual connection test
-        return success('Connection test not yet implemented. Will test actual connectivity.');
+        const state = wizard.getState();
+        if (!state.connection?.id) {
+          return error('No connection selected. Use qmb_select_connection first.');
+        }
+
+        const qlikService = getQmbQlikService();
+        if (!qlikService.isInitialized()) {
+          return error('Qlik service not initialized.');
+        }
+
+        const result = await qlikService.testConnection(state.connection.id);
+        if (result.success) {
+          return success('Connection test successful! The connection is working.');
+        } else {
+          return error(`Connection test failed: ${result.error}`);
+        }
       }
 
       // ============================================================
       // Table Configuration
       // ============================================================
       case 'qmb_list_tables': {
-        // TODO: Implement actual database query
-        return success('Table listing not yet implemented. Will query database metadata.');
+        const state = wizard.getState();
+        if (!state.connection?.id) {
+          return error('No connection selected. Use qmb_select_connection first.');
+        }
+
+        const qlikService = getQmbQlikService();
+        if (!qlikService.isInitialized()) {
+          return error('Qlik service not initialized.');
+        }
+
+        try {
+          const tables = await qlikService.getTablesFromConnection(state.connection.id);
+          if (tables.length === 0) {
+            return success('No tables found in the connection.');
+          }
+
+          const schemaFilter = args.schema as string | undefined;
+          const searchFilter = args.search as string | undefined;
+
+          let filteredTables = tables;
+          if (schemaFilter) {
+            filteredTables = filteredTables.filter(t => t.schema === schemaFilter);
+          }
+          if (searchFilter) {
+            const search = searchFilter.toLowerCase();
+            filteredTables = filteredTables.filter(t => t.name.toLowerCase().includes(search));
+          }
+
+          const tableList = filteredTables.map(t =>
+            `- ${t.schema ? t.schema + '.' : ''}${t.name} (${t.type})`
+          ).join('\n');
+
+          return success(`Found ${filteredTables.length} tables:\n\n${tableList}`);
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          return error(`Failed to list tables: ${message}`);
+        }
       }
 
       case 'qmb_add_table': {
