@@ -416,6 +416,13 @@ export async function handleQmbTool(
         return success(`Clone from app ${appId} not yet implemented. Will extract configuration from existing app.`);
       }
 
+      case 'qmb_guide': {
+        const language = (args.language as 'en' | 'he') || 'he';
+        const status = wizard.getStatus();
+        const guide = generateStepGuide(status, language);
+        return success(guide);
+      }
+
       default:
         return error(`Unknown QMB tool: ${toolName}`);
     }
@@ -475,4 +482,304 @@ function error(message: string): CallToolResult {
     content: [{ type: 'text', text: `Error: ${message}` } as TextContent],
     isError: true,
   };
+}
+
+/**
+ * Generate contextual guide for current step
+ */
+function generateStepGuide(status: Record<string, unknown>, language: 'en' | 'he'): string {
+  const currentStep = status.currentStep as string;
+  const isHe = language === 'he';
+
+  const progress = formatProgress(status, isHe);
+
+  const guides: Record<string, { he: string; en: string }> = {
+    space_setup: {
+      he: `${progress}
+
+📍 **שלב נוכחי: הגדרת Space**
+
+מה עושים כאן?
+בחר Space קיים או צור חדש. ה-Space קובע היכן יישמר האפליקציה.
+
+🔧 **פעולות זמינות:**
+• \`qmb_list_spaces\` - הצג Spaces זמינים
+• \`qmb_select_space\` - בחר Space קיים
+• \`qmb_create_space\` - צור Space חדש
+
+💡 **המלצות:**
+• **Managed Space** - לפרודקשן (שליטה מלאה בהרשאות)
+• **Shared Space** - לפיתוח/בדיקות (שיתוף קל)`,
+
+      en: `${progress}
+
+📍 **Current Step: Space Setup**
+
+What to do here?
+Select an existing Space or create a new one. The Space determines where your app will be stored.
+
+🔧 **Available Actions:**
+• \`qmb_list_spaces\` - List available Spaces
+• \`qmb_select_space\` - Select existing Space
+• \`qmb_create_space\` - Create new Space
+
+💡 **Recommendations:**
+• **Managed Space** - For production (full permission control)
+• **Shared Space** - For development/testing (easy sharing)`,
+    },
+
+    data_source: {
+      he: `${progress}
+
+📍 **שלב נוכחי: מקור נתונים**
+
+מה עושים כאן?
+הגדר חיבור למקור הנתונים - בסיס נתונים, API, או קבצים.
+
+🔧 **פעולות זמינות:**
+• \`qmb_list_connections\` - הצג חיבורים קיימים
+• \`qmb_select_connection\` - בחר חיבור קיים
+• \`qmb_create_connection\` - צור חיבור חדש
+• \`qmb_api_wizard\` - אשף לחיבורי REST API
+• \`qmb_test_connection\` - בדוק שהחיבור עובד
+
+💡 **סוגי חיבורים נתמכים:**
+• SQL Server, PostgreSQL, Oracle, MySQL
+• REST API (עם אשף ייעודי)
+• Excel, CSV, JSON, QVD`,
+
+      en: `${progress}
+
+📍 **Current Step: Data Source**
+
+What to do here?
+Configure connection to your data source - database, API, or files.
+
+🔧 **Available Actions:**
+• \`qmb_list_connections\` - List existing connections
+• \`qmb_select_connection\` - Select existing connection
+• \`qmb_create_connection\` - Create new connection
+• \`qmb_api_wizard\` - Guided REST API setup
+• \`qmb_test_connection\` - Test connection works
+
+💡 **Supported Connection Types:**
+• SQL Server, PostgreSQL, Oracle, MySQL
+• REST API (with dedicated wizard)
+• Excel, CSV, JSON, QVD`,
+    },
+
+    table_selection: {
+      he: `${progress}
+
+📍 **שלב נוכחי: בחירת טבלאות**
+
+מה עושים כאן?
+בחר את הטבלאות שתרצה לחלץ מהמקור.
+
+🔧 **פעולות זמינות:**
+• \`qmb_list_tables\` - הצג טבלאות זמינות
+• \`qmb_add_table\` - הוסף טבלה
+• \`qmb_remove_table\` - הסר טבלה
+
+💡 **טיפים:**
+• התחל עם טבלאות ה-Fact (עובדות/טרנזקציות)
+• הוסף טבלאות Dimension (ממדים/מילונים)
+• אפשר לסנן לפי schema עם פרמטר \`schema\``,
+
+      en: `${progress}
+
+📍 **Current Step: Table Selection**
+
+What to do here?
+Select the tables you want to extract from the source.
+
+🔧 **Available Actions:**
+• \`qmb_list_tables\` - Show available tables
+• \`qmb_add_table\` - Add a table
+• \`qmb_remove_table\` - Remove a table
+
+💡 **Tips:**
+• Start with Fact tables (transactions/events)
+• Add Dimension tables (lookups/references)
+• Filter by schema using the \`schema\` parameter`,
+    },
+
+    field_mapping: {
+      he: `${progress}
+
+📍 **שלב נוכחי: מיפוי שדות**
+
+מה עושים כאן?
+בחר אילו שדות לכלול מכל טבלה.
+
+🔧 **פעולות זמינות:**
+• \`qmb_get_table_fields\` - הצג שדות של טבלה
+• \`qmb_set_table_fields\` - הגדר שדות לכלול/להחריג
+
+💡 **טיפים:**
+• לא חייב לקחת הכל - בחר רק מה שצריך
+• שדות עם נתונים רגישים? שקול להחריג
+• שדות גדולים (BLOB, TEXT) יכולים להאט`,
+
+      en: `${progress}
+
+📍 **Current Step: Field Mapping**
+
+What to do here?
+Choose which fields to include from each table.
+
+🔧 **Available Actions:**
+• \`qmb_get_table_fields\` - Show table fields
+• \`qmb_set_table_fields\` - Set fields to include/exclude
+
+💡 **Tips:**
+• You don't need everything - select what you need
+• Sensitive data? Consider excluding
+• Large fields (BLOB, TEXT) can slow things down`,
+    },
+
+    incremental_config: {
+      he: `${progress}
+
+📍 **שלב נוכחי: הגדרת Incremental**
+
+מה עושים כאן?
+קבע איך לטעון כל טבלה - מלא או אינקרמנטלי.
+
+🔧 **פעולות זמינות:**
+• \`qmb_set_incremental\` - הגדר אסטרטגיה לטבלה
+• \`qmb_suggest_incremental\` - קבל המלצה אוטומטית
+
+💡 **אסטרטגיות:**
+• **none** - טעינה מלאה (לטבלאות קטנות/ממדים)
+• **by_date** - לפי תאריך עדכון (ModifiedDate)
+• **by_id** - לפי ID אוטומטי (מזהה עולה)
+• **time_window** - חלון זמן (7 ימים אחרונים)
+
+💡 **המלצות:**
+• Fact Tables גדולות → by_date או by_id
+• Dimension Tables קטנות → none
+• יש ModifiedDate? → by_date`,
+
+      en: `${progress}
+
+📍 **Current Step: Incremental Configuration**
+
+What to do here?
+Set how to load each table - full or incremental.
+
+🔧 **Available Actions:**
+• \`qmb_set_incremental\` - Set strategy for table
+• \`qmb_suggest_incremental\` - Get automatic suggestion
+
+💡 **Strategies:**
+• **none** - Full reload (small tables/dimensions)
+• **by_date** - By update date (ModifiedDate)
+• **by_id** - By auto-increment ID
+• **time_window** - Time window (last 7 days)
+
+💡 **Recommendations:**
+• Large Fact Tables → by_date or by_id
+• Small Dimension Tables → none
+• Has ModifiedDate? → by_date`,
+    },
+
+    review: {
+      he: `${progress}
+
+📍 **שלב נוכחי: סקירה ויצירת Script**
+
+מה עושים כאן?
+בדוק את ההגדרות וצור את הסקריפט.
+
+🔧 **פעולות זמינות:**
+• \`qmb_validate\` - בדוק שהכל תקין
+• \`qmb_preview_script\` - צפה בסקריפט שייווצר
+• \`qmb_status\` - סיכום מצב
+
+⚠️ **חשוב:**
+תמיד הרץ \`qmb_validate\` לפני שממשיכים ל-Deploy!`,
+
+      en: `${progress}
+
+📍 **Current Step: Review & Generate Script**
+
+What to do here?
+Review settings and generate the script.
+
+🔧 **Available Actions:**
+• \`qmb_validate\` - Validate everything is correct
+• \`qmb_preview_script\` - Preview generated script
+• \`qmb_status\` - Status summary
+
+⚠️ **Important:**
+Always run \`qmb_validate\` before proceeding to Deploy!`,
+    },
+
+    deploy: {
+      he: `${progress}
+
+📍 **שלב נוכחי: Deploy**
+
+מה עושים כאן?
+צור את האפליקציה ב-Qlik Cloud!
+
+🔧 **פעולות זמינות:**
+• \`qmb_deploy\` - צור אפליקציה והעלה סקריפט
+• \`qmb_preview_script\` - צפה בסקריפט לפני
+
+⚠️ **לפני Deploy:**
+וודא שהרצת \`qmb_validate step:"all"\`!`,
+
+      en: `${progress}
+
+📍 **Current Step: Deploy**
+
+What to do here?
+Create the app in Qlik Cloud!
+
+🔧 **Available Actions:**
+• \`qmb_deploy\` - Create app and upload script
+• \`qmb_preview_script\` - Preview script before
+
+⚠️ **Before Deploy:**
+Make sure you ran \`qmb_validate step:"all"\`!`,
+    },
+  };
+
+  const guide = guides[currentStep];
+  if (!guide) {
+    return isHe
+      ? 'לא נמצא מדריך לשלב הנוכחי. השתמש ב-qmb_status לראות את המצב.'
+      : 'No guide found for current step. Use qmb_status to see the state.';
+  }
+
+  return isHe ? guide.he : guide.en;
+}
+
+/**
+ * Format progress indicator
+ */
+function formatProgress(status: Record<string, unknown>, isHe: boolean): string {
+  const steps = [
+    { id: 'space_setup', he: 'Space', en: 'Space' },
+    { id: 'data_source', he: 'חיבור', en: 'Connection' },
+    { id: 'table_selection', he: 'טבלאות', en: 'Tables' },
+    { id: 'field_mapping', he: 'שדות', en: 'Fields' },
+    { id: 'incremental_config', he: 'Incremental', en: 'Incremental' },
+    { id: 'review', he: 'סקירה', en: 'Review' },
+    { id: 'deploy', he: 'Deploy', en: 'Deploy' },
+  ];
+
+  const currentStep = status.currentStep as string;
+  const currentIndex = steps.findIndex(s => s.id === currentStep);
+
+  const progressLine = steps.map((step, i) => {
+    const name = isHe ? step.he : step.en;
+    if (i < currentIndex) return `✓ ${name}`;
+    if (i === currentIndex) return `→ **${name}**`;
+    return `○ ${name}`;
+  }).join('  ');
+
+  return progressLine;
 }

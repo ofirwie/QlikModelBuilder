@@ -539,6 +539,25 @@ export const qmbTools: Tool[] = [
       required: ['appId'],
     },
   },
+
+  // ============================================================
+  // Smart Guide Tool
+  // ============================================================
+  {
+    name: 'qmb_guide',
+    description: 'Get contextual guidance for the current wizard step - what to do next, available actions, and recommendations',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        language: {
+          type: 'string',
+          enum: ['en', 'he'],
+          description: 'Response language',
+          default: 'he',
+        },
+      },
+    },
+  },
 ];
 
 /**
