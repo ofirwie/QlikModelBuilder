@@ -45,11 +45,13 @@
     "enigma.js": "^2.14.0",
     "lru-cache": "^11.1.0",
     "node-fetch": "^3.3.2",
+    "uuid": "^13.0.0",
     "ws": "^8.18.3"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
     "@types/node": "^20.10.0",
+    "@types/uuid": "^10.0.0",
     "@types/ws": "^8.18.1",
     "@typescript-eslint/eslint-plugin": "^6.15.0",
     "@typescript-eslint/parser": "^6.15.0",
