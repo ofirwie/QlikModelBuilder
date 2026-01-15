@@ -1,0 +1,83 @@
+{
+  "name": "qlik-model-builder",
+  "version": "0.1.0",
+  "description": "MCP Server for rapid Qlik Sense model development - Wizard-based data extraction with incremental load support",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node --max-old-space-size=12288 dist/index.js",
+    "start:new": "node --max-old-space-size=12288 dist/index-new.js",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "rebuild": "npm run clean && npm run build",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
+    "test:semantic": "node --experimental-vm-modules node_modules/jest/bin/jest.js src/__tests__/semantic/ --coverage",
+    "test:integration": "node --experimental-vm-modules node_modules/jest/bin/jest.js src/__tests__/integration/ --runInBand",
+    "test:all": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
+    "test:manual": "node dist/test.js",
+    "lint": "eslint src/**/*.ts",
+    "type-check": "tsc --noEmit"
+  },
+  "keywords": [
+    "qlik",
+    "qlik-cloud",
+    "qlik-sense",
+    "mcp",
+    "model-context-protocol",
+    "data-modeling",
+    "incremental-load",
+    "etl",
+    "wizard",
+    "automation",
+    "claude",
+    "ai-assistant"
+  ],
+  "author": "ofirwie",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.5.0",
+    "@qlik/api": "^2.2.0",
+    "axios": "^1.10.0",
+    "dotenv": "^17.0.1",
+    "enigma.js": "^2.14.0",
+    "lru-cache": "^11.1.0",
+    "node-fetch": "^3.3.2",
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^20.10.0",
+    "@types/ws": "^8.18.1",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
+    "eslint": "^8.56.0",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.6",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ofirwie/QlikModelBuilder"
+  },
+  "bugs": {
+    "url": "https://github.com/ofirwie/QlikModelBuilder/issues"
+  },
+  "homepage": "https://github.com/ofirwie/QlikModelBuilder#readme",
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "package.json"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  }
+}
