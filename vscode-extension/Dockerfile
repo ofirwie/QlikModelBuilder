@@ -28,11 +28,11 @@ RUN npm ci
 # Copy extension source
 COPY --chown=coder:coder . .
 
-# Build extension
-RUN npm run compile
+# Build extension with esbuild (bundles all dependencies)
+RUN npm run esbuild
 
-# Build VSIX package
-RUN vsce package --no-dependencies -o extension.vsix
+# Build VSIX package (dependencies are bundled, so no need for node_modules)
+RUN vsce package --allow-star-activation --no-dependencies -o extension.vsix
 
 # Install extension into code-server
 RUN code-server --install-extension extension.vsix
