@@ -12,7 +12,7 @@ services:
       # Mount test results for visibility
       - ./test-results:/home/coder/extension/test-results
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+      test: ["CMD", "curl", "-fk", "https://localhost:8080/healthz"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -29,5 +29,6 @@ services:
       - ./test/docker:/tests
       - ./test-results:/tests/test-results
     environment:
-      - VSCODE_URL=http://vscode-test:8080
+      - VSCODE_URL=https://vscode-test:8080
+      - NODE_TLS_REJECT_UNAUTHORIZED=0
     command: npx playwright test --reporter=list

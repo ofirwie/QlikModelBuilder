@@ -10,7 +10,13 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onStartupFinished",
+    "onView:qmb.wizardView",
+    "onCommand:qmb.openWizard",
+    "onCommand:qmb.newProject",
+    "onCommand:qmb.configure"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
@@ -22,6 +28,11 @@
       {
         "command": "qmb.newProject",
         "title": "New Data Model Project",
+        "category": "Qlik"
+      },
+      {
+        "command": "qmb.configure",
+        "title": "Configure Qlik Cloud Connection",
         "category": "Qlik"
       }
     ],
@@ -42,17 +53,54 @@
           "name": "Model Builder"
         }
       ]
+    },
+    "configuration": {
+      "title": "Qlik Model Builder",
+      "properties": {
+        "qmb.geminiApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Google Gemini API Key for parsing Word documents (recommended)",
+          "scope": "application"
+        },
+        "qmb.anthropicApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Anthropic API Key for parsing Word documents with Claude AI",
+          "scope": "application"
+        }
+      }
     }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "lint": "eslint src --ext ts"
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "test-ui": "extest setup-and-run test/ui/*.test.ts",
+    "test-webview": "npx playwright test"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.2",
+    "@google/generative-ai": "^0.24.1",
+    "dotenv": "^17.2.3",
+    "mammoth": "^1.11.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
-    "@types/vscode": "^1.85.0",
+    "@playwright/test": "^1.57.0",
+    "@types/chai": "^5.2.3",
+    "@types/glob": "^8.1.0",
+    "@types/mocha": "^10.0.10",
     "@types/node": "^20.0.0",
-    "typescript": "^5.3.0"
+    "@types/vscode": "^1.85.0",
+    "@vscode/test-electron": "^2.5.2",
+    "chai": "^6.2.2",
+    "glob": "^13.0.0",
+    "mocha": "^11.7.5",
+    "playwright": "^1.57.0",
+    "typescript": "^5.3.0",
+    "vscode-extension-tester": "^8.21.0"
   }
 }
