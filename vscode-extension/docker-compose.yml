@@ -1,0 +1,33 @@
+services:
+  vscode-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - QLIK_TENANT_URL=${QLIK_TENANT_URL:-}
+      - QLIK_API_KEY=${QLIK_API_KEY:-}
+    volumes:
+      # Mount test results for visibility
+      - ./test-results:/home/coder/extension/test-results
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 15s
+
+  # Playwright test runner
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.57.0-jammy
+    depends_on:
+      vscode-test:
+        condition: service_healthy
+    working_dir: /tests
+    volumes:
+      - ./test/docker:/tests
+      - ./test-results:/tests/test-results
+    environment:
+      - VSCODE_URL=http://vscode-test:8080
+    command: npx playwright test --reporter=list
