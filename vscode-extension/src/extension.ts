@@ -1,38 +1,119 @@
+// Top-level log to verify module loading
+console.log('[QMB] Extension module loading...');
+
 import * as vscode from 'vscode';
+import * as fs from 'fs';
+import * as path from 'path';
+
+console.log('[QMB] Core modules loaded, loading local modules...');
+
 import { WizardPanel } from './wizardPanel';
+import { QlikApiService } from './qlikApi';
 
-export function activate(context: vscode.ExtensionContext) {
-  console.log('Qlik Model Builder extension activated');
+console.log('[QMB] All modules loaded successfully');
 
-  // Register command to open wizard
-  const openWizardCmd = vscode.commands.registerCommand('qmb.openWizard', () => {
-    WizardPanel.createOrShow(context.extensionUri);
-  });
-
-  // Register command for new project
-  const newProjectCmd = vscode.commands.registerCommand('qmb.newProject', () => {
-    WizardPanel.createOrShow(context.extensionUri);
-    // Send message to start fresh
-    WizardPanel.currentPanel?.postMessage({ type: 'startWizard', mode: 'scratch' });
-  });
-
-  // Register webview provider for sidebar
-  const provider = new WizardViewProvider(context.extensionUri);
-  const webviewProvider = vscode.window.registerWebviewViewProvider(
-    'qmb.wizardView',
-    provider
-  );
-
-  context.subscriptions.push(openWizardCmd, newProjectCmd, webviewProvider);
+// Debug logging to file
+const debugLogPath = path.join(__dirname, '..', 'extension-debug.log');
+function debugLog(msg: string) {
+  const timestamp = new Date().toISOString();
+  const line = `[${timestamp}] ${msg}\n`;
+  try {
+    fs.appendFileSync(debugLogPath, line);
+  } catch (e) {
+    // Ignore file write errors
+  }
+  console.log(msg);
 }
 
-export function deactivate() {}
+let qlikApi: QlikApiService;
+
+export function activate(context: vscode.ExtensionContext) {
+  // Clear previous log
+  try { fs.writeFileSync(debugLogPath, ''); } catch (e) { /* ignore */ }
+  debugLog('=== Extension activate() called ===');
+  debugLog(`Extension path: ${context.extensionPath}`);
+
+  try {
+    debugLog('Initializing extension...');
+
+    // Initialize Qlik API service
+    qlikApi = new QlikApiService(context);
+    debugLog('QlikApiService created');
+
+    // Register command to open wizard
+    const openWizardCmd = vscode.commands.registerCommand('qmb.openWizard', () => {
+      debugLog('qmb.openWizard command executed');
+      WizardPanel.createOrShow(context.extensionUri, qlikApi);
+    });
+    debugLog('qmb.openWizard registered');
+
+    // Register command for new project
+    const newProjectCmd = vscode.commands.registerCommand('qmb.newProject', () => {
+      debugLog('qmb.newProject command executed');
+      WizardPanel.createOrShow(context.extensionUri, qlikApi);
+      WizardPanel.currentPanel?.postMessage({ type: 'startWizard', mode: 'scratch' });
+    });
+    debugLog('qmb.newProject registered');
+
+    // Register command to configure credentials
+    const configureCmd = vscode.commands.registerCommand('qmb.configure', async () => {
+      debugLog('qmb.configure command executed');
+      const tenantUrl = await vscode.window.showInputBox({
+        prompt: 'Qlik Cloud Tenant URL',
+        placeHolder: 'https://your-tenant.region.qlikcloud.com',
+        value: qlikApi.getCredentials().tenantUrl
+      });
+
+      if (!tenantUrl) { return; }
+
+      const apiKey = await vscode.window.showInputBox({
+        prompt: 'Qlik Cloud API Key',
+        placeHolder: 'eyJhbGciOiJFUzM4NCIs...',
+        password: true
+      });
+
+      if (!apiKey) { return; }
+
+      await qlikApi.saveCredentials(tenantUrl, apiKey);
+      const result = await qlikApi.testConnection();
+
+      if (result.success) {
+        vscode.window.showInformationMessage(`Qlik Cloud: ${result.message}`);
+      } else {
+        vscode.window.showErrorMessage(`Connection failed: ${result.message}`);
+      }
+    });
+    debugLog('qmb.configure registered');
+
+    // Register webview provider for sidebar
+    const provider = new WizardViewProvider(context.extensionUri, qlikApi);
+    const webviewProvider = vscode.window.registerWebviewViewProvider(
+      'qmb.wizardView',
+      provider
+    );
+    debugLog('Webview provider registered');
+
+    context.subscriptions.push(openWizardCmd, newProjectCmd, configureCmd, webviewProvider);
+    debugLog('Extension activation complete!');
+  } catch (err) {
+    debugLog(`ERROR during activation: ${err instanceof Error ? err.message : err}`);
+    debugLog(`Stack: ${err instanceof Error ? err.stack : 'no stack'}`);
+    throw err;
+  }
+}
+
+export function deactivate() {
+  debugLog('Extension deactivate() called');
+}
 
 /**
  * Webview provider for the sidebar view
  */
 class WizardViewProvider implements vscode.WebviewViewProvider {
-  constructor(private readonly extensionUri: vscode.Uri) {}
+  constructor(
+    private readonly extensionUri: vscode.Uri,
+    private readonly qlikApi: QlikApiService
+  ) {}
 
   resolveWebviewView(
     webviewView: vscode.WebviewView,
@@ -50,21 +131,44 @@ class WizardViewProvider implements vscode.WebviewViewProvider {
     webviewView.webview.onDidReceiveMessage(async (message) => {
       switch (message.type) {
         case 'callTool':
-          // Call MCP tool and return result
-          const result = await this.callMcpTool(message.tool, message.args);
+          const result = await this.handleToolCall(message.tool, message.args);
           webviewView.webview.postMessage({ type: 'toolResult', id: message.id, result });
           break;
         case 'openFullWizard':
-          WizardPanel.createOrShow(this.extensionUri);
+          WizardPanel.createOrShow(this.extensionUri, this.qlikApi);
+          break;
+        case 'checkConnection':
+          const isConfigured = this.qlikApi.isConfigured();
+          webviewView.webview.postMessage({ type: 'connectionStatus', configured: isConfigured });
+          break;
+        case 'configure':
+          vscode.commands.executeCommand('qmb.configure');
           break;
       }
     });
   }
 
-  private async callMcpTool(tool: string, args: Record<string, unknown>): Promise<unknown> {
-    // TODO: Connect to actual MCP server
-    // For now, return mock data
-    return { success: true, message: `Called ${tool}` };
+  private async handleToolCall(tool: string, _args: Record<string, unknown>): Promise<unknown> {
+    if (!this.qlikApi.isConfigured()) {
+      return { error: 'NOT_CONFIGURED', message: 'Please configure Qlik Cloud credentials first' };
+    }
+
+    try {
+      switch (tool) {
+        case 'getSpaces':
+          return { success: true, data: await this.qlikApi.getSpaces() };
+        case 'getConnections':
+          return { success: true, data: await this.qlikApi.getConnections() };
+        case 'getApps':
+          return { success: true, data: await this.qlikApi.getApps() };
+        case 'testConnection':
+          return await this.qlikApi.testConnection();
+        default:
+          return { error: 'UNKNOWN_TOOL', message: `Unknown tool: ${tool}` };
+      }
+    } catch (err) {
+      return { error: 'API_ERROR', message: err instanceof Error ? err.message : 'Unknown error' };
+    }
   }
 
   private getHtmlForWebview(webview: vscode.Webview): string {
@@ -371,28 +475,32 @@ function getWizardHtml(webview: vscode.Webview, extensionUri: vscode.Uri): strin
   </div>
 
   <div class="progress-bar" id="progressBar">
-    <div class="step-indicator current" data-step="space">
+    <div class="step-indicator current" data-step="1">
       <div class="step-circle">1</div>
+      <span class="step-label">Entry</span>
+    </div>
+    <div class="step-indicator" data-step="2">
+      <div class="step-circle">2</div>
       <span class="step-label">Space</span>
     </div>
-    <div class="step-indicator" data-step="connection">
-      <div class="step-circle">2</div>
-      <span class="step-label">חיבור</span>
-    </div>
-    <div class="step-indicator" data-step="tables">
+    <div class="step-indicator" data-step="3">
       <div class="step-circle">3</div>
-      <span class="step-label">טבלאות</span>
+      <span class="step-label">Source</span>
     </div>
-    <div class="step-indicator" data-step="incremental">
+    <div class="step-indicator" data-step="4">
       <div class="step-circle">4</div>
+      <span class="step-label">Tables</span>
+    </div>
+    <div class="step-indicator" data-step="5">
+      <div class="step-circle">5</div>
+      <span class="step-label">Fields</span>
+    </div>
+    <div class="step-indicator" data-step="6">
+      <div class="step-circle">6</div>
       <span class="step-label">Incremental</span>
     </div>
-    <div class="step-indicator" data-step="review">
-      <div class="step-circle">5</div>
-      <span class="step-label">סקירה</span>
-    </div>
-    <div class="step-indicator" data-step="deploy">
-      <div class="step-circle">6</div>
+    <div class="step-indicator" data-step="7">
+      <div class="step-circle">7</div>
       <span class="step-label">Deploy</span>
     </div>
   </div>
@@ -423,7 +531,7 @@ function getWizardHtml(webview: vscode.Webview, extensionUri: vscode.Uri): strin
     </div>
 
     <!-- Step 2: Connection -->
-    <div id="step-connection" class="step-content" style="display: none;">
+    <div id="step-source" class="step-content" style="display: none;">
       <h2>🔗 מקור נתונים</h2>
       <p style="margin-bottom: 16px; color: var(--text-secondary);">
         בחר חיבור קיים או צור חדש
@@ -451,7 +559,7 @@ function getWizardHtml(webview: vscode.Webview, extensionUri: vscode.Uri): strin
     // State
     let state = {
       currentStep: 0,
-      steps: ['space', 'connection', 'tables', 'incremental', 'review', 'deploy'],
+      steps: ['entry', 'space', 'source', 'tables', 'fields', 'incremental', 'deploy'],
       selectedSpace: null,
       selectedConnection: null,
       selectedTables: [],
