@@ -129,6 +129,9 @@ export function extractWebviewHtml(): string {
         selectedTables: []
       };
 
+      // Track setState calls for testing
+      window.setStateCalls = [];
+
       window.acquireVsCodeApi = function() {
         return {
           postMessage: function(msg) {
@@ -137,6 +140,7 @@ export function extractWebviewHtml(): string {
           },
           getState: function() { return window.wizardState; },
           setState: function(state) {
+            window.setStateCalls.push(state);
             window.wizardState = { ...window.wizardState, ...state };
             return window.wizardState;
           }
