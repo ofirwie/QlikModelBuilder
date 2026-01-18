@@ -48,8 +48,8 @@ test.describe('Wizard Smoke Tests - 7-Step Design', () => {
    * The new wizard design requires 7 steps in the progress bar
    */
   test('Smoke 2: Progress bar shows 7 steps', async ({ page }) => {
-    // Find all step indicators in the progress bar
-    const stepIndicators = page.locator('.step-indicator, .progress-bar .step-circle');
+    // Find all step indicators in the progress bar (use only .step-indicator to avoid double-counting)
+    const stepIndicators = page.locator('.step-indicator');
 
     // Should have exactly 7 steps
     const count = await stepIndicators.count();
