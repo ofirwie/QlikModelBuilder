@@ -1545,6 +1545,62 @@ JSON OUTPUT:`;
     </div>
   </div>
 
+  <!-- Step 1: Entry Point -->
+  <div id="step-1" class="step-content" data-step="1">
+    <h2>Entry Point</h2>
+    <p style="margin-bottom: 16px; color: var(--text-secondary);">
+      How would you like to start building your data model?
+    </p>
+
+    <ul class="item-list" id="entry-options">
+      <li data-entry="spec" onclick="selectEntry('spec')">
+        <div class="item-info">
+          <span class="item-name">From Spec File</span>
+          <span class="item-type">Upload a Word/Excel specification document</span>
+        </div>
+      </li>
+      <li data-entry="template" onclick="selectEntry('template')">
+        <div class="item-info">
+          <span class="item-name">From Template</span>
+          <span class="item-type">Start with a predefined template</span>
+        </div>
+      </li>
+      <li data-entry="scratch" onclick="selectEntry('scratch')">
+        <div class="item-info">
+          <span class="item-name">Start from Scratch</span>
+          <span class="item-type">Build your model step by step</span>
+        </div>
+      </li>
+    </ul>
+
+    <div class="button-row">
+      <div></div>
+      <button class="btn btn-primary" id="btn-next" disabled onclick="nextStep()">
+        Next
+      </button>
+    </div>
+  </div>
+
+  <!-- Step 2: Space Selection (placeholder for navigation tests) -->
+  <div id="step-2" class="step-content" data-step="2" style="display: none;">
+    <h2>Space Selection</h2>
+    <p style="margin-bottom: 16px; color: var(--text-secondary);">
+      Select a Qlik Cloud Space for your model
+    </p>
+    <div id="step-space">
+      <!-- Space list will be rendered here -->
+      <p>Loading spaces...</p>
+    </div>
+    <div class="button-row">
+      <button class="btn btn-secondary" id="btn-back" onclick="prevStep()">
+        Back
+      </button>
+      <button class="btn btn-primary" disabled>
+        Next
+      </button>
+    </div>
+  </div>
+
   <div id="app">
     <div class="loading">
       <div class="spinner"></div>

@@ -549,6 +549,78 @@ export function getDashboardStyles(): string {
       display: none !important;
     }
 
+    /* Step Content */
+    .step-content {
+      padding: 24px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .step-content h2 {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+    }
+
+    /* Item List (Entry Options) */
+    .item-list {
+      list-style: none;
+      padding: 0;
+      margin: 16px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .item-list li {
+      display: flex;
+      align-items: center;
+      padding: 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .item-list li:hover {
+      background: var(--bg-hover);
+      border-color: var(--qlik-green);
+    }
+
+    .item-list li.selected {
+      background: rgba(0, 152, 69, 0.1);
+      border-color: var(--qlik-green);
+    }
+
+    .item-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .item-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .item-type {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* Button Row */
+    .button-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-color);
+    }
+
     /* Progress Bar - 7 Step Wizard */
     .progress-bar {
       display: flex;
@@ -641,8 +713,109 @@ export function getDashboardScript(): string {
       selectedTables: [],
       incrementalConfig: {},
       generatedScript: '',
-      projectSpec: null
+      projectSpec: null,
+      entryPoint: null,
+      currentStep: 1
     };
+
+    // =============================================
+    // Entry Point Selection (Step 1)
+    // =============================================
+    window.selectEntry = function selectEntry(entry) {
+      state.entryPoint = entry;
+
+      // Update UI - mark selected item
+      document.querySelectorAll('#entry-options li').forEach(li => {
+        li.classList.toggle('selected', li.dataset.entry === entry);
+      });
+
+      // Enable Next button
+      const nextBtn = document.getElementById('btn-next');
+      if (nextBtn) {
+        nextBtn.disabled = false;
+      }
+
+      // Save state to VS Code
+      if (typeof vscode !== 'undefined') {
+        vscode.setState(state);
+      }
+
+      // Also expose for test access
+      if (typeof window !== 'undefined') {
+        window.wizardState = state;
+      }
+    }
+
+    window.nextStep = function nextStep() {
+      state.currentStep++;
+
+      // Update progress bar indicators
+      document.querySelectorAll('.step-indicator').forEach((indicator, idx) => {
+        const step = idx + 1;
+        indicator.classList.remove('current', 'completed');
+        if (step < state.currentStep) {
+          indicator.classList.add('completed');
+        } else if (step === state.currentStep) {
+          indicator.classList.add('current');
+        }
+      });
+
+      // Hide current step content, show next step content
+      document.querySelectorAll('.step-content').forEach(content => {
+        const stepNum = parseInt(content.dataset.step, 10);
+        if (stepNum === state.currentStep) {
+          content.style.display = 'block';
+        } else {
+          content.style.display = 'none';
+        }
+      });
+
+      // Save state
+      if (typeof vscode !== 'undefined') {
+        vscode.setState(state);
+      }
+
+      // Expose for tests
+      if (typeof window !== 'undefined') {
+        window.wizardState = state;
+      }
+    }
+
+    window.prevStep = function prevStep() {
+      if (state.currentStep <= 1) return;
+      state.currentStep--;
+
+      // Update progress bar indicators
+      document.querySelectorAll('.step-indicator').forEach((indicator, idx) => {
+        const step = idx + 1;
+        indicator.classList.remove('current', 'completed');
+        if (step < state.currentStep) {
+          indicator.classList.add('completed');
+        } else if (step === state.currentStep) {
+          indicator.classList.add('current');
+        }
+      });
+
+      // Hide current step content, show previous step content
+      document.querySelectorAll('.step-content').forEach(content => {
+        const stepNum = parseInt(content.dataset.step, 10);
+        if (stepNum === state.currentStep) {
+          content.style.display = 'block';
+        } else {
+          content.style.display = 'none';
+        }
+      });
+
+      // Save state
+      if (typeof vscode !== 'undefined') {
+        vscode.setState(state);
+      }
+
+      // Expose for tests
+      if (typeof window !== 'undefined') {
+        window.wizardState = state;
+      }
+    }
 
     // =============================================
     // Initialization
