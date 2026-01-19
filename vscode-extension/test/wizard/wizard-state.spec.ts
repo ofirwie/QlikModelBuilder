@@ -27,7 +27,7 @@ test.describe('Wizard State Management', () => {
   test('state.currentStep updates when navigating', async ({ page }) => {
     // Select entry and navigate
     await page.locator('[data-entry="scratch"]').click();
-    await page.locator('#btn-next, [onclick*="nextStep"]').first().click();
+    await page.locator('#btn-next, .btn-next-action, .btn-next').first().click();
     await page.waitForTimeout(300);
 
     const state = await page.evaluate(() => (window as any).wizardState);
@@ -39,11 +39,11 @@ test.describe('Wizard State Management', () => {
     await page.locator('[data-entry="template"]').click();
 
     // Navigate forward
-    await page.locator('#btn-next, [onclick*="nextStep"]').first().click();
+    await page.locator('#btn-next, .btn-next-action, .btn-next').first().click();
     await page.waitForTimeout(300);
 
     // Navigate back
-    await page.locator('[onclick*="prevStep"]').first().click();
+    await page.locator('#btn-back, .btn-back-action, .btn-back').first().click();
     await page.waitForTimeout(300);
 
     // Check state still has the entry

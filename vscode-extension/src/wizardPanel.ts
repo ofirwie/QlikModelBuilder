@@ -1553,19 +1553,19 @@ JSON OUTPUT:`;
     </p>
 
     <ul class="item-list" id="entry-options">
-      <li data-entry="spec" onclick="selectEntry('spec')">
+      <li data-entry="spec">
         <div class="item-info">
           <span class="item-name">From Spec File</span>
           <span class="item-type">Upload a Word/Excel specification document</span>
         </div>
       </li>
-      <li data-entry="template" onclick="selectEntry('template')">
+      <li data-entry="template">
         <div class="item-info">
           <span class="item-name">From Template</span>
           <span class="item-type">Start with a predefined template</span>
         </div>
       </li>
-      <li data-entry="scratch" onclick="selectEntry('scratch')">
+      <li data-entry="scratch">
         <div class="item-info">
           <span class="item-name">Start from Scratch</span>
           <span class="item-type">Build your model step by step</span>
@@ -1575,7 +1575,7 @@ JSON OUTPUT:`;
 
     <div class="button-row">
       <div></div>
-      <button class="btn btn-primary" id="btn-next" disabled onclick="nextStep()">
+      <button class="btn btn-primary" id="btn-next" disabled>
         Next
       </button>
     </div>
@@ -1592,10 +1592,10 @@ JSON OUTPUT:`;
       <p>Loading spaces...</p>
     </div>
     <div class="button-row">
-      <button class="btn btn-secondary" id="btn-back" onclick="prevStep()">
+      <button class="btn btn-secondary" id="btn-back">
         Back
       </button>
-      <button class="btn btn-primary" onclick="nextStep()">
+      <button class="btn btn-primary" id="btn-next-2">
         Next
       </button>
     </div>
@@ -1630,8 +1630,8 @@ JSON OUTPUT:`;
       </ul>
     </div>
     <div class="button-row">
-      <button class="btn btn-secondary" onclick="prevStep()">Back</button>
-      <button class="btn btn-primary" onclick="nextStep()">Next</button>
+      <button class="btn btn-secondary btn-back-action">Back</button>
+      <button class="btn btn-primary btn-next-action">Next</button>
     </div>
   </div>
 
@@ -1664,8 +1664,8 @@ JSON OUTPUT:`;
       </ul>
     </div>
     <div class="button-row">
-      <button class="btn btn-secondary" onclick="prevStep()">Back</button>
-      <button class="btn btn-primary" onclick="nextStep()">Next</button>
+      <button class="btn btn-secondary btn-back-action">Back</button>
+      <button class="btn btn-primary btn-next-action">Next</button>
     </div>
   </div>
 
@@ -1679,8 +1679,8 @@ JSON OUTPUT:`;
       <p>Field mapping configuration will appear here based on selected tables.</p>
     </div>
     <div class="button-row">
-      <button class="btn btn-secondary" onclick="prevStep()">Back</button>
-      <button class="btn btn-primary" onclick="nextStep()">Next</button>
+      <button class="btn btn-secondary btn-back-action">Back</button>
+      <button class="btn btn-primary btn-next-action">Next</button>
     </div>
   </div>
 
@@ -1694,8 +1694,8 @@ JSON OUTPUT:`;
       <p>Incremental load configuration will appear here based on selected tables.</p>
     </div>
     <div class="button-row">
-      <button class="btn btn-secondary" onclick="prevStep()">Back</button>
-      <button class="btn btn-primary" onclick="nextStep()">Next</button>
+      <button class="btn btn-secondary btn-back-action">Back</button>
+      <button class="btn btn-primary btn-next-action">Next</button>
     </div>
   </div>
 
@@ -1709,7 +1709,7 @@ JSON OUTPUT:`;
       <p>Review summary will appear here.</p>
     </div>
     <div class="button-row">
-      <button class="btn btn-secondary" onclick="prevStep()">Back</button>
+      <button class="btn btn-secondary btn-back-action">Back</button>
       <button class="btn btn-primary" style="background: var(--qlik-green);">Deploy App</button>
     </div>
   </div>

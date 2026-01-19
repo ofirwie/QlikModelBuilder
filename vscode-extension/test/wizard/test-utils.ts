@@ -170,7 +170,7 @@ export async function navigateToStep(page: Page, targetStep: number): Promise<vo
   for (let i = 1; i < targetStep; i++) {
     // Look for visible Next button in current step content
     const currentStepContent = page.locator(`.step-content:visible, [data-step="${i}"]:visible`).first();
-    const nextButton = currentStepContent.locator('button:has-text("Next"), button:has-text("המשך"), [onclick*="nextStep"]').first();
+    const nextButton = currentStepContent.locator('button:has-text("Next"), button:has-text("המשך"), .btn-next-action, .btn-next').first();
 
     try {
       await nextButton.waitFor({ state: 'visible', timeout: 3000 });

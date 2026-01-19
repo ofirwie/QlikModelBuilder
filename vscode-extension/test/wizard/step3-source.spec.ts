@@ -52,7 +52,7 @@ test.describe('Step 3: Data Source / Connection', () => {
 
     // Click back button
     const visibleStep = page.locator('.step-content:visible').first();
-    const backButton = visibleStep.locator('button:has-text("Back"), button:has-text("חזור"), [onclick*="prevStep"]').first();
+    const backButton = visibleStep.locator('button:has-text("Back"), button:has-text("חזור"), .btn-back-action, .btn-back').first();
     await backButton.click();
     await page.waitForTimeout(300);
 

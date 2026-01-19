@@ -41,22 +41,12 @@ RUN code-server --install-extension extension.vsix
 RUN mkdir -p /home/coder/.local/share/code-server/User && \
     echo '{"security.workspace.trust.enabled": false, "security.workspace.trust.startupPrompt": "never", "workbench.startupEditor": "none", "workbench.tips.enabled": false, "workbench.welcomePage.walkthroughs.openOnInstall": false}' > /home/coder/.local/share/code-server/User/settings.json
 
-# Generate self-signed certificate for HTTPS (required for webviews)
-USER root
-RUN mkdir -p /etc/code-server/certs && \
-    openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-    -keyout /etc/code-server/certs/key.pem \
-    -out /etc/code-server/certs/cert.pem \
-    -subj "/C=US/ST=State/L=City/O=Org/CN=localhost" && \
-    chown -R coder:coder /etc/code-server
-USER coder
-
 # Expose code-server port
 EXPOSE 8080
 
-# Health check (use -k for self-signed cert)
+# Health check
 HEALTHCHECK --interval=5s --timeout=3s --start-period=10s \
-    CMD curl -fk https://localhost:8080/healthz || exit 1
+    CMD curl -f http://localhost:8080/healthz || exit 1
 
-# Start code-server with HTTPS for webview support
-CMD ["code-server", "--bind-addr", "0.0.0.0:8080", "--auth", "none", "--cert", "/etc/code-server/certs/cert.pem", "--cert-key", "/etc/code-server/certs/key.pem", "/home/coder/extension"]
+# Start code-server WITHOUT HTTPS (HTTP only for localhost)
+CMD ["code-server", "--bind-addr", "0.0.0.0:8080", "--auth", "none", "/home/coder/extension"]

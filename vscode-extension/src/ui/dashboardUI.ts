@@ -818,6 +818,62 @@ export function getDashboardScript(): string {
     }
 
     // =============================================
+    // Wizard Event Listeners (CSP-safe, no inline onclick)
+    // =============================================
+    function setupWizardEventListeners() {
+      // Entry point selection
+      document.querySelectorAll('#entry-options li[data-entry]').forEach(li => {
+        li.addEventListener('click', () => {
+          const entry = li.dataset.entry;
+          if (entry && window.selectEntry) {
+            window.selectEntry(entry);
+          }
+        });
+      });
+
+      // Next buttons (Step 1)
+      const btnNext = document.getElementById('btn-next');
+      if (btnNext) {
+        btnNext.addEventListener('click', () => {
+          if (window.nextStep) window.nextStep();
+        });
+      }
+
+      // Step 2 buttons
+      const btnNext2 = document.getElementById('btn-next-2');
+      if (btnNext2) {
+        btnNext2.addEventListener('click', () => {
+          if (window.nextStep) window.nextStep();
+        });
+      }
+      const btnBack = document.getElementById('btn-back');
+      if (btnBack) {
+        btnBack.addEventListener('click', () => {
+          if (window.prevStep) window.prevStep();
+        });
+      }
+
+      // Generic next/back buttons (Steps 3-7)
+      document.querySelectorAll('.btn-next-action').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (window.nextStep) window.nextStep();
+        });
+      });
+      document.querySelectorAll('.btn-back-action').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (window.prevStep) window.prevStep();
+        });
+      });
+    }
+
+    // Call setup after DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', setupWizardEventListeners);
+    } else {
+      setupWizardEventListeners();
+    }
+
+    // =============================================
     // Initialization
     // =============================================
     function init() {

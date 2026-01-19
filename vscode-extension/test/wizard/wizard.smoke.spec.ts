@@ -62,7 +62,7 @@ test.describe('Wizard Smoke Tests - 7-Step Design', () => {
    */
   test('Smoke 3: Next button exists and is initially disabled', async ({ page }) => {
     // Find the Next button
-    const nextButton = page.locator('button:has-text("Next"), button:has-text("המשך"), #btn-next, [onclick*="nextStep"]').first();
+    const nextButton = page.locator('button:has-text("Next"), button:has-text("המשך"), #btn-next, .btn-next-action, .btn-next').first();
 
     // Should exist
     await expect(nextButton).toBeVisible();
@@ -103,7 +103,7 @@ test.describe('Wizard Smoke Tests - 7-Step Design', () => {
    */
   test('Smoke 5: Selecting entry point enables Next button', async ({ page }) => {
     // Find the Next button
-    const nextButton = page.locator('button:has-text("Next"), button:has-text("המשך"), #btn-next, [onclick*="nextStep"]').first();
+    const nextButton = page.locator('button:has-text("Next"), button:has-text("המשך"), #btn-next, .btn-next-action, .btn-next').first();
 
     // Initially disabled
     await expect(nextButton).toBeDisabled();
@@ -130,7 +130,7 @@ test.describe('Wizard Smoke Tests - 7-Step Design', () => {
     await page.waitForTimeout(200);
 
     // Click Next
-    const nextButton = page.locator('button:has-text("Next"), button:has-text("המשך"), #btn-next, [onclick*="nextStep"]').first();
+    const nextButton = page.locator('button:has-text("Next"), button:has-text("המשך"), #btn-next, .btn-next-action, .btn-next').first();
     await nextButton.click();
     await page.waitForTimeout(300);
 
@@ -154,7 +154,7 @@ test.describe('Wizard Smoke Tests - 7-Step Design', () => {
     await navigateToStep(page, 2);
 
     // Find and click the Back button
-    const backButton = page.locator('button:has-text("Back"), button:has-text("חזור"), #btn-back, [onclick*="prevStep"]').first();
+    const backButton = page.locator('button:has-text("Back"), button:has-text("חזור"), #btn-back, .btn-back-action, .btn-back').first();
     await backButton.click();
     await page.waitForTimeout(300);
 
@@ -182,12 +182,12 @@ test.describe('Wizard Smoke Tests - 7-Step Design', () => {
     const initialState = await page.evaluate(() => (window as any).wizardState);
 
     // Navigate to Step 2
-    const nextButton = page.locator('button:has-text("Next"), button:has-text("המשך"), #btn-next, [onclick*="nextStep"]').first();
+    const nextButton = page.locator('button:has-text("Next"), button:has-text("המשך"), #btn-next, .btn-next-action, .btn-next').first();
     await nextButton.click();
     await page.waitForTimeout(300);
 
     // Navigate back to Step 1
-    const backButton = page.locator('button:has-text("Back"), button:has-text("חזור"), #btn-back, [onclick*="prevStep"]').first();
+    const backButton = page.locator('button:has-text("Back"), button:has-text("חזור"), #btn-back, .btn-back-action, .btn-back').first();
     await backButton.click();
     await page.waitForTimeout(300);
 

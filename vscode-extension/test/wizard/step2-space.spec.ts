@@ -36,7 +36,7 @@ test.describe('Step 2: Space Selection', () => {
 
   test('Back button navigates to Step 1', async ({ page }) => {
     // Click back button
-    const backButton = page.locator('button:has-text("Back"), button:has-text("חזור"), #btn-back, [onclick*="prevStep"]').first();
+    const backButton = page.locator('button:has-text("Back"), button:has-text("חזור"), #btn-back, .btn-back-action, .btn-back').first();
     await backButton.click();
     await page.waitForTimeout(300);
 
