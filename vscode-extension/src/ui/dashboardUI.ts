@@ -928,10 +928,38 @@ export function getDashboardScript(): string {
 
         case 'spaces':
           state.spaces = msg.data || [];
-          if (state.spaces.length > 0 && !state.selectedSpace) {
-            state.selectedSpace = state.spaces[0].id;
+          state.spacesLoading = false;
+          state.spacesError = null;
+          if (state.spaces.length > 0 && !state.selectedSpaceId) {
+            state.selectedSpaceId = state.spaces[0].id;
           }
-          renderSidebar();
+          renderSpaces();
+          break;
+
+        case 'spacesError':
+          state.spacesLoading = false;
+          state.spacesError = msg.message || 'Failed to load spaces';
+          renderSpaces();
+          break;
+
+        case 'spaceCreated':
+          state.createSpaceLoading = false;
+          if (msg.space) {
+            state.spaces.push(msg.space);
+            state.selectedSpaceId = msg.space.id;
+          }
+          const newSpaceInput = document.getElementById('new-space-name') as HTMLInputElement;
+          if (newSpaceInput) newSpaceInput.value = '';
+          renderSpaces();
+          break;
+
+        case 'createSpaceError':
+          state.createSpaceLoading = false;
+          const createError = document.getElementById('create-space-error');
+          if (createError) {
+            createError.textContent = msg.message || 'Failed to create space';
+            createError.style.display = 'block';
+          }
           break;
 
         case 'connections':
