@@ -305,6 +305,18 @@ export class WizardPanel {
             await this.sendSpaces();
             break;
 
+          case 'createSpace':
+            try {
+              const space = await this._qlikApi.createSpace(message.name);
+              this._panel.webview.postMessage({ type: 'spaceCreated', space });
+            } catch (error) {
+              this._panel.webview.postMessage({
+                type: 'createSpaceError',
+                message: error instanceof Error ? error.message : 'Failed to create space'
+              });
+            }
+            break;
+
           case 'getConnections':
             await this.sendConnections();
             break;
