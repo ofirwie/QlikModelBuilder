@@ -705,7 +705,7 @@ export function getDashboardScript(): string {
     const state = {
       configured: false,
       tenantUrl: '',
-      spaces: [],
+      spaces: [] as Array<{id: string; name: string; type: string}>,
       connections: [],
       selectedSpace: null,
       selectedConnection: null,
@@ -715,7 +715,13 @@ export function getDashboardScript(): string {
       generatedScript: '',
       projectSpec: null,
       entryPoint: null,
-      currentStep: 1
+      currentStep: 1,
+      // Space selection state (Step 2)
+      selectedSpaceId: null as string | null,
+      newSpaceName: '',
+      spacesLoading: true,
+      createSpaceLoading: false,
+      spacesError: null as string | null
     };
 
     // =============================================
@@ -728,6 +734,12 @@ export function getDashboardScript(): string {
       document.querySelectorAll('#entry-options li').forEach(li => {
         li.classList.toggle('selected', li.dataset.entry === entry);
       });
+
+      // Show/hide upload section based on entry type
+      const uploadSection = document.getElementById('spec-upload-section');
+      if (uploadSection) {
+        uploadSection.style.display = entry === 'spec' ? 'block' : 'none';
+      }
 
       // Enable Next button
       const nextBtn = document.getElementById('btn-next');
@@ -864,6 +876,14 @@ export function getDashboardScript(): string {
           if (window.prevStep) window.prevStep();
         });
       });
+
+      // Upload spec file button
+      const btnUploadSpec = document.getElementById('btn-upload-spec');
+      if (btnUploadSpec) {
+        btnUploadSpec.addEventListener('click', () => {
+          vscode.postMessage({ type: 'uploadSpec' });
+        });
+      }
     }
 
     // Call setup after DOM is ready
