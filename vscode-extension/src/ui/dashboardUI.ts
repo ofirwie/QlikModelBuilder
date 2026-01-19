@@ -1194,6 +1194,77 @@ export function getDashboardScript(): string {
       }
     }
 
+    function renderSpaces() {
+      const loadingEl = document.getElementById('spaces-loading');
+      const errorEl = document.getElementById('spaces-error');
+      const emptyEl = document.getElementById('spaces-empty');
+      const listEl = document.getElementById('spaces-list');
+      const radioListEl = document.getElementById('spaces-radio-list');
+      const btnNext2 = document.getElementById('btn-next-2') as HTMLButtonElement;
+
+      // Hide all states first
+      if (loadingEl) loadingEl.style.display = 'none';
+      if (errorEl) errorEl.style.display = 'none';
+      if (emptyEl) emptyEl.style.display = 'none';
+      if (listEl) listEl.style.display = 'none';
+
+      // Show appropriate state
+      if (state.spacesLoading) {
+        if (loadingEl) loadingEl.style.display = 'block';
+        return;
+      }
+
+      if (state.spacesError) {
+        if (errorEl) errorEl.style.display = 'block';
+        const errorMsg = document.getElementById('spaces-error-message');
+        if (errorMsg) errorMsg.textContent = state.spacesError;
+        return;
+      }
+
+      if (state.spaces.length === 0) {
+        if (emptyEl) emptyEl.style.display = 'block';
+        return;
+      }
+
+      // Show spaces list
+      if (listEl) listEl.style.display = 'block';
+
+      // Render radio buttons
+      if (radioListEl) {
+        radioListEl.innerHTML = state.spaces.map(space => \`
+          <li style="padding: 8px; border-radius: 4px; cursor: pointer;" data-space-id="\${space.id}">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="radio" name="space" value="\${space.id}"
+                     \${state.selectedSpaceId === space.id ? 'checked' : ''} />
+              <span style="flex: 1;">
+                <span class="item-name">\${space.name}</span>
+                <span class="item-type" style="display: block; font-size: 11px; color: var(--text-secondary);">\${space.type}</span>
+              </span>
+            </label>
+          </li>
+        \`).join('');
+
+        // Add click handlers for radio buttons
+        radioListEl.querySelectorAll('input[type="radio"]').forEach(radio => {
+          radio.addEventListener('change', (e) => {
+            const target = e.target as HTMLInputElement;
+            state.selectedSpaceId = target.value;
+            updateStep2NextButton();
+          });
+        });
+      }
+
+      // Update Next button state
+      updateStep2NextButton();
+    }
+
+    function updateStep2NextButton() {
+      const btnNext2 = document.getElementById('btn-next-2') as HTMLButtonElement;
+      if (btnNext2) {
+        btnNext2.disabled = !state.selectedSpaceId;
+      }
+    }
+
     // =============================================
     // Event Handlers
     // =============================================
