@@ -884,6 +884,52 @@ export function getDashboardScript(): string {
           vscode.postMessage({ type: 'uploadSpec' });
         });
       }
+
+      // Step 2: Create space button
+      const btnCreateSpace = document.getElementById('btn-create-space');
+      if (btnCreateSpace) {
+        btnCreateSpace.addEventListener('click', () => {
+          const nameInput = document.getElementById('new-space-name') as HTMLInputElement;
+          const name = nameInput?.value?.trim();
+
+          // Validation
+          if (!name) {
+            const errorEl = document.getElementById('create-space-error');
+            if (errorEl) {
+              errorEl.textContent = 'Please enter a space name';
+              errorEl.style.display = 'block';
+            }
+            return;
+          }
+
+          // Clear previous error
+          const errorEl = document.getElementById('create-space-error');
+          if (errorEl) errorEl.style.display = 'none';
+
+          // Send create message
+          state.createSpaceLoading = true;
+          vscode.postMessage({ type: 'createSpace', name: name });
+        });
+      }
+
+      // Step 2: Retry spaces button
+      const btnSpacesRetry = document.getElementById('btn-spaces-retry');
+      if (btnSpacesRetry) {
+        btnSpacesRetry.addEventListener('click', () => {
+          state.spacesLoading = true;
+          state.spacesError = null;
+          renderSpaces();
+          vscode.postMessage({ type: 'getSpaces' });
+        });
+      }
+
+      // Step 2: Configure button (go back to config)
+      const btnSpacesConfigure = document.getElementById('btn-spaces-configure');
+      if (btnSpacesConfigure) {
+        btnSpacesConfigure.addEventListener('click', () => {
+          vscode.postMessage({ type: 'openSettings' });
+        });
+      }
     }
 
     // Call setup after DOM is ready
