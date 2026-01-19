@@ -51,7 +51,8 @@ test.describe('Step 4: Table Selection', () => {
     await navigateToStep(page, 4);
 
     // Click back button
-    const backButton = page.locator('button:has-text("Back"), button:has-text("חזור"), #btn-back, [onclick*="prevStep"]').first();
+    const visibleStep = page.locator('.step-content:visible').first();
+    const backButton = visibleStep.locator('button:has-text("Back"), button:has-text("חזור"), [onclick*="prevStep"]').first();
     await backButton.click();
     await page.waitForTimeout(300);
 

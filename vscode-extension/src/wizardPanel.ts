@@ -1595,9 +1595,122 @@ JSON OUTPUT:`;
       <button class="btn btn-secondary" id="btn-back" onclick="prevStep()">
         Back
       </button>
-      <button class="btn btn-primary" disabled>
+      <button class="btn btn-primary" onclick="nextStep()">
         Next
       </button>
+    </div>
+  </div>
+
+  <!-- Step 3: Data Source / Connection -->
+  <div id="step-3" class="step-content" data-step="3" style="display: none;">
+    <h2>🔗 Data Source</h2>
+    <p style="margin-bottom: 16px; color: var(--text-secondary);">
+      Select or configure your data source connection
+    </p>
+    <div id="connections-list">
+      <ul class="item-list">
+        <li data-connection="database">
+          <div class="item-info">
+            <span class="item-name">Database Connection</span>
+            <span class="item-type">Connect to SQL Server, PostgreSQL, etc.</span>
+          </div>
+        </li>
+        <li data-connection="rest">
+          <div class="item-info">
+            <span class="item-name">REST API</span>
+            <span class="item-type">Connect to REST endpoints</span>
+          </div>
+        </li>
+        <li data-connection="files">
+          <div class="item-info">
+            <span class="item-name">Data Files</span>
+            <span class="item-type">Load from CSV, Excel, QVD files</span>
+          </div>
+        </li>
+      </ul>
+    </div>
+    <div class="button-row">
+      <button class="btn btn-secondary" onclick="prevStep()">Back</button>
+      <button class="btn btn-primary" onclick="nextStep()">Next</button>
+    </div>
+  </div>
+
+  <!-- Step 4: Table Selection -->
+  <div id="step-4" class="step-content" data-step="4" style="display: none;">
+    <h2>📊 Table Selection</h2>
+    <p style="margin-bottom: 16px; color: var(--text-secondary);">
+      Select tables to include in your data model
+    </p>
+    <div id="tables-list">
+      <ul class="item-list">
+        <li data-table="customers">
+          <div class="item-info">
+            <span class="item-name">Customers</span>
+            <span class="item-type">Customer master data</span>
+          </div>
+        </li>
+        <li data-table="orders">
+          <div class="item-info">
+            <span class="item-name">Orders</span>
+            <span class="item-type">Sales orders</span>
+          </div>
+        </li>
+        <li data-table="products">
+          <div class="item-info">
+            <span class="item-name">Products</span>
+            <span class="item-type">Product catalog</span>
+          </div>
+        </li>
+      </ul>
+    </div>
+    <div class="button-row">
+      <button class="btn btn-secondary" onclick="prevStep()">Back</button>
+      <button class="btn btn-primary" onclick="nextStep()">Next</button>
+    </div>
+  </div>
+
+  <!-- Step 5: Field Mapping -->
+  <div id="step-5" class="step-content" data-step="5" style="display: none;">
+    <h2>🔧 Field Mapping</h2>
+    <p style="margin-bottom: 16px; color: var(--text-secondary);">
+      Configure field mappings and relationships
+    </p>
+    <div id="fields-config">
+      <p>Field mapping configuration will appear here based on selected tables.</p>
+    </div>
+    <div class="button-row">
+      <button class="btn btn-secondary" onclick="prevStep()">Back</button>
+      <button class="btn btn-primary" onclick="nextStep()">Next</button>
+    </div>
+  </div>
+
+  <!-- Step 6: Incremental Load Configuration -->
+  <div id="step-6" class="step-content" data-step="6" style="display: none;">
+    <h2>⚡ Incremental Load</h2>
+    <p style="margin-bottom: 16px; color: var(--text-secondary);">
+      Configure incremental load settings for each table
+    </p>
+    <div id="incremental-config">
+      <p>Incremental load configuration will appear here based on selected tables.</p>
+    </div>
+    <div class="button-row">
+      <button class="btn btn-secondary" onclick="prevStep()">Back</button>
+      <button class="btn btn-primary" onclick="nextStep()">Next</button>
+    </div>
+  </div>
+
+  <!-- Step 7: Review & Deploy -->
+  <div id="step-7" class="step-content" data-step="7" style="display: none;">
+    <h2>🚀 Review & Deploy</h2>
+    <p style="margin-bottom: 16px; color: var(--text-secondary);">
+      Review your configuration and deploy the app
+    </p>
+    <div id="review-summary">
+      <p>Review summary will appear here.</p>
+    </div>
+    <div class="button-row">
+      <button class="btn btn-secondary" onclick="prevStep()">Back</button>
+      <button class="btn btn-primary" style="background: var(--qlik-green);">Deploy App</button>
     </div>
   </div>
 
