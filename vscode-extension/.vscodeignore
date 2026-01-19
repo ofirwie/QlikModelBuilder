@@ -1,6 +1,5 @@
 .vscode/**
 .vscode-test/**
-out/**
 node_modules/**
 src/**
 test/**
@@ -11,7 +10,7 @@ vsc-extension-quickstart.md
 **/.eslintrc.json
 **/*.map
 **/*.ts
-!dist/**
+!out/**
 .dockerignore
 Dockerfile
 docker-compose.yml
