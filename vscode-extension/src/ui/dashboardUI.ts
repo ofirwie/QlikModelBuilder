@@ -782,6 +782,13 @@ export function getDashboardScript(): string {
         }
       });
 
+      // When entering Step 2, fetch spaces
+      if (state.currentStep === 2) {
+        state.spacesLoading = true;
+        renderSpaces();
+        vscode.postMessage({ type: 'getSpaces' });
+      }
+
       // Save state
       if (typeof vscode !== 'undefined') {
         vscode.setState(state);
