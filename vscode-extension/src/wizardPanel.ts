@@ -1573,6 +1573,14 @@ JSON OUTPUT:`;
       </li>
     </ul>
 
+    <!-- Upload section - shown when "From Spec File" is selected -->
+    <div id="spec-upload-section" style="display: none; margin-top: 16px; padding: 16px; background: var(--vscode-editor-background); border-radius: 8px; border: 1px solid var(--vscode-panel-border);">
+      <button id="btn-upload-spec" class="btn btn-primary btn-upload-action">
+        Select Spec File
+      </button>
+      <div id="selected-file" style="margin-top: 8px; color: var(--vscode-descriptionForeground);"></div>
+    </div>
+
     <div class="button-row">
       <div></div>
       <button class="btn btn-primary" id="btn-next" disabled>
@@ -1581,23 +1589,58 @@ JSON OUTPUT:`;
     </div>
   </div>
 
-  <!-- Step 2: Space Selection (placeholder for navigation tests) -->
+  <!-- Step 2: Space Selection -->
   <div id="step-2" class="step-content" data-step="2" style="display: none;">
     <h2>Space Selection</h2>
     <p style="margin-bottom: 16px; color: var(--text-secondary);">
       Select a Qlik Cloud Space for your model
     </p>
-    <div id="step-space">
-      <!-- Space list will be rendered here -->
-      <p>Loading spaces...</p>
+
+    <!-- Loading State -->
+    <div id="spaces-loading" style="display: none; padding: 20px; text-align: center;">
+      <span class="codicon codicon-loading codicon-modifier-spin"></span>
+      Loading spaces...
     </div>
-    <div class="button-row">
-      <button class="btn btn-secondary" id="btn-back">
-        Back
-      </button>
-      <button class="btn btn-primary" id="btn-next-2">
-        Next
-      </button>
+
+    <!-- Error State -->
+    <div id="spaces-error" style="display: none; padding: 20px; border: 1px solid var(--error-color); border-radius: 4px;">
+      <p id="spaces-error-message" style="color: var(--error-color); margin-bottom: 12px;"></p>
+      <button class="btn btn-secondary" id="btn-spaces-retry">Retry</button>
+      <button class="btn btn-secondary" id="btn-spaces-configure" style="margin-left: 8px;">Configure</button>
+    </div>
+
+    <!-- Empty State -->
+    <div id="spaces-empty" style="display: none; padding: 20px; text-align: center; color: var(--text-secondary);">
+      <p>No spaces found.</p>
+      <p>Create your first space below.</p>
+    </div>
+
+    <!-- Spaces List -->
+    <div id="spaces-list" style="display: none;">
+      <div class="section-box" style="margin-bottom: 16px;">
+        <h3 style="font-size: 12px; margin-bottom: 12px; color: var(--text-secondary);">Available Spaces</h3>
+        <ul id="spaces-radio-list" class="item-list" style="max-height: 300px; overflow-y: auto;">
+          <!-- Radio buttons rendered here -->
+        </ul>
+      </div>
+    </div>
+
+    <!-- Create New Space -->
+    <div id="create-space-section" class="section-box" style="margin-top: 16px;">
+      <h3 style="font-size: 12px; margin-bottom: 12px; color: var(--text-secondary);">Or Create New Space</h3>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <input type="text" id="new-space-name" placeholder="Space name"
+               style="flex: 1; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-primary); color: var(--text-primary);" />
+        <button class="btn btn-secondary" id="btn-create-space">
+          <span class="codicon codicon-add"></span> Create
+        </button>
+      </div>
+      <p id="create-space-error" style="display: none; color: var(--error-color); font-size: 12px; margin-top: 4px;"></p>
+    </div>
+
+    <div class="button-row" style="margin-top: 24px;">
+      <button class="btn btn-secondary" id="btn-back">Back</button>
+      <button class="btn btn-primary" id="btn-next-2" disabled>Next</button>
     </div>
   </div>
 
