@@ -1,16 +1,16 @@
 # QlikModelBuilder - Data Model Builder Design Document
 
 **Date:** 2026-01-20
-**Version:** 0.1.0 (In Progress)
-**Status:** Brainstorming - 3/~8 sections completed
+**Version:** 1.0.0 (Complete)
+**Status:** Ready for Review
 **Session:** Brainstorming with Claude Code
 
 ---
 
 ## Document Purpose
 
-This document captures the complete brainstorming session for **Stage 2: Data Model Builder** of Phase B.
-It contains all decisions made, reasoning, and design details to allow seamless continuation.
+This document captures the complete design for **Stage 2: Data Model Builder** of Phase B.
+It defines how the system transforms JSON from Stage 1 (Parser) into a complete Qlik data model.
 
 ---
 
@@ -203,24 +203,13 @@ User ←→ Claude Code ←→ Gemini Pro 1.5
     "line": 45,
     "field": "CustomerID"
   },
-  "description": "שני שדות משותפים יוצרים מפתח סינטטי",
-  "recommendation": "השתמש ב-QUALIFY או שנה שמות",
+  "description": "Two shared fields create synthetic key",
+  "recommendation": "Use QUALIFY or rename fields",
   "fix_example": "QUALIFY CustomerID;",
-  "best_practice_ref": "נספח ו' - Anti-Patterns",
-  "estimated_impact": "מגדיל את גודל המודל, מאט חישובים"
+  "best_practice_ref": "Appendix: Anti-Patterns",
+  "estimated_impact": "Increases model size, slows calculations"
 }
 ```
-
-**Fields Explained:**
-- `issue_id`: Unique identifier (category prefix + number)
-- `severity`: How critical is this issue
-- `category`: Type of issue for filtering/grouping
-- `location`: Exact location in code
-- `description`: Human-readable explanation (Hebrew)
-- `recommendation`: What to do
-- `fix_example`: Code example of the fix
-- `best_practice_ref`: Reference to documentation
-- `estimated_impact`: Expected effect (not measured, estimated)
 
 ---
 
@@ -236,6 +225,52 @@ User ←→ Claude Code ←→ Gemini Pro 1.5
 3. Claude shows user: "I plan to fix these issues: [list]"
 4. User reviews and approves
 5. Only then Claude applies fixes
+
+---
+
+### 2.11 AutoNumber Usage
+
+**Decision:** AutoNumber only when user explicitly requests.
+
+| Situation | Behavior |
+|-----------|----------|
+| **Default** | No AutoNumber - keeps original values for easier debugging |
+| **User requests** | Add AutoNumber to all keys |
+| **Very large model** | Suggest to user: "AutoNumber can save ~60% RAM. Enable?" |
+| **Long composite key** | Suggest: "3+ field composite key, recommend AutoNumberHash128" |
+
+**Reasoning:** AutoNumber helps performance but makes debugging harder.
+
+---
+
+### 2.12 Calendar Generation
+
+**Decision:** Separate Master Calendar for each date field.
+
+**NOT:** One shared calendar for all dates
+**YES:** Each date field gets its own calendar dimension
+
+Example:
+- `FACT_Orders.OrderDate` → `DIM_OrderDate`
+- `FACT_Orders.ShipDate` → `DIM_ShipDate`
+- `DIM_Customers.CreatedDate` → `DIM_CreatedDate`
+
+**Language:** Configurable (EN, HE, AR, etc.) - project is multilingual.
+
+---
+
+### 2.13 Script Building Approach
+
+**Decision:** Build script in stages with approval at each stage.
+
+**NOT:** Build entire script at once
+**YES:** 6 stages with user approval after each:
+1. Configuration
+2. Dimensions (each table separately)
+3. Facts (each table separately)
+4. Link Tables (if needed)
+5. Calendars
+6. STORE + Cleanup
 
 ---
 
@@ -270,22 +305,17 @@ User ←→ Claude Code ←→ Gemini Pro 1.5
 │                    USER INTERFACE                               │
 │  ┌─────────────────────────────────────────────────────────┐   │
 │  │  Claude Code CLI + Chat Interface                        │   │
-│  │  • הצגת אופציות והמלצות                                  │   │
-│  │  • דיאלוג עם המשתמש                                      │   │
-│  │  • אישור תיקונים לפני ביצוע                              │   │
+│  │  • Present options and recommendations                   │   │
+│  │  • Dialogue with user                                    │   │
+│  │  • Approve fixes before execution                        │   │
 │  └─────────────────────────────────────────────────────────┘   │
 │                                                                 │
 └────────────────────────────────────────────────────────────────┘
 ```
 
-**Three Main Components:**
-1. **Input Processor** - Receives JSON from Stage 1 + pulls Sample Data from QVD
-2. **Analyzer Engine** - Identifies recommended model type, proposes options
-3. **Builder Engine** - Builds the script + automatic QUALIFY
-
 ---
 
-### 3.2 Input Processor (COMPLETED)
+### 3.2 Input Processor
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -341,7 +371,7 @@ User ←→ Claude Code ←→ Gemini Pro 1.5
 
 ---
 
-### 3.3 Analyzer Engine (COMPLETED)
+### 3.3 Analyzer Engine
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -372,13 +402,13 @@ User ←→ Claude Code ←→ Gemini Pro 1.5
 │  │            MODEL TYPE DETECTION                      │    │
 │  ├─────────────────────────────────────────────────────┤    │
 │  │                                                      │    │
-│  │  IF: Dimension → Dimension relationship             │    │
+│  │  IF: Dimension → Dimension relationship              │    │
 │  │      → SNOWFLAKE                                     │    │
 │  │                                                      │    │
-│  │  IF: Fact ←→ Fact relationship (N:M)                │    │
+│  │  IF: Fact ←→ Fact relationship (N:M)                 │    │
 │  │      → LINK TABLE needed                             │    │
 │  │                                                      │    │
-│  │  IF: Multiple Facts with same dimensions            │    │
+│  │  IF: Multiple Facts with same dimensions             │    │
 │  │      → CONCATENATED FACTS candidate                  │    │
 │  │                                                      │    │
 │  │  ELSE: → STAR SCHEMA                                 │    │
@@ -398,8 +428,8 @@ User ←→ Claude Code ←→ Gemini Pro 1.5
     {
       "model": "snowflake",
       "reason": "Geography has hierarchy (Country→Region→City)",
-      "pros": ["שומר על היררכיה טבעית", "קל לתחזוקה"],
-      "cons": ["יותר JOINs", "מעט יותר איטי"]
+      "pros": ["Preserves natural hierarchy", "Easy to maintain"],
+      "cons": ["More JOINs", "Slightly slower"]
     }
   ],
   "classifications": {
@@ -411,161 +441,793 @@ User ←→ Claude Code ←→ Gemini Pro 1.5
 
 ---
 
-## 4. Sections Still To Design
-
-The following sections need to be designed in the next session:
-
-### 4.1 Builder Engine (NOT STARTED)
-- How Qlik script is generated
-- QUALIFY/UNQUALIFY logic
-- AutoNumber key generation
-- Calendar table auto-creation
-
-### 4.2 Review Loop Details (NOT STARTED)
-- Exact prompts sent to Gemini
-- How feedback is parsed
-- How fixes are proposed to user
-
-### 4.3 User Dialogue Flow (NOT STARTED)
-- Conversation flow examples
-- How options are presented
-- How user approves/rejects
-
-### 4.4 Scope Guard Implementation (NOT STARTED)
-- How to detect non-code requests
-- What happens when abuse detected
-- Rate limiting considerations
-
-### 4.5 Error Handling (NOT STARTED)
-- What if Gemini API fails
-- What if Claude can't fix an issue
-- Rollback mechanisms
-
-### 4.6 Integration with Stage 1 & 3 (NOT STARTED)
-- Exact JSON schema between stages
-- Handoff protocol
-- State persistence
-
----
-
-## 5. Q&A Summary
-
-All questions asked and answers received during brainstorming:
-
-| # | Question | Answer |
-|---|----------|--------|
-| 1 | מה לברינסטורם? | Data Model Builder (Stage 2) |
-| 2 | מה האתגר העיקרי? | כל הנ"ל כחבילה (זיהוי Fact/Dim, קשרים, Anti-Patterns) |
-| 3 | אילו סוגי מודלים? | Star + Snowflake + Link Tables + Concatenated Facts |
-| 4 | איך בוחרים מודל? | משתמש בוחר - מערכת מסבירה אופציות, יתרונות, חסרונות, המלצה + דיאלוג |
-| 5 | מה ה-Input? | JSON + QVD Sample Data (אחרי DB Load) |
-| 6 | איפה השיחה מתנהלת? | VSCode + Chat (Claude Code + Gemini) |
-| 7 | איך עובד AI ב-On-Prem? | API לשניהם - Claude בונה, Gemini בודק |
-| 8 | מתי נגמר הדיאלוג Claude-Gemini? | 1 אוטומטי, 2-3 עם נימוק, 4+ HITL + Scope Guard |
-| 9 | מה Gemini בודק? | הכל - Syntax, Best Practices, Anti-Patterns, Model Size |
-| 10 | איך מדורגות בעיות? | JSON מובנה לכל בעיה |
-| 11 | מה קורה בתיקון? | Claude מציג מה יתקן, משתמש מאשר לפני ביצוע |
-
----
-
-## 6. Open Questions
-
-Questions that came up but weren't fully resolved:
-
-1. **Stage 1 Enhancement:** Should Stage 1 also do initial field mapping? (User suggested yes)
-2. **Cardinality Thresholds:** Is 10K the right threshold for Fact vs Dimension?
-3. **QVD Sample Size:** Is 100 rows enough for analysis?
-4. **Confidence Score Calculation:** How exactly is confidence calculated?
-
----
-
-## 7. Next Steps
-
-To continue this brainstorming session:
-
-1. **Read this document** to restore context
-2. **Continue from Section 4.1** - Builder Engine design
-3. **Complete remaining sections** (4.2 - 4.6)
-4. **Validate complete design** with user
-5. **Write final design document**
-6. **Optionally:** Create implementation plan with /write-plan
-
----
-
-## 8. Technical Notes
-
-### Cloud vs On-Prem Differences
-
-| Aspect | Cloud | On-Prem |
-|--------|-------|---------|
-| **Limit** | Model SIZE | RAM |
-| **AI Access** | Claude + Gemini API | Claude + Gemini API (both available) |
-| **Performance Testing** | Not possible | Not possible |
-| **Best Practices** | Apply always | Apply always |
-
-### Key Best Practices Referenced
-
-From PHASE_B_SPEC.md and KNOWLEDGE_BASE.md:
-- QUALIFY * except keys - prevents Synthetic Keys
-- AutoNumber on all composite keys - 60% RAM savings
-- Star Schema as default - unless proven otherwise
-- No LOAD * - selective field loading
-- No Circular References - use QUALIFY/Rename
-
----
-
-## Appendix A: Complete Review Loop Flow
+### 3.4 Builder Engine
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    COMPLETE REVIEW LOOP                      │
+│                    BUILDER ENGINE                            │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
+│  INPUT: Model Spec (from Analyzer)                          │
 │  ┌─────────────────────────────────────────────────────┐    │
-│  │  ROUND 1: AUTOMATIC                                  │    │
-│  │  ────────────────────────────────────────────────    │    │
-│  │  1. Claude receives model spec                       │    │
-│  │  2. Claude builds Qlik script                        │    │
-│  │  3. Script sent to Gemini                            │    │
-│  │  4. Gemini reviews (Syntax, BP, AP, Size)            │    │
-│  │  5. Gemini returns issues[] as JSON                  │    │
-│  │  6. Claude shows results to user                     │    │
+│  │ {                                                    │    │
+│  │   "model_type": "star_schema",                       │    │
+│  │   "facts": ["Orders"],                               │    │
+│  │   "dimensions": ["Customers", "Products", "Date"],   │    │
+│  │   "relationships": [...],                            │    │
+│  │   "keys": {...}                                      │    │
+│  │ }                                                    │    │
 │  └─────────────────────────────────────────────────────┘    │
 │                          ↓                                   │
-│              User satisfied? ──YES──→ END                    │
-│                          ↓ NO                                │
 │  ┌─────────────────────────────────────────────────────┐    │
-│  │  ROUNDS 2-3: WITH JUSTIFICATION                      │    │
-│  │  ────────────────────────────────────────────────    │    │
-│  │  1. User must explain WHY another round needed       │    │
-│  │  2. Claude proposes fixes based on issues            │    │
-│  │  3. Claude shows: "I will fix: [list]"               │    │
-│  │  4. User approves fix list                           │    │
-│  │  5. Claude applies fixes                             │    │
-│  │  6. New script sent to Gemini                        │    │
-│  │  7. Repeat until satisfied or round 3 complete       │    │
+│  │            SCRIPT GENERATION STEPS                   │    │
+│  │                                                      │    │
+│  │  1. QUALIFY * (Synthetic Key prevention)            │    │
+│  │  2. Variables Section (vPath, vReloadDate)          │    │
+│  │  3. Dimension Tables                                │    │
+│  │  4. Fact Tables (with FK references)                │    │
+│  │  5. Link Tables (if needed)                         │    │
+│  │  6. Calendar Tables (per date field)                │    │
+│  │  7. UNQUALIFY for keys only                         │    │
+│  │  8. STORE to QVD                                    │    │
+│  │                                                      │    │
 │  └─────────────────────────────────────────────────────┘    │
 │                          ↓                                   │
-│              User satisfied? ──YES──→ END                    │
-│                          ↓ NO                                │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │  ROUND 4+: HITL (Human In The Loop)                  │    │
-│  │  ────────────────────────────────────────────────    │    │
-│  │  1. User must manually approve EACH round            │    │
-│  │  2. System warns: "This requires manual approval"    │    │
-│  │  3. Each fix requires explicit confirmation          │    │
-│  │  4. Full audit trail maintained                      │    │
-│  └─────────────────────────────────────────────────────┘    │
+│  OUTPUT: Complete Qlik Load Script                           │
 │                                                              │
-│  ⚠️ SCOPE GUARD: At any point, if request is not            │
-│     code-related, system rejects with explanation            │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Script Generation Order:**
+
+| Step | What's Created | Why This Order |
+|------|----------------|----------------|
+| 1 | `QUALIFY *` | Must be first - prevents issues |
+| 2 | Variables | Global definitions before use |
+| 3 | Dimensions | Loaded before Facts (Facts reference them) |
+| 4 | Facts | After Dimensions - have FK |
+| 5 | Link Tables | After Facts - connect between Facts |
+| 6 | Calendars | Last - connect to all date fields |
+| 7 | `UNQUALIFY` | Only for keys that need to connect |
+| 8 | STORE | Save to QVD |
+
+---
+
+### 3.5 Script Template (Default - No AutoNumber)
+
+```qlik
+//=============================================================
+// Project: [ProjectName]
+// Created: [Date] by QlikModelBuilder
+// Model Type: [star_schema | snowflake | link_table | concatenated]
+//=============================================================
+
+//-------------------------------------------------------------
+// SECTION 0: QUALIFY ALL (Synthetic Key Prevention)
+//-------------------------------------------------------------
+QUALIFY *;
+
+//-------------------------------------------------------------
+// SECTION 1: Variables & Configuration
+//-------------------------------------------------------------
+SET vPathQVD = 'lib://QVD/[ProjectName]/';
+SET vPathDB = 'lib://DB/';
+SET vReloadDate = Today();
+SET vReloadTime = Now();
+SET vCalendarLanguage = 'EN';  // EN | HE | AR | ...
+
+//-------------------------------------------------------------
+// SECTION 2: Dimensions
+//-------------------------------------------------------------
+
+// DIM_Customers
+DIM_Customers:
+LOAD
+    CustomerID AS CustomerKey,    // PK - keeps original value
+    CustomerName,
+    City,
+    Country
+FROM [$(vPathQVD)customers.qvd] (qvd);
+
+// DIM_Products
+DIM_Products:
+LOAD
+    ProductID AS ProductKey,      // PK - keeps original value
+    ProductName,
+    Category,
+    Brand
+FROM [$(vPathQVD)products.qvd] (qvd);
+
+//-------------------------------------------------------------
+// SECTION 3: Facts
+//-------------------------------------------------------------
+
+// FACT_Orders
+FACT_Orders:
+LOAD
+    OrderID AS OrderKey,
+    CustomerID AS CustomerKey,    // FK to DIM_Customers
+    ProductID AS ProductKey,      // FK to DIM_Products
+    OrderDate,
+    Quantity,
+    Amount
+FROM [$(vPathQVD)orders.qvd] (qvd);
+
+//-------------------------------------------------------------
+// SECTION 4: Calendars (Per Date Field)
+//-------------------------------------------------------------
+// [See Calendar Template below]
+
+//-------------------------------------------------------------
+// SECTION 5: UNQUALIFY Keys Only
+//-------------------------------------------------------------
+UNQUALIFY CustomerKey, ProductKey, OrderKey, DateKey;
+
+//-------------------------------------------------------------
+// SECTION 6: Store to Final QVD
+//-------------------------------------------------------------
+STORE DIM_Customers INTO [$(vPathQVD)Final/DIM_Customers.qvd] (qvd);
+STORE DIM_Products INTO [$(vPathQVD)Final/DIM_Products.qvd] (qvd);
+STORE FACT_Orders INTO [$(vPathQVD)Final/FACT_Orders.qvd] (qvd);
+```
+
+---
+
+### 3.6 Calendar Template (Per Date Field, Multilingual)
+
+```qlik
+//-------------------------------------------------------------
+// Master Calendar Generator - Per Date Field
+//-------------------------------------------------------------
+
+SUB CreateMasterCalendar(vFieldName, vMinDate, vMaxDate)
+
+    // Generate base dates
+    TempCal_$(vFieldName):
+    LOAD
+        Date($(vMinDate) + RowNo() - 1) AS TempDate
+    AUTOGENERATE $(vMaxDate) - $(vMinDate) + 1;
+
+    // Create DIM for this specific date field
+    DIM_$(vFieldName):
+    LOAD
+        TempDate AS $(vFieldName),           // Links to original field
+        Year(TempDate) AS $(vFieldName)_Year,
+        Month(TempDate) AS $(vFieldName)_MonthNum,
+        Date(MonthStart(TempDate), 'MMM-YYYY') AS $(vFieldName)_MonthYear,
+        Day(TempDate) AS $(vFieldName)_Day,
+        Week(TempDate) AS $(vFieldName)_Week,
+        'Q' & Ceil(Month(TempDate)/3) AS $(vFieldName)_Quarter,
+        // Language-aware month name
+        $(IF(vCalendarLanguage='HE',
+            Pick(Month(TempDate), 'ינואר','פברואר','מרץ','אפריל','מאי','יוני',
+                 'יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'),
+            Pick(Month(TempDate), 'Jan','Feb','Mar','Apr','May','Jun',
+                 'Jul','Aug','Sep','Oct','Nov','Dec'))) AS $(vFieldName)_MonthName
+    RESIDENT TempCal_$(vFieldName);
+
+    DROP TABLE TempCal_$(vFieldName);
+
+END SUB
+
+// Generate Calendar for each date field
+CALL CreateMasterCalendar('OrderDate', Num(MakeDate(2020,1,1)), Num(MakeDate(2027,1,20)));
+CALL CreateMasterCalendar('ShipDate', Num(MakeDate(2020,1,1)), Num(MakeDate(2027,1,20)));
+```
+
+**Output per Calendar:**
+
+| Source Field | Calendar Table | Generated Fields |
+|--------------|----------------|------------------|
+| `OrderDate` | `DIM_OrderDate` | OrderDate_Year, OrderDate_Month, OrderDate_Quarter... |
+| `ShipDate` | `DIM_ShipDate` | ShipDate_Year, ShipDate_Month, ShipDate_Quarter... |
+
+---
+
+## 4. Review Loop
+
+### 4.1 Gemini Review Prompt
+
+```
+SYSTEM PROMPT:
+┌─────────────────────────────────────────────────────────────┐
+│  You are a Qlik Sense expert reviewer.                      │
+│  Review the following Qlik Load Script and check:           │
+│                                                             │
+│  1. SYNTAX: Valid Qlik syntax, no errors                   │
+│  2. BEST PRACTICES:                                         │
+│     - QUALIFY * used correctly                              │
+│     - No LOAD * (selective fields only)                    │
+│     - Variables defined before use                          │
+│     - STORE to QVD for each table                          │
+│  3. ANTI-PATTERNS:                                          │
+│     - Synthetic Keys (shared fields between tables)        │
+│     - Circular References                                   │
+│     - God Tables (>50 fields)                              │
+│  4. MODEL SIZE:                                             │
+│     - High cardinality Link Tables                         │
+│     - Unnecessary fields loaded                             │
+│                                                             │
+│  Return issues as JSON array.                               │
+│  If no issues found, return empty array.                   │
+└─────────────────────────────────────────────────────────────┘
+
+USER PROMPT:
+┌─────────────────────────────────────────────────────────────┐
+│  Review this script:                                        │
+│  ```qlik                                                    │
+│  [GENERATED SCRIPT HERE]                                    │
+│  ```                                                        │
+│                                                             │
+│  Model info:                                                │
+│  - Type: star_schema                                        │
+│  - Facts: 1 (Orders)                                       │
+│  - Dimensions: 3 (Customers, Products, Date)               │
+│  - Expected rows: ~100K                                     │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 4.2 Gemini Response Format
+
+```json
+{
+  "review_status": "issues_found | approved",
+  "score": 85,
+  "issues": [
+    {
+      "issue_id": "BP-001",
+      "severity": "warning",
+      "category": "best-practice",
+      "title": "LOAD * detected",
+      "location": { "table": "DIM_Products", "line": 45 },
+      "description": "Using LOAD * loads all fields, including unnecessary ones",
+      "recommendation": "Specify only required fields explicitly",
+      "fix_example": "LOAD ProductID, ProductName, Category FROM..."
+    }
+  ],
+  "summary": "Script is functional but has 2 best practice issues"
+}
+```
+
+### 4.3 Review Round Flow
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    REVIEW ROUND FLOW                         │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  1. Claude sends script to Gemini                           │
+│     │                                                        │
+│     ▼                                                        │
+│  2. Gemini returns JSON with issues[]                       │
+│     │                                                        │
+│     ▼                                                        │
+│  3. Claude parses response                                  │
+│     │                                                        │
+│     ├── issues.length == 0 → "Script approved! ✅"          │
+│     │                                                        │
+│     └── issues.length > 0 →                                 │
+│         │                                                    │
+│         ▼                                                    │
+│  4. Claude shows user:                                      │
+│     ┌─────────────────────────────────────────┐             │
+│     │ Gemini found 2 issues:                  │             │
+│     │                                         │             │
+│     │ ⚠️ WARNING: LOAD * in DIM_Products     │             │
+│     │ ⚠️ WARNING: Missing STORE for DIM_Date │             │
+│     │                                         │             │
+│     │ Proposed fixes:                         │             │
+│     │ 1. Change to selective LOAD             │             │
+│     │ 2. Add STORE statement                  │             │
+│     │                                         │             │
+│     │ [Approve fixes] [Modify] [Ignore]       │             │
+│     └─────────────────────────────────────────┘             │
 │                                                              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Appendix B: Issue Severity Definitions
+## 5. User Dialogue Flow (Staged Building)
+
+### 5.1 Staged Script Building
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│              STAGED SCRIPT BUILDING                          │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  STAGE A: Configuration                                      │
+│     ↓ ✓ User approves                                       │
+│  STAGE B: Dimensions (each table separately)                │
+│     ↓ ✓ User approves                                       │
+│  STAGE C: Facts (each table separately)                     │
+│     ↓ ✓ User approves                                       │
+│  STAGE D: Link Tables (if needed)                           │
+│     ↓ ✓ User approves                                       │
+│  STAGE E: Calendars (per date field)                        │
+│     ↓ ✓ User approves                                       │
+│  STAGE F: STORE + Cleanup                                    │
+│     ↓ ✓ User approves                                       │
+│  COMPLETE → Send to Gemini for final review                 │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 5.2 Stage Approval Table
+
+| Stage | Content | User Approves |
+|-------|---------|---------------|
+| A | Configuration | QUALIFY, Variables, Settings |
+| B | Dimensions | Each DIM separately - fields, types |
+| C | Facts | Each FACT separately - fields, FK |
+| D | Link Tables | If exists - link structure |
+| E | Calendars | Each Calendar - date fields |
+| F | STORE + Cleanup | QVD paths, DROP statements |
+
+### 5.3 Example Dialogue
+
+```
+USER: Build me a model from the data
+
+CLAUDE:
+┌─────────────────────────────────────────────────────────────┐
+│ 📊 Analyzing your data...                                    │
+│                                                              │
+│ Detected: 2 Facts, 3 Dimensions                             │
+│ Recommended: Star Schema                                     │
+│                                                              │
+│ [Star Schema] [Concatenated Facts] [Ask question]           │
+└─────────────────────────────────────────────────────────────┘
+
+USER: Star Schema
+
+CLAUDE:
+┌─────────────────────────────────────────────────────────────┐
+│ ✅ Star Schema selected                                      │
+│                                                              │
+│ Building script in 6 stages:                                │
+│ ○ Stage A: Configuration                                    │
+│ ○ Stage B: Dimensions (3)                                   │
+│ ○ Stage C: Facts (2)                                        │
+│ ○ Stage D: Link Tables (0 - not needed)                     │
+│ ○ Stage E: Calendars (2)                                    │
+│ ○ Stage F: STORE + Cleanup                                  │
+│                                                              │
+│ Starting Stage A...                                          │
+└─────────────────────────────────────────────────────────────┘
+
+CLAUDE:
+┌─────────────────────────────────────────────────────────────┐
+│ 📝 STAGE A: Configuration                                    │
+│ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ │
+│                                                              │
+│ ```qlik                                                      │
+│ //=========================================================  │
+│ // Project: SalesModel                                       │
+│ // Created: 2026-01-20 by QlikModelBuilder                  │
+│ // Model Type: Star Schema                                   │
+│ //=========================================================  │
+│                                                              │
+│ // Prevent Synthetic Keys                                    │
+│ QUALIFY *;                                                   │
+│                                                              │
+│ // Variables                                                 │
+│ SET vPathQVD = 'lib://QVD/SalesModel/';                     │
+│ SET vReloadDate = Today();                                   │
+│ SET vCalendarLanguage = 'EN';                               │
+│ ```                                                          │
+│                                                              │
+│ [✓ Approve] [✏️ Edit] [❓ Question]                          │
+└─────────────────────────────────────────────────────────────┘
+
+USER: Approve
+
+CLAUDE:
+┌─────────────────────────────────────────────────────────────┐
+│ ✅ Stage A approved                                          │
+│                                                              │
+│ Progress: ████░░░░░░░░░░░░░░░░ 1/6                          │
+│                                                              │
+│ 📝 STAGE B: Dimensions (1/3) - DIM_Customers                │
+│ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ │
+│                                                              │
+│ ```qlik                                                      │
+│ DIM_Customers:                                               │
+│ LOAD                                                         │
+│     CustomerID AS CustomerKey,                               │
+│     CustomerName,                                            │
+│     City,                                                    │
+│     Country,                                                 │
+│     Segment                                                  │
+│ FROM [$(vPathQVD)customers.qvd] (qvd);                      │
+│ ```                                                          │
+│                                                              │
+│ Fields: 5 | Rows: ~5,000                                    │
+│                                                              │
+│ [✓ Approve] [✏️ Edit] [➕ Add field] [➖ Remove field]       │
+└─────────────────────────────────────────────────────────────┘
+
+USER: Remove City
+
+CLAUDE:
+┌─────────────────────────────────────────────────────────────┐
+│ ✅ Updated - City removed                                    │
+│                                                              │
+│ ```qlik                                                      │
+│ DIM_Customers:                                               │
+│ LOAD                                                         │
+│     CustomerID AS CustomerKey,                               │
+│     CustomerName,                                            │
+│     Country,                                                 │
+│     Segment                                                  │
+│ FROM [$(vPathQVD)customers.qvd] (qvd);                      │
+│ ```                                                          │
+│                                                              │
+│ Fields: 4 | Rows: ~5,000                                    │
+│                                                              │
+│ [✓ Approve] [✏️ Edit more]                                   │
+└─────────────────────────────────────────────────────────────┘
+
+... (continues for each stage) ...
+
+[After all stages approved]
+
+CLAUDE:
+┌─────────────────────────────────────────────────────────────┐
+│ ✅ All 6 stages approved                                     │
+│                                                              │
+│ Progress: ████████████████████ 6/6                          │
+│                                                              │
+│ 📊 Summary:                                                  │
+│ • Configuration: ✓                                          │
+│ • Dimensions: 3 tables, 14 fields                           │
+│ • Facts: 2 tables, 18 fields                                │
+│ • Link Tables: 0                                            │
+│ • Calendars: 2 (OrderDate, ReturnDate)                      │
+│ • Total script: 187 lines                                   │
+│                                                              │
+│ 🔍 Sending to Gemini for final review...                    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 6. Scope Guard Implementation
+
+### 6.1 Purpose & Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    SCOPE GUARD                               │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  PURPOSE: Ensure system is used only for Qlik code          │
+│                                                              │
+│     USER                                                     │
+│       │                                                      │
+│       ▼                                                      │
+│  ┌─────────┐                                                │
+│  │ CLAUDE  │ ←── Scope Guard + Rate Limit HERE             │
+│  └────┬────┘                                                │
+│       │                                                      │
+│       ▼                                                      │
+│  ┌─────────┐                                                │
+│  │ GEMINI  │ ←── No limit (only Claude can call)           │
+│  └─────────┘                                                │
+│                                                              │
+│  USER ──✗──→ GEMINI   (no direct access)                   │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 6.2 Classification Rules
+
+```json
+{
+  "allowed_intents": [
+    "build_model",
+    "modify_script",
+    "add_table",
+    "add_field",
+    "remove_field",
+    "explain_code",
+    "fix_issue",
+    "change_model_type",
+    "configure_calendar",
+    "review_script",
+    "ask_qlik_question"
+  ],
+
+  "blocked_patterns": [
+    "write email",
+    "translate",
+    "weather",
+    "python",
+    "javascript",
+    "unrelated to qlik"
+  ],
+
+  "keywords_must_contain_one": [
+    "model", "script", "table", "field",
+    "dimension", "fact", "qlik", "qvd",
+    "load", "calendar"
+  ]
+}
+```
+
+### 6.3 Rate Limiting (Claude Only)
+
+| Metric | Limit | Action |
+|--------|-------|--------|
+| Requests per minute | 10 | Slow down warning |
+| Failed scope checks | 3 consecutive | Temporary block (5 min) |
+| **Gemini calls** | **No limit** | Claude decides when to call |
+
+### 6.4 Rejection Message
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ ⚠️ Out of Scope                                              │
+│                                                              │
+│ This system is designed for Qlik model building only.       │
+│                                                              │
+│ I can help you with:                                         │
+│ • Building data models (Star, Snowflake, Link Tables)       │
+│ • Writing Qlik Load Scripts                                  │
+│ • Reviewing and fixing script issues                        │
+│ • Explaining Qlik concepts                                   │
+│                                                              │
+│ For other requests, please use a general assistant.         │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 7. Error Handling
+
+### 7.1 Error Categories
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    ERROR HANDLING                            │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  CATEGORY 1: API Errors                                      │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │  Gemini API fails                                    │    │
+│  │  ────────────────                                    │    │
+│  │  • Retry: 3 attempts with exponential backoff       │    │
+│  │  • If still fails: Continue WITHOUT review          │    │
+│  │  • Notify user: "Gemini unavailable, proceed        │    │
+│  │    without review or wait?"                          │    │
+│  │                                                      │    │
+│  │  Claude API fails                                    │    │
+│  │  ─────────────────                                   │    │
+│  │  • Cannot continue - Claude is the main engine      │    │
+│  │  • Show error + save current state                  │    │
+│  │  • User can resume later                            │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                                                              │
+│  CATEGORY 2: Data Errors                                     │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │  QVD file not found                                  │    │
+│  │  ───────────────────                                 │    │
+│  │  • List available QVDs                              │    │
+│  │  • Ask user to select correct file                  │    │
+│  │                                                      │    │
+│  │  JSON from Stage 1 invalid                          │    │
+│  │  ──────────────────────────                          │    │
+│  │  • Show validation errors                           │    │
+│  │  • Ask user to fix or return to Stage 1             │    │
+│  │                                                      │    │
+│  │  Sample data empty                                   │    │
+│  │  ──────────────────                                  │    │
+│  │  • Warn user: "No data in QVD, continuing without   │    │
+│  │    sample analysis"                                  │    │
+│  │  • Use JSON hints only                              │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                                                              │
+│  CATEGORY 3: Script Errors                                   │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │  Gemini finds critical issue                         │    │
+│  │  ────────────────────────────                        │    │
+│  │  • Block progress until fixed                       │    │
+│  │  • Show issue + proposed fix                        │    │
+│  │  • User must approve fix or provide alternative     │    │
+│  │                                                      │    │
+│  │  Claude can't fix an issue                          │    │
+│  │  ──────────────────────────                          │    │
+│  │  • Explain why fix is not possible                  │    │
+│  │  • Offer options:                                   │    │
+│  │    [1] Ignore (with warning)                        │    │
+│  │    [2] Manual edit by user                          │    │
+│  │    [3] Go back to previous stage                    │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 7.2 State Persistence
+
+```json
+{
+  "session_id": "abc-123",
+  "project_name": "SalesModel",
+  "current_stage": "C",
+  "completed_stages": ["A", "B"],
+  "model_type": "star_schema",
+  "approved_script_parts": {
+    "A_config": "QUALIFY *; SET vPath...",
+    "B_dimensions": "DIM_Customers: LOAD..."
+  },
+  "pending_tables": ["FACT_Orders", "FACT_Returns"],
+  "timestamp": "2026-01-20T14:30:00Z"
+}
+```
+
+**Location:** `.qmb/sessions/{session_id}.json`
+
+### 7.3 Resume Flow
+
+```
+USER: (returns after disconnect)
+
+CLAUDE:
+┌─────────────────────────────────────────────────────────────┐
+│ 🔄 Found saved session                                       │
+│                                                              │
+│ Project: SalesModel                                          │
+│ Progress: Stage C (Facts)                                   │
+│ Last saved: 10 minutes ago                                  │
+│                                                              │
+│ Completed:                                                   │
+│ ✅ Stage A: Configuration                                    │
+│ ✅ Stage B: Dimensions (3 tables)                           │
+│                                                              │
+│ Pending:                                                     │
+│ ○ Stage C: Facts (2 tables)                                 │
+│ ○ Stage D-F                                                  │
+│                                                              │
+│ [Continue from Stage C] [Start over] [View saved script]    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 8. Integration with Stage 1 & 3
+
+### 8.1 JSON Schema: Stage 1 → Stage 2
+
+```json
+{
+  "version": "1.0",
+  "source": "specification.docx",
+  "parsed_at": "2026-01-20T10:00:00Z",
+
+  "tables": [
+    {
+      "name": "Orders",
+      "source_name": "dbo.Orders",
+      "fields": [
+        {"name": "OrderID", "type": "integer"},
+        {"name": "CustomerID", "type": "string"},
+        {"name": "OrderDate", "type": "date"},
+        {"name": "Amount", "type": "decimal"}
+      ]
+    }
+  ],
+
+  "relationship_hints": [
+    {
+      "from": "Orders.CustomerID",
+      "to": "Customers.CustomerID",
+      "type": "many-to-one"
+    }
+  ]
+}
+```
+
+### 8.2 JSON Schema: Stage 2 → Stage 3
+
+**model.json:**
+```json
+{
+  "version": "1.0",
+  "model_type": "star_schema",
+  "created_at": "2026-01-20T12:00:00Z",
+
+  "facts": [
+    {
+      "name": "FACT_Orders",
+      "source_table": "Orders",
+      "keys": ["OrderKey", "CustomerKey"],
+      "measures": ["Amount", "Quantity"]
+    }
+  ],
+
+  "dimensions": [
+    {
+      "name": "DIM_Customers",
+      "source_table": "Customers",
+      "pk": "CustomerKey",
+      "fields": ["CustomerName", "Country"]
+    }
+  ],
+
+  "calendars": [
+    {"name": "DIM_OrderDate", "field": "OrderDate"}
+  ],
+
+  "relationships": [
+    {
+      "from": "FACT_Orders.CustomerKey",
+      "to": "DIM_Customers.CustomerKey",
+      "cardinality": "N:1"
+    }
+  ],
+
+  "gemini_review": {
+    "score": 95,
+    "status": "approved",
+    "issues_fixed": 2
+  }
+}
+```
+
+**script.qvs:** Full approved Qlik Load Script
+
+### 8.3 JSON Schema: Stage 3 Output
+
+```json
+{
+  "status": "success",
+  "tables_created": 6,
+  "qvd_files": [
+    "Final/FACT_Orders.qvd",
+    "Final/DIM_Customers.qvd"
+  ],
+  "app_id": "abc-123-xyz"
+}
+```
+
+### 8.4 File Structure
+
+```
+project_folder/
+├── input/
+│   └── specification.docx       # Original document
+│
+├── stage1_output/
+│   └── spec.json                # Parser output
+│
+├── stage2_output/
+│   ├── model.json               # Model definition
+│   ├── script.qvs               # Approved script
+│   └── gemini_review.json       # Review results
+│
+├── stage3_output/
+│   ├── execution_result.json    # Execution status
+│   └── qvd/
+│       └── Final/               # Generated QVDs
+│
+└── .qmb/
+    └── sessions/                # Saved session states
+```
+
+### 8.5 Handoff Protocol
+
+| From | To | Files | Validation |
+|------|-----|-------|------------|
+| Stage 1 → Stage 2 | `spec.json` | JSON Schema check |
+| Stage 2 → Stage 3 | `model.json` + `script.qvs` | Gemini approved |
+| Stage 3 → Stage 4 | `execution_result.json` | Tables exist in Qlik |
+
+---
+
+## 9. Issue Severity & Category Definitions
+
+### 9.1 Severity Levels
 
 | Severity | Definition | Examples | Action |
 |----------|------------|----------|--------|
@@ -573,9 +1235,7 @@ From PHASE_B_SPEC.md and KNOWLEDGE_BASE.md:
 | **warning** | Should fix - causes performance/maintenance issues | LOAD *, Missing AutoNumber, Snowflake >4 levels | Recommend fix |
 | **info** | Nice to fix - minor improvements | Missing comments, Naming convention | Optional |
 
----
-
-## Appendix C: Category Definitions
+### 9.2 Category Definitions
 
 | Category | Description | Examples |
 |----------|-------------|----------|
@@ -586,8 +1246,29 @@ From PHASE_B_SPEC.md and KNOWLEDGE_BASE.md:
 
 ---
 
+## 10. Open Questions (Resolved)
+
+| Question | Resolution |
+|----------|------------|
+| AutoNumber by default? | NO - only on user request (debugging is harder) |
+| One calendar or many? | MANY - separate calendar per date field |
+| Build script at once? | NO - build in stages with approval |
+| Gemini rate limit? | NO - Gemini has no limit, only Claude does |
+| Language hardcoded? | NO - configurable (multilingual project) |
+
+---
+
+## 11. Next Steps
+
+1. **Implementation Planning** - Use `/write-plan` to create detailed implementation plan
+2. **Stage 1 Integration** - Ensure Parser outputs correct JSON schema
+3. **Stage 3 Integration** - Define execution engine requirements
+4. **Testing** - Create test cases for each model type
+
+---
+
 **Document End**
 
-Last Updated: 2026-01-20
-Session Status: Paused at Section 3.3 (Analyzer Engine)
-Next: Continue with Section 4.1 (Builder Engine)
+**Version:** 1.0.0 (Complete)
+**Last Updated:** 2026-01-20
+**Status:** Ready for Gemini Review
