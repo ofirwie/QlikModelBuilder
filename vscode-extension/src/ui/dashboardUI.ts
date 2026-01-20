@@ -721,7 +721,18 @@ export function getDashboardScript(): string {
       newSpaceName: '',
       spacesLoading: true,
       createSpaceLoading: false,
-      spacesError: null
+      spacesError: null,
+      // Source selection state (Step 3)
+      connections: [],
+      selectedConnectionId: null,
+      connectionType: '',
+      newConnectionName: '',
+      connectionString: '',
+      connectionsLoading: true,
+      createConnectionLoading: false,
+      connectionsError: null,
+      connectionsErrorType: null,  // 'auth', 'network', 'server', 'validation'
+      connectionsCorrelationId: null  // For error reporting
     };
 
     // =============================================
