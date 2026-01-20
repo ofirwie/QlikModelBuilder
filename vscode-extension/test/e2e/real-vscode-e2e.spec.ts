@@ -165,14 +165,15 @@ test.describe('Real VS Code E2E', () => {
     const webviewFrame = page.frameLocator('iframe.webview.ready').first();
     const innerFrame = webviewFrame.frameLocator('iframe').first();
 
-    // Select entry point
-    const specFileOption = innerFrame.locator('text=From Spec File').first();
+    // Select entry point - click on the li element directly
+    const specFileOption = innerFrame.locator('#entry-options li[data-entry="spec"]').first();
     await expect(specFileOption).toBeVisible({ timeout: 10000 });
     await specFileOption.click();
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(500);
 
-    // Click Next to go to Step 2
+    // Wait for Next button to be enabled then click
     const nextBtn = innerFrame.locator('#btn-next').first();
+    await expect(nextBtn).toBeEnabled({ timeout: 5000 });
     await nextBtn.click();
     await page.waitForTimeout(1000);
 

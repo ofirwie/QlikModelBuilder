@@ -28,7 +28,10 @@ RUN npm ci
 # Copy extension source
 COPY --chown=coder:coder . .
 
-# Build extension with esbuild (bundles all dependencies)
+# Compile TypeScript (generates all .js files including wizardPanel.js, dashboardUI.js)
+RUN npm run compile
+
+# Build extension with esbuild (bundles main entry point)
 RUN npm run esbuild
 
 # Build VSIX package (dependencies are bundled, so no need for node_modules)
