@@ -1655,37 +1655,84 @@ JSON OUTPUT:`;
     </div>
   </div>
 
-  <!-- Step 3: Data Source / Connection -->
+  <!-- Step 3: Source Selection -->
   <div id="step-3" class="step-content" data-step="3" style="display: none;">
-    <h2>🔗 Data Source</h2>
+    <h2>Source Selection</h2>
     <p style="margin-bottom: 16px; color: var(--text-secondary);">
-      Select or configure your data source connection
+      Select or create a data connection
     </p>
-    <div id="connections-list">
-      <ul class="item-list">
-        <li data-connection="database">
-          <div class="item-info">
-            <span class="item-name">Database Connection</span>
-            <span class="item-type">Connect to SQL Server, PostgreSQL, etc.</span>
-          </div>
-        </li>
-        <li data-connection="rest">
-          <div class="item-info">
-            <span class="item-name">REST API</span>
-            <span class="item-type">Connect to REST endpoints</span>
-          </div>
-        </li>
-        <li data-connection="files">
-          <div class="item-info">
-            <span class="item-name">Data Files</span>
-            <span class="item-type">Load from CSV, Excel, QVD files</span>
-          </div>
-        </li>
-      </ul>
+
+    <!-- Loading State -->
+    <div id="connections-loading" class="loading-section" style="display: flex; padding: 20px; text-align: center; align-items: center; justify-content: center; gap: 8px;">
+      <span class="codicon codicon-loading codicon-modifier-spin"></span>
+      <span>Loading connections...</span>
     </div>
-    <div class="button-row">
-      <button class="btn btn-secondary btn-back-action">Back</button>
-      <button class="btn btn-primary btn-next-action">Next</button>
+
+    <!-- Error State -->
+    <div id="connections-error" class="error-section" style="display: none; padding: 20px; border: 1px solid var(--error-color); border-radius: 4px;">
+      <p class="error-message" style="color: var(--error-color); margin-bottom: 12px;"></p>
+      <p id="connections-error-id" style="font-size: 11px; color: var(--text-secondary); margin-bottom: 8px; display: none;">Error ID: <span></span></p>
+      <div class="error-actions">
+        <button id="btn-connections-retry" class="btn btn-secondary">Retry</button>
+        <button id="btn-connections-configure" class="btn btn-secondary" style="display: none; margin-left: 8px;">Configure Credentials</button>
+        <a id="btn-connections-report" href="#" style="display: none; margin-left: 8px; font-size: 12px;">Report Issue</a>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div id="connections-empty" class="empty-section" style="display: none; padding: 20px; text-align: center; color: var(--text-secondary);">
+      <p>No connections found. Create one below.</p>
+    </div>
+
+    <!-- Connections List -->
+    <div id="connections-list" style="display: none;">
+      <div class="section-box" style="margin-bottom: 16px;">
+        <h3 style="font-size: 12px; margin-bottom: 12px; color: var(--text-secondary);">Available Connections</h3>
+        <div id="connections-radio-list" class="radio-list" style="max-height: 250px; overflow-y: auto;">
+          <!-- Radio buttons rendered dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <hr style="border: none; border-top: 1px solid var(--border-color); margin: 16px 0;">
+
+    <!-- Create New Connection -->
+    <div id="create-connection-section" class="section-box">
+      <h3 style="font-size: 12px; margin-bottom: 12px; color: var(--text-secondary);">Or Create New Connection</h3>
+
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label for="connection-type" style="display: block; font-size: 12px; margin-bottom: 4px;">Connection Type</label>
+        <select id="connection-type" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-primary); color: var(--text-primary);">
+          <option value="">Select type...</option>
+          <option value="PostgreSQL">PostgreSQL</option>
+          <option value="MySQL">MySQL</option>
+          <option value="SQLServer">SQL Server</option>
+          <option value="REST">REST API</option>
+          <option value="folder">Folder (DataFiles)</option>
+        </select>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label for="new-connection-name" style="display: block; font-size: 12px; margin-bottom: 4px;">Connection Name</label>
+        <input type="text" id="new-connection-name" placeholder="My Database" maxlength="100"
+               style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-primary); color: var(--text-primary);" />
+      </div>
+
+      <div id="connection-params" class="form-group" style="display: none; margin-bottom: 12px;">
+        <label for="connection-string" style="display: block; font-size: 12px; margin-bottom: 4px;">Connection String</label>
+        <input type="text" id="connection-string" placeholder="host=localhost;port=5432;database=mydb"
+               style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-primary); color: var(--text-primary);" />
+      </div>
+
+      <button id="btn-create-connection" class="btn btn-secondary" disabled>
+        <span class="codicon codicon-add"></span> Create Connection
+      </button>
+      <span id="create-connection-error" class="error-text" style="display: none; color: var(--error-color); font-size: 12px; margin-left: 8px;"></span>
+    </div>
+
+    <div class="button-row" style="margin-top: 24px;">
+      <button class="btn btn-secondary" id="btn-back-3">Back</button>
+      <button class="btn btn-primary" id="btn-next-3" disabled>Next</button>
     </div>
   </div>
 
