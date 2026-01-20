@@ -377,8 +377,7 @@ export class WizardPanel {
       this._panel.webview.postMessage({ type: 'spaces', data: spaces });
     } catch (err) {
       this._panel.webview.postMessage({
-        type: 'error',
-        source: 'spaces',
+        type: 'spacesError',
         message: err instanceof Error ? err.message : 'Failed to load spaces'
       });
     }

@@ -188,8 +188,35 @@ test.describe('Real VS Code E2E', () => {
     const step2 = innerFrame.locator('#step-2');
     await expect(step2).toBeVisible({ timeout: 5000 });
 
-    // Check for spaces section (loading, list, or error)
-    const spacesSection = innerFrame.locator('#spaces-loading, #spaces-list, #spaces-error');
-    await expect(spacesSection.first()).toBeVisible({ timeout: 10000 });
+    // Wait for API call to complete (up to 10 seconds)
+    await page.waitForTimeout(5000);
+
+    // Screenshot the result
+    await page.screenshot({ path: 'test-results/step2-final-state.png' });
+
+    // Check final state - should have either spaces list or error (not loading)
+    const spacesList = innerFrame.locator('#spaces-list');
+    const spacesError = innerFrame.locator('#spaces-error');
+
+    const hasSpacesList = await spacesList.isVisible().catch(() => false);
+    const hasError = await spacesError.isVisible().catch(() => false);
+
+    console.log('Step 2 final state - spaces list:', hasSpacesList, 'error:', hasError);
+
+    // Verify we got a response (either spaces or error, not stuck loading)
+    expect(hasSpacesList || hasError).toBe(true);
+
+    // If spaces list is visible, count the spaces
+    if (hasSpacesList) {
+      const radioButtons = innerFrame.locator('#spaces-radio-list input[type="radio"]');
+      const count = await radioButtons.count();
+      console.log('Spaces count:', count);
+    }
+
+    // If error, log it
+    if (hasError) {
+      const errorText = await spacesError.textContent();
+      console.log('Spaces error:', errorText);
+    }
   });
 });
