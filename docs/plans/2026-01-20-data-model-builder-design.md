@@ -1,7 +1,7 @@
 # QlikModelBuilder - Data Model Builder Design Document
 
 **Date:** 2026-01-20
-**Version:** 1.0.0 (Complete)
+**Version:** 1.1.0 (Complete + Logging)
 **Status:** Ready for Review
 **Session:** Brainstorming with Claude Code
 
@@ -1095,6 +1095,75 @@ CLAUDE:
 
 ---
 
+### 7.4 Logging & Monitoring
+
+#### Log Levels
+
+| Level | Usage | Examples |
+|-------|-------|----------|
+| **ERROR** | Critical failures | API timeout, file not found, script execution failed |
+| **WARN** | Issues that don't block | Gemini unavailable, empty sample data |
+| **INFO** | Normal operations | Stage completed, user approved, script generated |
+| **DEBUG** | Detailed tracing | API requests/responses, parsing steps |
+
+#### Log Structure
+
+```json
+{
+  "timestamp": "2026-01-20T14:30:00.123Z",
+  "level": "INFO",
+  "session_id": "abc-123",
+  "stage": "B",
+  "component": "builder_engine",
+  "action": "table_generated",
+  "details": {
+    "table": "DIM_Customers",
+    "fields": 5,
+    "rows_estimated": 5000
+  },
+  "user_id": "user@company.com"
+}
+```
+
+#### What Gets Logged
+
+| Category | Events |
+|----------|--------|
+| **Session** | Start, resume, complete, abandon |
+| **Stages** | Enter, approve, reject, edit |
+| **AI Calls** | Claude request/response, Gemini request/response, tokens used |
+| **Errors** | All errors with stack trace |
+| **User Actions** | Approve, edit, add field, remove field, question asked |
+| **Script** | Generated script hash, validation results |
+
+#### Log Files
+
+```
+.qmb/
+├── sessions/
+│   └── {session_id}.json      # Session state
+└── logs/
+    ├── {session_id}.log       # Session-specific log
+    └── qmb.log                # Global log (rolling, max 10MB)
+```
+
+#### Audit Trail (for compliance)
+
+```json
+{
+  "audit_type": "script_approved",
+  "timestamp": "2026-01-20T14:35:00Z",
+  "session_id": "abc-123",
+  "user_id": "user@company.com",
+  "action": "approved_stage_c",
+  "script_hash": "sha256:a1b2c3...",
+  "gemini_score": 95,
+  "issues_fixed": 2
+}
+```
+
+---
+
 ## 8. Integration with Stage 1 & 3
 
 ### 8.1 JSON Schema: Stage 1 → Stage 2
@@ -1269,6 +1338,6 @@ project_folder/
 
 **Document End**
 
-**Version:** 1.0.0 (Complete)
+**Version:** 1.1.0 (Complete + Logging)
 **Last Updated:** 2026-01-20
 **Status:** Ready for Gemini Review
