@@ -1026,12 +1026,65 @@ export function getDashboardScript(): string {
           }
           break;
 
+        // Step 3: Connection handlers
         case 'connections':
           state.connections = msg.data || [];
+          state.connectionsLoading = false;
+          state.connectionsError = null;
+          state.connectionsErrorType = null;
+          state.connectionsCorrelationId = null;
+          // Also update old state for backward compatibility
           if (state.connections.length > 0 && !state.selectedConnection) {
             state.selectedConnection = state.connections[0].id;
           }
+          renderConnections();
           renderSidebar();
+          break;
+
+        case 'connectionsError':
+          state.connectionsLoading = false;
+          state.connectionsError = msg.message || 'Failed to load connections';
+          state.connectionsErrorType = msg.errorType || 'unknown';
+          state.connectionsCorrelationId = msg.correlationId || null;
+          // Log error for debugging
+          console.error('[Step 3] Connection error:', state.connectionsError, 'Type:', state.connectionsErrorType);
+          renderConnections();
+          break;
+
+        case 'connectionCreated':
+          state.createConnectionLoading = false;
+          if (msg.connection) {
+            state.connections.push(msg.connection);
+            state.selectedConnectionId = msg.connection.id;
+          }
+          // Clear form inputs
+          state.newConnectionName = '';
+          state.connectionType = '';
+          state.connectionString = '';
+          var connNameInput = document.getElementById('new-connection-name');
+          var connTypeSelect = document.getElementById('connection-type');
+          var connStringInput = document.getElementById('connection-string');
+          if (connNameInput) connNameInput.value = '';
+          if (connTypeSelect) connTypeSelect.value = '';
+          if (connStringInput) connStringInput.value = '';
+          renderConnections();
+          updateCreateConnectionButton();
+          break;
+
+        case 'createConnectionError':
+          state.createConnectionLoading = false;
+          var connErrorEl = document.getElementById('create-connection-error');
+          if (connErrorEl) {
+            connErrorEl.textContent = msg.message || 'Failed to create connection';
+            connErrorEl.style.display = 'block';
+            // Auto-hide validation errors after 5 seconds
+            if (msg.errorType === 'validation') {
+              setTimeout(function() {
+                connErrorEl.style.display = 'none';
+              }, 5000);
+            }
+          }
+          updateCreateConnectionButton();
           break;
 
         case 'specParsed':
