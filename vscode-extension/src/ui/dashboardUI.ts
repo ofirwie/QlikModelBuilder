@@ -705,7 +705,7 @@ export function getDashboardScript(): string {
     const state = {
       configured: false,
       tenantUrl: '',
-      spaces: [] as Array<{id: string; name: string; type: string}>,
+      spaces: [],
       connections: [],
       selectedSpace: null,
       selectedConnection: null,
@@ -717,11 +717,11 @@ export function getDashboardScript(): string {
       entryPoint: null,
       currentStep: 1,
       // Space selection state (Step 2)
-      selectedSpaceId: null as string | null,
+      selectedSpaceId: null,
       newSpaceName: '',
       spacesLoading: true,
       createSpaceLoading: false,
-      spacesError: null as string | null
+      spacesError: null
     };
 
     // =============================================
@@ -896,7 +896,7 @@ export function getDashboardScript(): string {
       const btnCreateSpace = document.getElementById('btn-create-space');
       if (btnCreateSpace) {
         btnCreateSpace.addEventListener('click', () => {
-          const nameInput = document.getElementById('new-space-name') as HTMLInputElement;
+          const nameInput = document.getElementById('new-space-name');
           const name = nameInput?.value?.trim();
 
           // Validation
@@ -1001,7 +1001,7 @@ export function getDashboardScript(): string {
             state.spaces.push(msg.space);
             state.selectedSpaceId = msg.space.id;
           }
-          const newSpaceInput = document.getElementById('new-space-name') as HTMLInputElement;
+          const newSpaceInput = document.getElementById('new-space-name');
           if (newSpaceInput) newSpaceInput.value = '';
           renderSpaces();
           break;
@@ -1281,7 +1281,7 @@ export function getDashboardScript(): string {
       const emptyEl = document.getElementById('spaces-empty');
       const listEl = document.getElementById('spaces-list');
       const radioListEl = document.getElementById('spaces-radio-list');
-      const btnNext2 = document.getElementById('btn-next-2') as HTMLButtonElement;
+      const btnNext2 = document.getElementById('btn-next-2');
 
       // Hide all states first
       if (loadingEl) loadingEl.style.display = 'none';
@@ -1328,7 +1328,7 @@ export function getDashboardScript(): string {
         // Add click handlers for radio buttons
         radioListEl.querySelectorAll('input[type="radio"]').forEach(radio => {
           radio.addEventListener('change', (e) => {
-            const target = e.target as HTMLInputElement;
+            const target = e.target;
             state.selectedSpaceId = target.value;
             updateStep2NextButton();
           });
@@ -1340,7 +1340,7 @@ export function getDashboardScript(): string {
     }
 
     function updateStep2NextButton() {
-      const btnNext2 = document.getElementById('btn-next-2') as HTMLButtonElement;
+      const btnNext2 = document.getElementById('btn-next-2');
       if (btnNext2) {
         btnNext2.disabled = !state.selectedSpaceId;
       }
