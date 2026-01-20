@@ -800,6 +800,13 @@ export function getDashboardScript(): string {
         vscode.postMessage({ type: 'getSpaces' });
       }
 
+      // When entering Step 3, fetch connections
+      if (state.currentStep === 3) {
+        state.connectionsLoading = true;
+        renderConnections();
+        vscode.postMessage({ type: 'getConnections' });
+      }
+
       // Save state
       if (typeof vscode !== 'undefined') {
         vscode.setState(state);
@@ -946,6 +953,132 @@ export function getDashboardScript(): string {
       if (btnSpacesConfigure) {
         btnSpacesConfigure.addEventListener('click', () => {
           vscode.postMessage({ type: 'openSettings' });
+        });
+      }
+
+      // =============================================
+      // Step 3: Source Selection Event Listeners
+      // =============================================
+
+      // Step 3: Next button
+      var btnNext3 = document.getElementById('btn-next-3');
+      if (btnNext3) {
+        btnNext3.addEventListener('click', function() {
+          if (window.nextStep) window.nextStep();
+        });
+      }
+
+      // Step 3: Back button
+      var btnBack3 = document.getElementById('btn-back-3');
+      if (btnBack3) {
+        btnBack3.addEventListener('click', function() {
+          if (window.prevStep) window.prevStep();
+        });
+      }
+
+      // Step 3: Retry connections button
+      var btnConnectionsRetry = document.getElementById('btn-connections-retry');
+      if (btnConnectionsRetry) {
+        btnConnectionsRetry.addEventListener('click', function() {
+          state.connectionsLoading = true;
+          state.connectionsError = null;
+          state.connectionsErrorType = null;
+          state.connectionsCorrelationId = null;
+          renderConnections();
+          vscode.postMessage({ type: 'getConnections' });
+        });
+      }
+
+      // Step 3: Configure Credentials button (for auth errors)
+      var btnConnectionsConfigure = document.getElementById('btn-connections-configure');
+      if (btnConnectionsConfigure) {
+        btnConnectionsConfigure.addEventListener('click', function() {
+          vscode.postMessage({ type: 'openSettings' });
+        });
+      }
+
+      // Step 3: Create Connection button
+      var btnCreateConnection = document.getElementById('btn-create-connection');
+      if (btnCreateConnection) {
+        btnCreateConnection.addEventListener('click', function() {
+          var nameInput = document.getElementById('new-connection-name');
+          var typeSelect = document.getElementById('connection-type');
+          var stringInput = document.getElementById('connection-string');
+
+          var name = nameInput ? nameInput.value.trim() : '';
+          var type = typeSelect ? typeSelect.value : '';
+          var connString = stringInput ? stringInput.value : '';
+
+          // Validation
+          if (!name) {
+            showConnectionFormError('Connection name is required');
+            return;
+          }
+          if (name.length > 100) {
+            showConnectionFormError('Connection name must be 100 characters or less');
+            return;
+          }
+          if (!type) {
+            showConnectionFormError('Connection type is required');
+            return;
+          }
+
+          // Clear previous error
+          var errorEl = document.getElementById('create-connection-error');
+          if (errorEl) errorEl.style.display = 'none';
+
+          state.createConnectionLoading = true;
+          updateCreateConnectionButton();
+
+          vscode.postMessage({
+            type: 'createConnection',
+            name: name,
+            connectionType: type,
+            connectionString: connString
+          });
+        });
+      }
+
+      function showConnectionFormError(message) {
+        var errorEl = document.getElementById('create-connection-error');
+        if (errorEl) {
+          errorEl.textContent = message;
+          errorEl.style.display = 'block';
+          // Auto-hide after 5 seconds for validation errors
+          setTimeout(function() {
+            errorEl.style.display = 'none';
+          }, 5000);
+        }
+      }
+
+      // Step 3: Connection type dropdown (show/hide connection string)
+      var connectionType = document.getElementById('connection-type');
+      if (connectionType) {
+        connectionType.addEventListener('change', function(e) {
+          state.connectionType = e.target.value;
+          var paramsEl = document.getElementById('connection-params');
+          if (paramsEl) {
+            // Show connection string for all types except folder
+            paramsEl.style.display = state.connectionType && state.connectionType !== 'folder' ? 'block' : 'none';
+          }
+          updateCreateConnectionButton();
+        });
+      }
+
+      // Step 3: Connection name input
+      var newConnName = document.getElementById('new-connection-name');
+      if (newConnName) {
+        newConnName.addEventListener('input', function(e) {
+          state.newConnectionName = e.target.value;
+          updateCreateConnectionButton();
+        });
+      }
+
+      // Step 3: Connection string input
+      var connString = document.getElementById('connection-string');
+      if (connString) {
+        connString.addEventListener('input', function(e) {
+          state.connectionString = e.target.value;
         });
       }
     }
