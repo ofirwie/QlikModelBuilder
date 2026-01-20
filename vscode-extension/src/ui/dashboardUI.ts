@@ -1358,6 +1358,121 @@ export function getDashboardScript(): string {
     }
 
     // =============================================
+    // Step 3: Source Selection
+    // =============================================
+
+    // Helper to escape HTML (prevent XSS)
+    function escapeHtml(text) {
+      var div = document.createElement('div');
+      div.textContent = text || '';
+      return div.innerHTML;
+    }
+
+    function renderConnections() {
+      var loadingEl = document.getElementById('connections-loading');
+      var errorEl = document.getElementById('connections-error');
+      var emptyEl = document.getElementById('connections-empty');
+      var listEl = document.getElementById('connections-list');
+      var radioList = document.getElementById('connections-radio-list');
+      var configureBtn = document.getElementById('btn-connections-configure');
+      var reportLink = document.getElementById('btn-connections-report');
+      var errorIdEl = document.getElementById('connections-error-id');
+
+      // Hide all states
+      if (loadingEl) loadingEl.style.display = 'none';
+      if (errorEl) errorEl.style.display = 'none';
+      if (emptyEl) emptyEl.style.display = 'none';
+      if (listEl) listEl.style.display = 'none';
+
+      if (state.connectionsLoading) {
+        if (loadingEl) loadingEl.style.display = 'flex';
+        return;
+      }
+
+      if (state.connectionsError) {
+        if (errorEl) {
+          errorEl.style.display = 'block';
+          var errorMsg = errorEl.querySelector('.error-message');
+          if (errorMsg) errorMsg.textContent = state.connectionsError;
+
+          // Show configure button for auth errors
+          if (configureBtn) {
+            configureBtn.style.display = state.connectionsErrorType === 'auth' ? 'inline-block' : 'none';
+          }
+
+          // Show error ID for support (persistent errors only)
+          if (errorIdEl && state.connectionsCorrelationId) {
+            errorIdEl.style.display = 'block';
+            var idSpan = errorIdEl.querySelector('span');
+            if (idSpan) idSpan.textContent = state.connectionsCorrelationId;
+          }
+
+          // Show report link for server errors
+          if (reportLink) {
+            if (state.connectionsErrorType === 'server' || state.connectionsErrorType === 'unknown') {
+              reportLink.style.display = 'inline-block';
+              var errorCode = state.connectionsCorrelationId || 'unknown';
+              reportLink.href = 'https://github.com/your-repo/issues/new?title=Error:' + encodeURIComponent(errorCode);
+            } else {
+              reportLink.style.display = 'none';
+            }
+          }
+        }
+        return;
+      }
+
+      if (state.connections.length === 0) {
+        if (emptyEl) emptyEl.style.display = 'block';
+        return;
+      }
+
+      // Show connections list
+      if (listEl) listEl.style.display = 'block';
+      if (radioList) {
+        radioList.innerHTML = state.connections.map(function(conn) {
+          return '<li style="padding: 8px; border-radius: 4px; cursor: pointer;" data-connection-id="' + escapeHtml(conn.id) + '">' +
+            '<label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">' +
+            '<input type="radio" name="connection" value="' + escapeHtml(conn.id) + '"' +
+            (state.selectedConnectionId === conn.id ? ' checked' : '') + ' />' +
+            '<span style="flex: 1;">' +
+            '<span class="item-name">' + escapeHtml(conn.qName) + '</span>' +
+            '<span class="item-type" style="display: block; font-size: 11px; color: var(--text-secondary);">' + escapeHtml(conn.qType) + '</span>' +
+            '</span>' +
+            '</label>' +
+            '</li>';
+        }).join('');
+
+        // Add click handlers for radio buttons
+        radioList.querySelectorAll('input[type="radio"]').forEach(function(radio) {
+          radio.addEventListener('change', function(e) {
+            state.selectedConnectionId = e.target.value;
+            updateStep3NextButton();
+          });
+        });
+      }
+
+      updateStep3NextButton();
+    }
+
+    function updateStep3NextButton() {
+      var btnNext = document.getElementById('btn-next-3');
+      if (btnNext) {
+        btnNext.disabled = !state.selectedConnectionId;
+      }
+    }
+
+    function updateCreateConnectionButton() {
+      var btnCreate = document.getElementById('btn-create-connection');
+      var nameInput = document.getElementById('new-connection-name');
+      var typeSelect = document.getElementById('connection-type');
+      if (btnCreate && nameInput && typeSelect) {
+        var hasName = nameInput.value.trim().length > 0;
+        var hasType = typeSelect.value !== '';
+        btnCreate.disabled = !hasName || !hasType || state.createConnectionLoading;
+      }
+    }
+
+    // =============================================
     // Event Handlers
     // =============================================
     function handleSpecParsed(msg) {
