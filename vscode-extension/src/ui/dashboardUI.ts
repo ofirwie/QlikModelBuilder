@@ -753,7 +753,17 @@ export function getDashboardScript(): string {
       fieldsError: null,
       fieldsErrorType: null,
       fieldsCorrelationId: null,
-      fieldsSearchQuery: ''
+      fieldsSearchQuery: '',
+
+      // Incremental load state (Step 6)
+      incrementalSettings: {},     // { tableName: { mode, timestampField, keyField } }
+      currentIncrementalTable: '',
+
+      // Deploy state (Step 7)
+      appName: '',
+      deployLoading: false,
+      deployError: null,
+      deployedAppId: null
     };
 
     // =============================================
@@ -840,6 +850,17 @@ export function getDashboardScript(): string {
         state.fieldsLoading = true;
         renderFields();
         vscode.postMessage({ type: 'getFields', tables: state.selectedTables });
+      }
+
+      // When entering Step 6, render incremental settings
+      if (state.currentStep === 6) {
+        renderIncrementalSettings();
+      }
+
+      // When entering Step 7, render review
+      if (state.currentStep === 7) {
+        renderReview();
+        renderDeployState();
       }
 
       // Save state
@@ -1298,6 +1319,144 @@ export function getDashboardScript(): string {
           renderFields();
         }
       });
+
+      // =============================================
+      // Step 6: Incremental Settings Event Listeners
+      // =============================================
+
+      // Step 6: Next/Back buttons
+      var btnNext6 = document.getElementById('btn-next-6');
+      if (btnNext6) {
+        btnNext6.addEventListener('click', function() {
+          if (window.nextStep) window.nextStep();
+        });
+      }
+
+      var btnBack6 = document.getElementById('btn-back-6');
+      if (btnBack6) {
+        btnBack6.addEventListener('click', function() {
+          if (window.prevStep) window.prevStep();
+        });
+      }
+
+      // Step 6: Table selector
+      var incTableSelect = document.getElementById('incremental-table-select');
+      if (incTableSelect) {
+        incTableSelect.addEventListener('change', function(e) {
+          state.currentIncrementalTable = e.target.value;
+          renderIncrementalSettings();
+        });
+      }
+
+      // Step 6: Mode selector (show/hide options)
+      var incMode = document.getElementById('incremental-mode');
+      if (incMode) {
+        incMode.addEventListener('change', function(e) {
+          var tableName = state.currentIncrementalTable;
+          if (!tableName) return;
+          if (!state.incrementalSettings[tableName]) {
+            state.incrementalSettings[tableName] = { mode: 'full', timestampField: '', keyField: '' };
+          }
+          state.incrementalSettings[tableName].mode = e.target.value;
+
+          // Show/hide incremental options
+          var optionsEl = document.getElementById('incremental-options');
+          if (optionsEl) {
+            optionsEl.style.display = e.target.value !== 'full' ? 'block' : 'none';
+          }
+        });
+      }
+
+      // Step 6: Timestamp and key fields
+      var timestampField = document.getElementById('timestamp-field');
+      if (timestampField) {
+        timestampField.addEventListener('input', function(e) {
+          var tableName = state.currentIncrementalTable;
+          if (tableName && state.incrementalSettings[tableName]) {
+            state.incrementalSettings[tableName].timestampField = e.target.value;
+          }
+        });
+      }
+
+      var keyField = document.getElementById('key-field');
+      if (keyField) {
+        keyField.addEventListener('input', function(e) {
+          var tableName = state.currentIncrementalTable;
+          if (tableName && state.incrementalSettings[tableName]) {
+            state.incrementalSettings[tableName].keyField = e.target.value;
+          }
+        });
+      }
+
+      // =============================================
+      // Step 7: Review & Deploy Event Listeners
+      // =============================================
+
+      // Step 7: Back button
+      var btnBack7 = document.getElementById('btn-back-7');
+      if (btnBack7) {
+        btnBack7.addEventListener('click', function() {
+          if (window.prevStep) window.prevStep();
+        });
+      }
+
+      // Step 7: App name input
+      var appNameInput = document.getElementById('app-name');
+      if (appNameInput) {
+        appNameInput.addEventListener('input', function(e) {
+          state.appName = e.target.value;
+        });
+      }
+
+      // Step 7: Deploy button
+      var btnDeploy = document.getElementById('btn-deploy');
+      if (btnDeploy) {
+        btnDeploy.addEventListener('click', function() {
+          if (!state.appName.trim()) {
+            alert('Please enter an app name');
+            return;
+          }
+          state.deployLoading = true;
+          state.deployError = null;
+          renderDeployState();
+          vscode.postMessage({
+            type: 'deploy',
+            appName: state.appName,
+            spaceId: state.selectedSpaceId,
+            tables: state.selectedTables,
+            fields: state.selectedFieldsByTable,
+            incrementalSettings: state.incrementalSettings
+          });
+        });
+      }
+
+      // Step 7: Deploy retry
+      var btnDeployRetry = document.getElementById('btn-deploy-retry');
+      if (btnDeployRetry) {
+        btnDeployRetry.addEventListener('click', function() {
+          state.deployLoading = true;
+          state.deployError = null;
+          renderDeployState();
+          vscode.postMessage({
+            type: 'deploy',
+            appName: state.appName,
+            spaceId: state.selectedSpaceId,
+            tables: state.selectedTables,
+            fields: state.selectedFieldsByTable,
+            incrementalSettings: state.incrementalSettings
+          });
+        });
+      }
+
+      // Step 7: Open app button
+      var btnOpenApp = document.getElementById('btn-open-app');
+      if (btnOpenApp) {
+        btnOpenApp.addEventListener('click', function() {
+          if (state.deployedAppId) {
+            vscode.postMessage({ type: 'openApp', appId: state.deployedAppId });
+          }
+        });
+      }
     }
 
     // Call setup after DOM is ready
@@ -1480,6 +1639,21 @@ export function getDashboardScript(): string {
           state.fieldsCorrelationId = msg.correlationId || null;
           console.error('[' + state.fieldsCorrelationId + '] Fields error (' + state.fieldsErrorType + '): ' + state.fieldsError);
           renderFields();
+          break;
+
+        case 'deploySuccess':
+          state.deployLoading = false;
+          state.deployError = null;
+          state.deployedAppId = msg.appId;
+          console.log('[Deploy] Success: App created with ID ' + msg.appId);
+          renderDeployState();
+          break;
+
+        case 'deployError':
+          state.deployLoading = false;
+          state.deployError = msg.message || 'Deploy failed';
+          console.error('[Deploy] Error: ' + state.deployError);
+          renderDeployState();
           break;
 
         case 'specParsed':
@@ -2115,6 +2289,80 @@ export function getDashboardScript(): string {
         });
         btnNext.disabled = !hasFields;
       }
+    }
+
+    // =============================================
+    // Step 6: Incremental Settings Render
+    // =============================================
+    function renderIncrementalSettings() {
+      var tableSelect = document.getElementById('incremental-table-select');
+      var modeSelect = document.getElementById('incremental-mode');
+      var timestampInput = document.getElementById('timestamp-field');
+      var keyInput = document.getElementById('key-field');
+      var optionsEl = document.getElementById('incremental-options');
+
+      // Populate table selector
+      if (tableSelect) {
+        tableSelect.innerHTML = state.selectedTables.map(function(tableName) {
+          return '<option value="' + escapeHtml(tableName) + '"' +
+            (tableName === state.currentIncrementalTable ? ' selected' : '') + '>' +
+            escapeHtml(tableName) + '</option>';
+        }).join('');
+
+        if (!state.currentIncrementalTable && state.selectedTables.length > 0) {
+          state.currentIncrementalTable = state.selectedTables[0];
+        }
+      }
+
+      // Get settings for current table
+      var settings = state.incrementalSettings[state.currentIncrementalTable] || { mode: 'full', timestampField: '', keyField: '' };
+
+      if (modeSelect) modeSelect.value = settings.mode;
+      if (timestampInput) timestampInput.value = settings.timestampField || '';
+      if (keyInput) keyInput.value = settings.keyField || '';
+      if (optionsEl) optionsEl.style.display = settings.mode !== 'full' ? 'block' : 'none';
+    }
+
+    // =============================================
+    // Step 7: Review & Deploy Render
+    // =============================================
+    function renderReview() {
+      var spaceValue = document.getElementById('review-space-value');
+      var tablesValue = document.getElementById('review-tables-value');
+      var fieldsValue = document.getElementById('review-fields-value');
+
+      // Find space name
+      var spaceName = '-';
+      if (state.selectedSpaceId && state.spaces.length > 0) {
+        var space = state.spaces.find(function(s) { return s.id === state.selectedSpaceId; });
+        if (space) spaceName = space.name;
+      }
+      if (spaceValue) spaceValue.textContent = spaceName;
+
+      // Count tables
+      if (tablesValue) tablesValue.textContent = state.selectedTables.length.toString();
+
+      // Count fields
+      var totalFields = Object.values(state.selectedFieldsByTable).reduce(function(sum, arr) {
+        return sum + (arr ? arr.length : 0);
+      }, 0);
+      if (fieldsValue) fieldsValue.textContent = totalFields.toString();
+    }
+
+    function renderDeployState() {
+      var loadingEl = document.getElementById('deploy-loading');
+      var errorEl = document.getElementById('deploy-error');
+      var successEl = document.getElementById('deploy-success');
+      var deployBtn = document.getElementById('btn-deploy');
+
+      if (loadingEl) loadingEl.style.display = state.deployLoading ? 'block' : 'none';
+      if (errorEl) {
+        errorEl.style.display = state.deployError ? 'block' : 'none';
+        var errorMsg = errorEl.querySelector('.error-message');
+        if (errorMsg && state.deployError) errorMsg.textContent = state.deployError;
+      }
+      if (successEl) successEl.style.display = state.deployedAppId ? 'block' : 'none';
+      if (deployBtn) deployBtn.disabled = state.deployLoading;
     }
 
     // =============================================

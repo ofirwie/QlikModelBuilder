@@ -218,8 +218,65 @@ class WizardPanel {
                     case 'getSpaces':
                         await this.sendSpaces();
                         break;
+                    case 'createSpace':
+                        try {
+                            const space = await this._qlikApi.createSpace(message.name);
+                            this._panel.webview.postMessage({ type: 'spaceCreated', space });
+                        }
+                        catch (error) {
+                            this._panel.webview.postMessage({
+                                type: 'createSpaceError',
+                                message: error instanceof Error ? error.message : 'Failed to create space'
+                            });
+                        }
+                        break;
                     case 'getConnections':
                         await this.sendConnections();
+                        break;
+                    case 'createConnection':
+                        try {
+                            const connection = await this._qlikApi.createConnection({
+                                name: message.name,
+                                type: message.connectionType,
+                                spaceId: message.spaceId,
+                                connectionString: message.connectionString
+                            });
+                            this._panel.webview.postMessage({ type: 'connectionCreated', connection });
+                        }
+                        catch (error) {
+                            const errorMessage = error instanceof Error ? error.message : 'Failed to create connection';
+                            const correlationId = `create-conn-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                            // Determine error type
+                            let errorType = 'unknown';
+                            if (errorMessage.includes('400') || errorMessage.includes('already exists') || errorMessage.includes('invalid')) {
+                                errorType = 'validation';
+                            }
+                            else if (errorMessage.includes('401') || errorMessage.includes('Unauthorized')) {
+                                errorType = 'auth';
+                            }
+                            console.error(`[${correlationId}] Create connection error (${errorType}): ${errorMessage}`);
+                            this._panel.webview.postMessage({
+                                type: 'createConnectionError',
+                                message: errorMessage,
+                                errorType: errorType,
+                                correlationId: correlationId
+                            });
+                        }
+                        break;
+                    case 'openSettings':
+                        vscode.commands.executeCommand('workbench.action.openSettings', 'qlik');
+                        break;
+                    case 'getTables':
+                        await this.sendTables(message.connectionId);
+                        break;
+                    case 'getFields':
+                        await this.sendFields(message.tables);
+                        break;
+                    case 'deploy':
+                        await this.deployApp(message.appName, message.spaceId, message.script);
+                        break;
+                    case 'openApp':
+                        await this.openAppInBrowser(message.appId);
                         break;
                     case 'showInfo':
                         vscode.window.showInformationMessage(message.text);
@@ -268,8 +325,7 @@ class WizardPanel {
         }
         catch (err) {
             this._panel.webview.postMessage({
-                type: 'error',
-                source: 'spaces',
+                type: 'spacesError',
                 message: err instanceof Error ? err.message : 'Failed to load spaces'
             });
         }
@@ -280,12 +336,130 @@ class WizardPanel {
             this._panel.webview.postMessage({ type: 'connections', data: connections });
         }
         catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to load connections';
+            const correlationId = `conn-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            // Determine error type based on error message/status
+            let errorType = 'unknown';
+            if (errorMessage.includes('401') || errorMessage.includes('Unauthorized') || errorMessage.includes('authentication')) {
+                errorType = 'auth';
+            }
+            else if (errorMessage.includes('network') || errorMessage.includes('ECONNREFUSED') || errorMessage.includes('timeout')) {
+                errorType = 'network';
+            }
+            else if (errorMessage.includes('500') || errorMessage.includes('502') || errorMessage.includes('503')) {
+                errorType = 'server';
+            }
+            else if (errorMessage.includes('400') || errorMessage.includes('validation')) {
+                errorType = 'validation';
+            }
+            // Log to VS Code Output channel
+            console.error(`[${correlationId}] Connections error (${errorType}): ${errorMessage}`);
             this._panel.webview.postMessage({
-                type: 'error',
-                source: 'connections',
-                message: err instanceof Error ? err.message : 'Failed to load connections'
+                type: 'connectionsError',
+                message: errorMessage,
+                errorType: errorType,
+                correlationId: correlationId
             });
         }
+    }
+    async sendTables(connectionId) {
+        try {
+            const tables = await this._qlikApi.getTables(connectionId);
+            this._panel.webview.postMessage({ type: 'tables', data: tables });
+        }
+        catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to load tables';
+            const correlationId = `tables-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            // Determine error type based on error message/status
+            let errorType = 'unknown';
+            if (errorMessage.includes('401') || errorMessage.includes('Unauthorized') || errorMessage.includes('authentication')) {
+                errorType = 'auth';
+            }
+            else if (errorMessage.includes('network') || errorMessage.includes('ECONNREFUSED') || errorMessage.includes('timeout')) {
+                errorType = 'network';
+            }
+            else if (errorMessage.includes('500') || errorMessage.includes('502') || errorMessage.includes('503')) {
+                errorType = 'server';
+            }
+            else if (errorMessage.includes('400') || errorMessage.includes('validation')) {
+                errorType = 'validation';
+            }
+            // Log to VS Code Output channel
+            console.error(`[${correlationId}] Tables error (${errorType}): ${errorMessage}`);
+            this._panel.webview.postMessage({
+                type: 'tablesError',
+                message: errorMessage,
+                errorType: errorType,
+                correlationId: correlationId
+            });
+        }
+    }
+    async sendFields(tables) {
+        try {
+            const fieldsByTable = await this._qlikApi.getFields(tables);
+            this._panel.webview.postMessage({ type: 'fields', data: fieldsByTable });
+        }
+        catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to load fields';
+            const correlationId = `fields-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            // Determine error type based on error message/status
+            let errorType = 'unknown';
+            if (errorMessage.includes('401') || errorMessage.includes('Unauthorized') || errorMessage.includes('authentication')) {
+                errorType = 'auth';
+            }
+            else if (errorMessage.includes('network') || errorMessage.includes('ECONNREFUSED') || errorMessage.includes('timeout')) {
+                errorType = 'network';
+            }
+            else if (errorMessage.includes('500') || errorMessage.includes('502') || errorMessage.includes('503')) {
+                errorType = 'server';
+            }
+            else if (errorMessage.includes('400') || errorMessage.includes('validation')) {
+                errorType = 'validation';
+            }
+            // Log to VS Code Output channel
+            console.error(`[${correlationId}] Fields error (${errorType}): ${errorMessage}`);
+            this._panel.webview.postMessage({
+                type: 'fieldsError',
+                message: errorMessage,
+                errorType: errorType,
+                correlationId: correlationId
+            });
+        }
+    }
+    /**
+     * Deploy app to Qlik Cloud
+     */
+    async deployApp(appName, spaceId, script) {
+        try {
+            // Create the app
+            const app = await this._qlikApi.createApp(appName, spaceId);
+            // Update the app script
+            await this._qlikApi.updateAppScript(app.id, script);
+            // Trigger initial reload
+            const reloadResult = await this._qlikApi.reloadApp(app.id);
+            // Wait for reload to complete (with timeout)
+            await this._qlikApi.waitForReload(reloadResult.id, 120000);
+            this._panel.webview.postMessage({
+                type: 'deploySuccess',
+                appId: app.id
+            });
+        }
+        catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Deploy failed';
+            console.error('[Deploy] Error:', errorMessage);
+            this._panel.webview.postMessage({
+                type: 'deployError',
+                message: errorMessage
+            });
+        }
+    }
+    /**
+     * Open app in browser
+     */
+    async openAppInBrowser(appId) {
+        const credentials = this._qlikApi.getCredentials();
+        const url = `${credentials.tenantUrl}/sense/app/${appId}`;
+        vscode.env.openExternal(vscode.Uri.parse(url));
     }
     async handleSaveConfig(tenantUrl, apiKey) {
         console.log('handleSaveConfig called with:', tenantUrl);
@@ -1354,37 +1528,84 @@ JSON OUTPUT:`;
     </div>
   </div>
 
-  <!-- Step 3: Data Source / Connection -->
+  <!-- Step 3: Source Selection -->
   <div id="step-3" class="step-content" data-step="3" style="display: none;">
-    <h2>🔗 Data Source</h2>
+    <h2>Source Selection</h2>
     <p style="margin-bottom: 16px; color: var(--text-secondary);">
-      Select or configure your data source connection
+      Select or create a data connection
     </p>
-    <div id="connections-list">
-      <ul class="item-list">
-        <li data-connection="database">
-          <div class="item-info">
-            <span class="item-name">Database Connection</span>
-            <span class="item-type">Connect to SQL Server, PostgreSQL, etc.</span>
-          </div>
-        </li>
-        <li data-connection="rest">
-          <div class="item-info">
-            <span class="item-name">REST API</span>
-            <span class="item-type">Connect to REST endpoints</span>
-          </div>
-        </li>
-        <li data-connection="files">
-          <div class="item-info">
-            <span class="item-name">Data Files</span>
-            <span class="item-type">Load from CSV, Excel, QVD files</span>
-          </div>
-        </li>
-      </ul>
+
+    <!-- Loading State -->
+    <div id="connections-loading" class="loading-section" style="display: flex; padding: 20px; text-align: center; align-items: center; justify-content: center; gap: 8px;">
+      <span class="codicon codicon-loading codicon-modifier-spin"></span>
+      <span>Loading connections...</span>
     </div>
-    <div class="button-row">
-      <button class="btn btn-secondary btn-back-action">Back</button>
-      <button class="btn btn-primary btn-next-action">Next</button>
+
+    <!-- Error State -->
+    <div id="connections-error" class="error-section" style="display: none; padding: 20px; border: 1px solid var(--error-color); border-radius: 4px;">
+      <p class="error-message" style="color: var(--error-color); margin-bottom: 12px;"></p>
+      <p id="connections-error-id" style="font-size: 11px; color: var(--text-secondary); margin-bottom: 8px; display: none;">Error ID: <span></span></p>
+      <div class="error-actions">
+        <button id="btn-connections-retry" class="btn btn-secondary">Retry</button>
+        <button id="btn-connections-configure" class="btn btn-secondary" style="display: none; margin-left: 8px;">Configure Credentials</button>
+        <a id="btn-connections-report" href="#" style="display: none; margin-left: 8px; font-size: 12px;">Report Issue</a>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div id="connections-empty" class="empty-section" style="display: none; padding: 20px; text-align: center; color: var(--text-secondary);">
+      <p>No connections found. Create one below.</p>
+    </div>
+
+    <!-- Connections List -->
+    <div id="connections-list" style="display: none;">
+      <div class="section-box" style="margin-bottom: 16px;">
+        <h3 style="font-size: 12px; margin-bottom: 12px; color: var(--text-secondary);">Available Connections</h3>
+        <div id="connections-radio-list" class="radio-list" style="max-height: 250px; overflow-y: auto;">
+          <!-- Radio buttons rendered dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <hr style="border: none; border-top: 1px solid var(--border-color); margin: 16px 0;">
+
+    <!-- Create New Connection -->
+    <div id="create-connection-section" class="section-box">
+      <h3 style="font-size: 12px; margin-bottom: 12px; color: var(--text-secondary);">Or Create New Connection</h3>
+
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label for="connection-type" style="display: block; font-size: 12px; margin-bottom: 4px;">Connection Type</label>
+        <select id="connection-type" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-primary); color: var(--text-primary);">
+          <option value="">Select type...</option>
+          <option value="PostgreSQL">PostgreSQL</option>
+          <option value="MySQL">MySQL</option>
+          <option value="SQLServer">SQL Server</option>
+          <option value="REST">REST API</option>
+          <option value="folder">Folder (DataFiles)</option>
+        </select>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label for="new-connection-name" style="display: block; font-size: 12px; margin-bottom: 4px;">Connection Name</label>
+        <input type="text" id="new-connection-name" placeholder="My Database" maxlength="100"
+               style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-primary); color: var(--text-primary);" />
+      </div>
+
+      <div id="connection-params" class="form-group" style="display: none; margin-bottom: 12px;">
+        <label for="connection-string" style="display: block; font-size: 12px; margin-bottom: 4px;">Connection String</label>
+        <input type="text" id="connection-string" placeholder="host=localhost;port=5432;database=mydb"
+               style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-primary); color: var(--text-primary);" />
+      </div>
+
+      <button id="btn-create-connection" class="btn btn-secondary" disabled>
+        <span class="codicon codicon-add"></span> Create Connection
+      </button>
+      <span id="create-connection-error" class="error-text" style="display: none; color: var(--error-color); font-size: 12px; margin-left: 8px;"></span>
+    </div>
+
+    <div class="button-row" style="margin-top: 24px;">
+      <button class="btn btn-secondary" id="btn-back-3">Back</button>
+      <button class="btn btn-primary" id="btn-next-3" disabled>Next</button>
     </div>
   </div>
 
@@ -1394,46 +1615,99 @@ JSON OUTPUT:`;
     <p style="margin-bottom: 16px; color: var(--text-secondary);">
       Select tables to include in your data model
     </p>
-    <div id="tables-list">
-      <ul class="item-list">
-        <li data-table="customers">
-          <div class="item-info">
-            <span class="item-name">Customers</span>
-            <span class="item-type">Customer master data</span>
-          </div>
-        </li>
-        <li data-table="orders">
-          <div class="item-info">
-            <span class="item-name">Orders</span>
-            <span class="item-type">Sales orders</span>
-          </div>
-        </li>
-        <li data-table="products">
-          <div class="item-info">
-            <span class="item-name">Products</span>
-            <span class="item-type">Product catalog</span>
-          </div>
-        </li>
-      </ul>
+
+    <div id="tables-loading" class="loading-section" style="display: flex; align-items: center; gap: 12px; padding: 24px; justify-content: center;">
+      <div class="spinner"></div>
+      <span>Loading tables...</span>
     </div>
-    <div class="button-row">
-      <button class="btn btn-secondary btn-back-action">Back</button>
-      <button class="btn btn-primary btn-next-action">Next</button>
+
+    <div id="tables-error" class="error-section" style="display: none; background: var(--error-bg, rgba(255,0,0,0.1)); padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+      <p class="error-message" style="color: var(--error-color, #f44336); margin-bottom: 12px;"></p>
+      <p id="tables-error-id" style="font-size: 11px; color: var(--text-secondary); margin-bottom: 12px;">Error ID: <span></span></p>
+      <div class="error-actions" style="display: flex; gap: 8px;">
+        <button id="btn-tables-retry" class="btn btn-secondary">
+          <span class="codicon codicon-refresh"></span> Retry
+        </button>
+      </div>
+    </div>
+
+    <div id="tables-empty" class="empty-section" style="display: none; text-align: center; padding: 32px; color: var(--text-secondary);">
+      <p>No tables found in this connection.</p>
+      <p class="empty-hint" style="font-size: 12px; margin-top: 8px;">Check that the connection has proper permissions.</p>
+    </div>
+
+    <div id="tables-list" style="display: none;">
+      <div class="tables-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <label class="select-all-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+          <input type="checkbox" id="tables-select-all">
+          <span>Select All</span>
+        </label>
+        <span id="tables-count" class="count-badge" style="background: var(--button-primary-bg, #0078d4); color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px;">0 selected</span>
+      </div>
+      <div class="tables-filter" style="margin-bottom: 12px;">
+        <input type="text" id="tables-search" placeholder="Filter tables..." style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 4px; background: var(--input-bg); color: var(--input-fg);">
+      </div>
+      <div id="tables-checkbox-list" class="checkbox-list" style="max-height: 300px; overflow-y: auto; border: 1px solid var(--input-border); border-radius: 4px; padding: 8px;">
+        <!-- Dynamic table checkboxes -->
+      </div>
+    </div>
+
+    <div class="button-row" style="margin-top: 24px; display: flex; justify-content: space-between;">
+      <button class="btn btn-secondary" id="btn-back-4">Back</button>
+      <button class="btn btn-primary" id="btn-next-4" disabled>Next</button>
     </div>
   </div>
 
-  <!-- Step 5: Field Mapping -->
+  <!-- Step 5: Field Configuration -->
   <div id="step-5" class="step-content" data-step="5" style="display: none;">
-    <h2>🔧 Field Mapping</h2>
+    <h2>🔧 Field Configuration</h2>
     <p style="margin-bottom: 16px; color: var(--text-secondary);">
-      Configure field mappings and relationships
+      Select fields to include for each table
     </p>
-    <div id="fields-config">
-      <p>Field mapping configuration will appear here based on selected tables.</p>
+
+    <div id="fields-loading" class="loading-section" style="display: flex; align-items: center; gap: 12px; padding: 24px; justify-content: center;">
+      <div class="spinner"></div>
+      <span>Loading fields...</span>
     </div>
-    <div class="button-row">
-      <button class="btn btn-secondary btn-back-action">Back</button>
-      <button class="btn btn-primary btn-next-action">Next</button>
+
+    <div id="fields-error" class="error-section" style="display: none; background: var(--error-bg, rgba(255,0,0,0.1)); padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+      <p class="error-message" style="color: var(--error-color, #f44336); margin-bottom: 12px;"></p>
+      <p id="fields-error-id" style="font-size: 11px; color: var(--text-secondary); margin-bottom: 12px;">Error ID: <span></span></p>
+      <div class="error-actions" style="display: flex; gap: 8px;">
+        <button id="btn-fields-retry" class="btn btn-secondary">
+          <span class="codicon codicon-refresh"></span> Retry
+        </button>
+      </div>
+    </div>
+
+    <div id="fields-list" style="display: none;">
+      <div class="fields-table-selector" style="margin-bottom: 16px;">
+        <label for="field-table-select" style="display: block; margin-bottom: 4px; font-weight: 500;">Select Table:</label>
+        <select id="field-table-select" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 4px; background: var(--input-bg); color: var(--input-fg);">
+          <!-- Dynamic table options -->
+        </select>
+      </div>
+
+      <div class="fields-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <label class="select-all-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+          <input type="checkbox" id="fields-select-all">
+          <span>Select All Fields</span>
+        </label>
+        <span id="fields-count" class="count-badge" style="background: var(--button-primary-bg, #0078d4); color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px;">0 selected</span>
+      </div>
+
+      <div class="fields-filter" style="margin-bottom: 12px;">
+        <input type="text" id="fields-search" placeholder="Filter fields..." style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 4px; background: var(--input-bg); color: var(--input-fg);">
+      </div>
+
+      <div id="fields-checkbox-list" class="checkbox-list" style="max-height: 300px; overflow-y: auto; border: 1px solid var(--input-border); border-radius: 4px; padding: 8px;">
+        <!-- Dynamic field checkboxes -->
+      </div>
+    </div>
+
+    <div class="button-row" style="margin-top: 24px; display: flex; justify-content: space-between;">
+      <button class="btn btn-secondary" id="btn-back-5">Back</button>
+      <button class="btn btn-primary" id="btn-next-5" disabled>Next</button>
     </div>
   </div>
 
@@ -1443,12 +1717,42 @@ JSON OUTPUT:`;
     <p style="margin-bottom: 16px; color: var(--text-secondary);">
       Configure incremental load settings for each table
     </p>
-    <div id="incremental-config">
-      <p>Incremental load configuration will appear here based on selected tables.</p>
+
+    <div class="incremental-table-selector" style="margin-bottom: 16px;">
+      <label for="incremental-table-select" style="display: block; margin-bottom: 4px; font-weight: 500;">Select Table:</label>
+      <select id="incremental-table-select" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 4px; background: var(--input-bg); color: var(--input-fg);">
+        <!-- Dynamic table options -->
+      </select>
     </div>
-    <div class="button-row">
-      <button class="btn btn-secondary btn-back-action">Back</button>
-      <button class="btn btn-primary btn-next-action">Next</button>
+
+    <div id="incremental-config" style="background: var(--card-bg, rgba(0,0,0,0.1)); padding: 16px; border-radius: 8px;">
+      <div class="config-row" style="margin-bottom: 12px;">
+        <label for="incremental-mode" style="display: block; margin-bottom: 4px; font-weight: 500;">Load Mode:</label>
+        <select id="incremental-mode" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 4px; background: var(--input-bg); color: var(--input-fg);">
+          <option value="full">Full Load (Replace all data)</option>
+          <option value="incremental">Incremental (Append new rows)</option>
+          <option value="upsert">Upsert (Update or Insert)</option>
+        </select>
+      </div>
+
+      <div id="incremental-options" style="display: none;">
+        <div class="config-row" style="margin-bottom: 12px;">
+          <label for="timestamp-field" style="display: block; margin-bottom: 4px; font-weight: 500;">Timestamp Field:</label>
+          <input type="text" id="timestamp-field" placeholder="e.g., updated_at" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 4px; background: var(--input-bg); color: var(--input-fg);">
+          <span style="font-size: 11px; color: var(--text-secondary);">Field used to detect changes</span>
+        </div>
+
+        <div class="config-row" style="margin-bottom: 12px;">
+          <label for="key-field" style="display: block; margin-bottom: 4px; font-weight: 500;">Key Field:</label>
+          <input type="text" id="key-field" placeholder="e.g., id" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 4px; background: var(--input-bg); color: var(--input-fg);">
+          <span style="font-size: 11px; color: var(--text-secondary);">Primary key for upsert operations</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="button-row" style="margin-top: 24px; display: flex; justify-content: space-between;">
+      <button class="btn btn-secondary" id="btn-back-6">Back</button>
+      <button class="btn btn-primary" id="btn-next-6">Next</button>
     </div>
   </div>
 
@@ -1458,12 +1762,49 @@ JSON OUTPUT:`;
     <p style="margin-bottom: 16px; color: var(--text-secondary);">
       Review your configuration and deploy the app
     </p>
-    <div id="review-summary">
-      <p>Review summary will appear here.</p>
+
+    <div id="review-summary" style="background: var(--card-bg, rgba(0,0,0,0.1)); padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+      <div id="review-space" class="review-row" style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--input-border);">
+        <span>Space:</span>
+        <span id="review-space-value" style="font-weight: 500;">-</span>
+      </div>
+      <div id="review-connection" class="review-row" style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--input-border);">
+        <span>Connection:</span>
+        <span id="review-connection-value" style="font-weight: 500;">-</span>
+      </div>
+      <div id="review-tables" class="review-row" style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--input-border);">
+        <span>Tables:</span>
+        <span id="review-tables-value" style="font-weight: 500;">0</span>
+      </div>
+      <div id="review-fields" class="review-row" style="display: flex; justify-content: space-between; padding: 8px 0;">
+        <span>Total Fields:</span>
+        <span id="review-fields-value" style="font-weight: 500;">0</span>
+      </div>
     </div>
-    <div class="button-row">
-      <button class="btn btn-secondary btn-back-action">Back</button>
-      <button class="btn btn-primary" style="background: var(--qlik-green);">Deploy App</button>
+
+    <div class="app-name-section" style="margin-bottom: 16px;">
+      <label for="app-name" style="display: block; margin-bottom: 4px; font-weight: 500;">App Name:</label>
+      <input type="text" id="app-name" placeholder="My Data Model" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 4px; background: var(--input-bg); color: var(--input-fg);">
+    </div>
+
+    <div id="deploy-loading" style="display: none; text-align: center; padding: 24px;">
+      <div class="spinner"></div>
+      <span>Deploying...</span>
+    </div>
+
+    <div id="deploy-error" class="error-section" style="display: none; background: var(--error-bg, rgba(255,0,0,0.1)); padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+      <p class="error-message" style="color: var(--error-color, #f44336);"></p>
+      <button id="btn-deploy-retry" class="btn btn-secondary" style="margin-top: 8px;">Retry</button>
+    </div>
+
+    <div id="deploy-success" style="display: none; background: var(--success-bg, rgba(0,255,0,0.1)); padding: 16px; border-radius: 8px; margin-bottom: 16px; text-align: center;">
+      <p style="color: var(--success-color, #4caf50); font-weight: 500;">✅ App deployed successfully!</p>
+      <button id="btn-open-app" class="btn btn-primary" style="margin-top: 8px;">Open in Qlik Cloud</button>
+    </div>
+
+    <div class="button-row" style="margin-top: 24px; display: flex; justify-content: space-between;">
+      <button class="btn btn-secondary" id="btn-back-7">Back</button>
+      <button class="btn btn-primary" id="btn-deploy" style="background: var(--qlik-green, #4caf50);">Deploy App</button>
     </div>
   </div>
 

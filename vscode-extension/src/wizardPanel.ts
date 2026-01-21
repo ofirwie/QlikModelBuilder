@@ -365,6 +365,14 @@ export class WizardPanel {
             await this.sendFields(message.tables);
             break;
 
+          case 'deploy':
+            await this.deployApp(message.appName, message.spaceId, message.script);
+            break;
+
+          case 'openApp':
+            await this.openAppInBrowser(message.appId);
+            break;
+
           case 'showInfo':
             vscode.window.showInformationMessage(message.text);
             break;
@@ -521,6 +529,47 @@ export class WizardPanel {
         correlationId: correlationId
       });
     }
+  }
+
+  /**
+   * Deploy app to Qlik Cloud
+   */
+  private async deployApp(appName: string, spaceId: string, script: string): Promise<void> {
+    try {
+      // Create the app
+      const app = await this._qlikApi.createApp(appName, spaceId);
+
+      // Update the app script
+      await this._qlikApi.updateAppScript(app.id, script);
+
+      // Trigger initial reload
+      const reloadResult = await this._qlikApi.reloadApp(app.id);
+
+      // Wait for reload to complete (with timeout)
+      await this._qlikApi.waitForReload(reloadResult.id, 120000);
+
+      this._panel.webview.postMessage({
+        type: 'deploySuccess',
+        appId: app.id
+      });
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Deploy failed';
+      console.error('[Deploy] Error:', errorMessage);
+
+      this._panel.webview.postMessage({
+        type: 'deployError',
+        message: errorMessage
+      });
+    }
+  }
+
+  /**
+   * Open app in browser
+   */
+  private async openAppInBrowser(appId: string): Promise<void> {
+    const credentials = this._qlikApi.getCredentials();
+    const url = `${credentials.tenantUrl}/sense/app/${appId}`;
+    vscode.env.openExternal(vscode.Uri.parse(url));
   }
 
   private async handleSaveConfig(tenantUrl: string, apiKey: string): Promise<void> {
@@ -1971,12 +2020,42 @@ JSON OUTPUT:`;
     <p style="margin-bottom: 16px; color: var(--text-secondary);">
       Configure incremental load settings for each table
     </p>
-    <div id="incremental-config">
-      <p>Incremental load configuration will appear here based on selected tables.</p>
+
+    <div class="incremental-table-selector" style="margin-bottom: 16px;">
+      <label for="incremental-table-select" style="display: block; margin-bottom: 4px; font-weight: 500;">Select Table:</label>
+      <select id="incremental-table-select" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 4px; background: var(--input-bg); color: var(--input-fg);">
+        <!-- Dynamic table options -->
+      </select>
     </div>
-    <div class="button-row">
-      <button class="btn btn-secondary btn-back-action">Back</button>
-      <button class="btn btn-primary btn-next-action">Next</button>
+
+    <div id="incremental-config" style="background: var(--card-bg, rgba(0,0,0,0.1)); padding: 16px; border-radius: 8px;">
+      <div class="config-row" style="margin-bottom: 12px;">
+        <label for="incremental-mode" style="display: block; margin-bottom: 4px; font-weight: 500;">Load Mode:</label>
+        <select id="incremental-mode" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 4px; background: var(--input-bg); color: var(--input-fg);">
+          <option value="full">Full Load (Replace all data)</option>
+          <option value="incremental">Incremental (Append new rows)</option>
+          <option value="upsert">Upsert (Update or Insert)</option>
+        </select>
+      </div>
+
+      <div id="incremental-options" style="display: none;">
+        <div class="config-row" style="margin-bottom: 12px;">
+          <label for="timestamp-field" style="display: block; margin-bottom: 4px; font-weight: 500;">Timestamp Field:</label>
+          <input type="text" id="timestamp-field" placeholder="e.g., updated_at" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 4px; background: var(--input-bg); color: var(--input-fg);">
+          <span style="font-size: 11px; color: var(--text-secondary);">Field used to detect changes</span>
+        </div>
+
+        <div class="config-row" style="margin-bottom: 12px;">
+          <label for="key-field" style="display: block; margin-bottom: 4px; font-weight: 500;">Key Field:</label>
+          <input type="text" id="key-field" placeholder="e.g., id" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 4px; background: var(--input-bg); color: var(--input-fg);">
+          <span style="font-size: 11px; color: var(--text-secondary);">Primary key for upsert operations</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="button-row" style="margin-top: 24px; display: flex; justify-content: space-between;">
+      <button class="btn btn-secondary" id="btn-back-6">Back</button>
+      <button class="btn btn-primary" id="btn-next-6">Next</button>
     </div>
   </div>
 
@@ -1986,12 +2065,49 @@ JSON OUTPUT:`;
     <p style="margin-bottom: 16px; color: var(--text-secondary);">
       Review your configuration and deploy the app
     </p>
-    <div id="review-summary">
-      <p>Review summary will appear here.</p>
+
+    <div id="review-summary" style="background: var(--card-bg, rgba(0,0,0,0.1)); padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+      <div id="review-space" class="review-row" style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--input-border);">
+        <span>Space:</span>
+        <span id="review-space-value" style="font-weight: 500;">-</span>
+      </div>
+      <div id="review-connection" class="review-row" style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--input-border);">
+        <span>Connection:</span>
+        <span id="review-connection-value" style="font-weight: 500;">-</span>
+      </div>
+      <div id="review-tables" class="review-row" style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--input-border);">
+        <span>Tables:</span>
+        <span id="review-tables-value" style="font-weight: 500;">0</span>
+      </div>
+      <div id="review-fields" class="review-row" style="display: flex; justify-content: space-between; padding: 8px 0;">
+        <span>Total Fields:</span>
+        <span id="review-fields-value" style="font-weight: 500;">0</span>
+      </div>
     </div>
-    <div class="button-row">
-      <button class="btn btn-secondary btn-back-action">Back</button>
-      <button class="btn btn-primary" style="background: var(--qlik-green);">Deploy App</button>
+
+    <div class="app-name-section" style="margin-bottom: 16px;">
+      <label for="app-name" style="display: block; margin-bottom: 4px; font-weight: 500;">App Name:</label>
+      <input type="text" id="app-name" placeholder="My Data Model" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 4px; background: var(--input-bg); color: var(--input-fg);">
+    </div>
+
+    <div id="deploy-loading" style="display: none; text-align: center; padding: 24px;">
+      <div class="spinner"></div>
+      <span>Deploying...</span>
+    </div>
+
+    <div id="deploy-error" class="error-section" style="display: none; background: var(--error-bg, rgba(255,0,0,0.1)); padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+      <p class="error-message" style="color: var(--error-color, #f44336);"></p>
+      <button id="btn-deploy-retry" class="btn btn-secondary" style="margin-top: 8px;">Retry</button>
+    </div>
+
+    <div id="deploy-success" style="display: none; background: var(--success-bg, rgba(0,255,0,0.1)); padding: 16px; border-radius: 8px; margin-bottom: 16px; text-align: center;">
+      <p style="color: var(--success-color, #4caf50); font-weight: 500;">✅ App deployed successfully!</p>
+      <button id="btn-open-app" class="btn btn-primary" style="margin-top: 8px;">Open in Qlik Cloud</button>
+    </div>
+
+    <div class="button-row" style="margin-top: 24px; display: flex; justify-content: space-between;">
+      <button class="btn btn-secondary" id="btn-back-7">Back</button>
+      <button class="btn btn-primary" id="btn-deploy" style="background: var(--qlik-green, #4caf50);">Deploy App</button>
     </div>
   </div>
 
