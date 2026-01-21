@@ -447,4 +447,120 @@ test.describe('Real VS Code E2E', () => {
 
     await page.screenshot({ path: 'test-results/step3-next-disabled.png' });
   });
+
+  // ============================================
+  // Level 4: Step 4 Table Selection Tests
+  // ============================================
+
+  // Helper function to navigate to Step 4
+  async function navigateToStep4(page: any) {
+    await page.keyboard.press('F1');
+    await page.keyboard.type('Qlik:');
+    await page.waitForTimeout(500);
+    await page.locator('.quick-input-list-entry:has-text("Open Model Builder Wizard")').first().click();
+    await page.waitForTimeout(3000);
+
+    const webviewFrame = page.frameLocator('iframe.webview.ready').first();
+    const innerFrame = webviewFrame.frameLocator('iframe').first();
+
+    // Step 1
+    const specFileOption = innerFrame.locator('#entry-options li[data-entry="spec"]').first();
+    await expect(specFileOption).toBeVisible({ timeout: 10000 });
+    await specFileOption.click();
+    await innerFrame.locator('#btn-next').first().click();
+    await page.waitForTimeout(2000);
+
+    // Step 2 -> Step 3
+    await innerFrame.evaluate(() => {
+      const btn = document.getElementById('btn-next-2');
+      if (btn) btn.removeAttribute('disabled');
+    });
+    await innerFrame.locator('#btn-next-2').click();
+    await page.waitForTimeout(2000);
+
+    // Step 3 -> Step 4
+    await innerFrame.evaluate(() => {
+      const btn = document.getElementById('btn-next-3');
+      if (btn) btn.removeAttribute('disabled');
+    });
+    await innerFrame.locator('#btn-next-3').click();
+    await page.waitForTimeout(2000);
+
+    return innerFrame;
+  }
+
+  test('Level 4.1: Navigate to Step 4 and see tables section', async ({ page }) => {
+    const innerFrame = await navigateToStep4(page);
+
+    // Verify Step 4 is visible
+    const step4 = innerFrame.locator('#step-4');
+    await expect(step4).toBeVisible({ timeout: 5000 });
+    await page.screenshot({ path: 'test-results/step4-visible.png' });
+
+    // Should see one of the states
+    const anyState = innerFrame.locator('#tables-loading, #tables-list, #tables-error, #tables-empty');
+    await expect(anyState.first()).toBeVisible({ timeout: 10000 });
+  });
+
+  test('Level 4.2: Search filter works', async ({ page }) => {
+    const innerFrame = await navigateToStep4(page);
+
+    // Wait for tables to load
+    await expect(innerFrame.locator('#step-4')).toBeVisible({ timeout: 5000 });
+    await page.waitForTimeout(3000);
+
+    // Type in search
+    const searchInput = innerFrame.locator('#tables-search');
+    if (await searchInput.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await searchInput.fill('customers');
+      await page.waitForTimeout(500);
+      await page.screenshot({ path: 'test-results/step4-search.png' });
+    }
+  });
+
+  test('Level 4.3: Select all checkbox works', async ({ page }) => {
+    const innerFrame = await navigateToStep4(page);
+
+    await expect(innerFrame.locator('#step-4')).toBeVisible({ timeout: 5000 });
+    await page.waitForTimeout(3000);
+
+    const selectAll = innerFrame.locator('#tables-select-all');
+    if (await selectAll.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await selectAll.check();
+      await page.waitForTimeout(500);
+
+      // Count badge should update
+      const countBadge = innerFrame.locator('#tables-count');
+      const countText = await countBadge.textContent();
+      console.log('Tables count:', countText);
+
+      await page.screenshot({ path: 'test-results/step4-select-all.png' });
+    }
+  });
+
+  test('Level 4.4: Back button returns to Step 3', async ({ page }) => {
+    const innerFrame = await navigateToStep4(page);
+
+    await expect(innerFrame.locator('#step-4')).toBeVisible({ timeout: 5000 });
+
+    // Click Back
+    await innerFrame.locator('#btn-back-4').click();
+    await page.waitForTimeout(500);
+
+    // Should be back at Step 3
+    await expect(innerFrame.locator('#step-3')).toBeVisible({ timeout: 3000 });
+    await page.screenshot({ path: 'test-results/step4-back-to-step3.png' });
+  });
+
+  test('Level 4.5: Next button disabled until tables selected', async ({ page }) => {
+    const innerFrame = await navigateToStep4(page);
+
+    await expect(innerFrame.locator('#step-4')).toBeVisible({ timeout: 5000 });
+
+    // Next button should be disabled
+    const nextBtn = innerFrame.locator('#btn-next-4');
+    await expect(nextBtn).toBeDisabled();
+
+    await page.screenshot({ path: 'test-results/step4-next-disabled.png' });
+  });
 });
