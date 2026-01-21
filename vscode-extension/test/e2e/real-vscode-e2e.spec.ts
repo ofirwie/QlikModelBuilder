@@ -219,4 +219,232 @@ test.describe('Real VS Code E2E', () => {
       console.log('Spaces error:', errorText);
     }
   });
+
+  // ============================================
+  // Level 3: Step 3 Source Selection Tests
+  // ============================================
+
+  test('Level 3.1: Navigate to Step 3 and see connections section', async ({ page }) => {
+    // Open wizard
+    await page.keyboard.press('F1');
+    await page.keyboard.type('Qlik:');
+    await page.waitForTimeout(500);
+    await page.locator('.quick-input-list-entry:has-text("Open Model Builder Wizard")').first().click();
+    await page.waitForTimeout(3000);
+
+    // Navigate iframe structure
+    const webviewFrame = page.frameLocator('iframe.webview.ready').first();
+    const innerFrame = webviewFrame.frameLocator('iframe').first();
+
+    // Step 1: Select entry option
+    const specFileOption = innerFrame.locator('#entry-options li[data-entry="spec"]').first();
+    await expect(specFileOption).toBeVisible({ timeout: 10000 });
+    await specFileOption.click();
+    await page.waitForTimeout(500);
+
+    // Go to Step 2
+    const nextBtn1 = innerFrame.locator('#btn-next').first();
+    await nextBtn1.click();
+    await page.waitForTimeout(2000);
+
+    // Step 2: Wait for spaces to load and select one (or skip if error)
+    const step2 = innerFrame.locator('#step-2');
+    await expect(step2).toBeVisible({ timeout: 5000 });
+    await page.waitForTimeout(3000);
+
+    // Check if spaces are available
+    const spacesList = innerFrame.locator('#spaces-list');
+    const hasSpaces = await spacesList.isVisible().catch(() => false);
+
+    if (hasSpaces) {
+      // Select first space
+      const firstSpace = innerFrame.locator('#spaces-radio-list input[type="radio"]').first();
+      if (await firstSpace.isVisible().catch(() => false)) {
+        await firstSpace.check();
+        await page.waitForTimeout(500);
+      }
+    }
+
+    // Go to Step 3 - remove disabled if needed
+    await innerFrame.evaluate(() => {
+      const btn = document.getElementById('btn-next-2');
+      if (btn) btn.removeAttribute('disabled');
+    });
+    await innerFrame.locator('#btn-next-2').click();
+    await page.waitForTimeout(2000);
+
+    // Verify Step 3 is visible
+    const step3 = innerFrame.locator('#step-3');
+    await expect(step3).toBeVisible({ timeout: 5000 });
+    await page.screenshot({ path: 'test-results/step3-visible.png' });
+
+    // Should see one of the states (loading, list, error, or empty)
+    const anyState = innerFrame.locator('#connections-loading, #connections-list, #connections-error, #connections-empty');
+    await expect(anyState.first()).toBeVisible({ timeout: 10000 });
+  });
+
+  test('Level 3.2: Create connection form validation', async ({ page }) => {
+    // Open wizard and navigate to Step 3
+    await page.keyboard.press('F1');
+    await page.keyboard.type('Qlik:');
+    await page.waitForTimeout(500);
+    await page.locator('.quick-input-list-entry:has-text("Open Model Builder Wizard")').first().click();
+    await page.waitForTimeout(3000);
+
+    const webviewFrame = page.frameLocator('iframe.webview.ready').first();
+    const innerFrame = webviewFrame.frameLocator('iframe').first();
+
+    // Navigate to Step 3
+    const specFileOption = innerFrame.locator('#entry-options li[data-entry="spec"]').first();
+    await expect(specFileOption).toBeVisible({ timeout: 10000 });
+    await specFileOption.click();
+    await innerFrame.locator('#btn-next').first().click();
+    await page.waitForTimeout(2000);
+
+    // Force navigate to Step 3
+    await innerFrame.evaluate(() => {
+      const btn = document.getElementById('btn-next-2');
+      if (btn) btn.removeAttribute('disabled');
+    });
+    await innerFrame.locator('#btn-next-2').click();
+    await page.waitForTimeout(2000);
+
+    // Verify Step 3 is visible
+    await expect(innerFrame.locator('#step-3')).toBeVisible({ timeout: 5000 });
+
+    // Create connection button should be disabled initially
+    const createBtn = innerFrame.locator('#btn-create-connection');
+    await expect(createBtn).toBeDisabled();
+
+    // Fill name only - still disabled
+    await innerFrame.locator('#new-connection-name').fill('Test Connection');
+    await page.waitForTimeout(300);
+    await expect(createBtn).toBeDisabled();
+
+    // Select type - now enabled
+    await innerFrame.locator('#connection-type').selectOption('PostgreSQL');
+    await page.waitForTimeout(300);
+    await expect(createBtn).toBeEnabled();
+
+    await page.screenshot({ path: 'test-results/step3-create-form.png' });
+  });
+
+  test('Level 3.3: Connection type shows/hides connection string field', async ({ page }) => {
+    // Open wizard and navigate to Step 3
+    await page.keyboard.press('F1');
+    await page.keyboard.type('Qlik:');
+    await page.waitForTimeout(500);
+    await page.locator('.quick-input-list-entry:has-text("Open Model Builder Wizard")').first().click();
+    await page.waitForTimeout(3000);
+
+    const webviewFrame = page.frameLocator('iframe.webview.ready').first();
+    const innerFrame = webviewFrame.frameLocator('iframe').first();
+
+    // Navigate to Step 3
+    const specFileOption = innerFrame.locator('#entry-options li[data-entry="spec"]').first();
+    await expect(specFileOption).toBeVisible({ timeout: 10000 });
+    await specFileOption.click();
+    await innerFrame.locator('#btn-next').first().click();
+    await page.waitForTimeout(2000);
+
+    await innerFrame.evaluate(() => {
+      const btn = document.getElementById('btn-next-2');
+      if (btn) btn.removeAttribute('disabled');
+    });
+    await innerFrame.locator('#btn-next-2').click();
+    await page.waitForTimeout(2000);
+
+    // Verify Step 3 is visible
+    await expect(innerFrame.locator('#step-3')).toBeVisible({ timeout: 5000 });
+
+    // Connection params should be hidden initially
+    const paramsField = innerFrame.locator('#connection-params');
+    await expect(paramsField).toBeHidden();
+
+    // Select PostgreSQL - should show connection string
+    await innerFrame.locator('#connection-type').selectOption('PostgreSQL');
+    await page.waitForTimeout(300);
+    await expect(paramsField).toBeVisible();
+
+    // Select folder - should hide connection string
+    await innerFrame.locator('#connection-type').selectOption('folder');
+    await page.waitForTimeout(300);
+    await expect(paramsField).toBeHidden();
+
+    await page.screenshot({ path: 'test-results/step3-connection-params.png' });
+  });
+
+  test('Level 3.4: Back button returns to Step 2', async ({ page }) => {
+    // Open wizard and navigate to Step 3
+    await page.keyboard.press('F1');
+    await page.keyboard.type('Qlik:');
+    await page.waitForTimeout(500);
+    await page.locator('.quick-input-list-entry:has-text("Open Model Builder Wizard")').first().click();
+    await page.waitForTimeout(3000);
+
+    const webviewFrame = page.frameLocator('iframe.webview.ready').first();
+    const innerFrame = webviewFrame.frameLocator('iframe').first();
+
+    // Navigate to Step 3
+    const specFileOption = innerFrame.locator('#entry-options li[data-entry="spec"]').first();
+    await expect(specFileOption).toBeVisible({ timeout: 10000 });
+    await specFileOption.click();
+    await innerFrame.locator('#btn-next').first().click();
+    await page.waitForTimeout(2000);
+
+    await innerFrame.evaluate(() => {
+      const btn = document.getElementById('btn-next-2');
+      if (btn) btn.removeAttribute('disabled');
+    });
+    await innerFrame.locator('#btn-next-2').click();
+    await page.waitForTimeout(2000);
+
+    // Verify Step 3 is visible
+    await expect(innerFrame.locator('#step-3')).toBeVisible({ timeout: 5000 });
+
+    // Click Back button
+    await innerFrame.locator('#btn-back-3').click();
+    await page.waitForTimeout(500);
+
+    // Should be back at Step 2
+    const step2 = innerFrame.locator('#step-2');
+    await expect(step2).toBeVisible({ timeout: 3000 });
+
+    await page.screenshot({ path: 'test-results/step3-back-to-step2.png' });
+  });
+
+  test('Level 3.5: Next button disabled until connection selected', async ({ page }) => {
+    // Open wizard and navigate to Step 3
+    await page.keyboard.press('F1');
+    await page.keyboard.type('Qlik:');
+    await page.waitForTimeout(500);
+    await page.locator('.quick-input-list-entry:has-text("Open Model Builder Wizard")').first().click();
+    await page.waitForTimeout(3000);
+
+    const webviewFrame = page.frameLocator('iframe.webview.ready').first();
+    const innerFrame = webviewFrame.frameLocator('iframe').first();
+
+    // Navigate to Step 3
+    const specFileOption = innerFrame.locator('#entry-options li[data-entry="spec"]').first();
+    await expect(specFileOption).toBeVisible({ timeout: 10000 });
+    await specFileOption.click();
+    await innerFrame.locator('#btn-next').first().click();
+    await page.waitForTimeout(2000);
+
+    await innerFrame.evaluate(() => {
+      const btn = document.getElementById('btn-next-2');
+      if (btn) btn.removeAttribute('disabled');
+    });
+    await innerFrame.locator('#btn-next-2').click();
+    await page.waitForTimeout(2000);
+
+    // Verify Step 3 is visible
+    await expect(innerFrame.locator('#step-3')).toBeVisible({ timeout: 5000 });
+
+    // Next button should be disabled (no connection selected)
+    const nextBtn = innerFrame.locator('#btn-next-3');
+    await expect(nextBtn).toBeDisabled();
+
+    await page.screenshot({ path: 'test-results/step3-next-disabled.png' });
+  });
 });
