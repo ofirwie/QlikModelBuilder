@@ -344,6 +344,88 @@ export interface GeminiReviewResponse {
 }
 
 // ============================================================================
+// Section 5.5: Script Builder Types
+// ============================================================================
+
+/**
+ * Configuration for script building
+ */
+export interface BuildConfig {
+  /** Project name for script header */
+  project_name: string;
+  /** Path to QVD files (e.g., 'lib://QVD/') */
+  qvd_path: string;
+  /** Calendar language ('EN' | 'HE') */
+  calendar_language: 'EN' | 'HE';
+  /** Whether to use AUTONUMBER for Link Table keys */
+  use_autonumber: boolean;
+}
+
+/**
+ * Context for building a script stage
+ */
+export interface BuildContext {
+  /** Current session state */
+  session: ModelBuilderSession;
+  /** Enriched model specification */
+  spec: EnrichedModelSpec;
+  /** Analysis results with classifications */
+  analysis: AnalysisResult;
+  /** Build configuration */
+  config: BuildConfig;
+}
+
+/**
+ * Output from building a single stage
+ */
+export interface StageScript {
+  /** Build stage identifier */
+  stage: BuildStage;
+  /** Generated Qlik script content */
+  script: string;
+  /** Table names included in this stage */
+  tables_included: string[];
+  /** Estimated number of lines in script */
+  estimated_lines: number;
+}
+
+/**
+ * Result of script validation
+ */
+export interface ScriptValidationResult {
+  /** Whether script is valid */
+  valid: boolean;
+  /** List of validation errors */
+  errors: ScriptValidationError[];
+  /** List of validation warnings */
+  warnings: ScriptValidationWarning[];
+}
+
+/**
+ * Script validation error
+ */
+export interface ScriptValidationError {
+  /** Line number (1-based) */
+  line?: number;
+  /** Error message */
+  message: string;
+  /** Error code */
+  code: string;
+}
+
+/**
+ * Script validation warning
+ */
+export interface ScriptValidationWarning {
+  /** Line number (1-based) */
+  line?: number;
+  /** Warning message */
+  message: string;
+  /** Warning code */
+  code: string;
+}
+
+// ============================================================================
 // Section 6: Session State
 // ============================================================================
 
