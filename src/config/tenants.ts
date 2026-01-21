@@ -18,27 +18,19 @@ export interface TenantsConfig {
 }
 
 // Hardcoded tenant configurations
-// API keys are loaded from environment or hardcoded for specific tenants
-// QLIK_API_KEY_REAL is set by Jest setup before it mocks the real key
+// API keys are loaded from environment variables
 const TENANT_CONFIGS: TenantConfig[] = [
   {
-    id: 'sysaid-main',
-    name: 'SysAid Main',
-    url: 'https://sysaid-main.eu.qlikcloud.com',
-    apiKey: process.env.QLIK_API_KEY_REAL || process.env.QLIK_API_KEY || '',
-    description: 'Main SysAid analytics tenant',
-  },
-  {
-    id: 'sysaid-internal',
-    name: 'SysAid Internal IT',
-    url: 'https://sysaid-sysaidinternalit.eu.qlikcloud.com',
-    apiKey: process.env.QLIK_API_KEY_INTERNAL || 'eyJhbGciOiJFUzM4NCIsImtpZCI6IjU2NjQzM2FmLTJhNWUtNDk0Mi1iZjBkLWQ3Y2MzMzFlM2Q3NyIsInR5cCI6IkpXVCJ9.eyJzdWJUeXBlIjoidXNlciIsInRlbmFudElkIjoiUjFxM2ZVUzdvRnIwSEZLZ2VleGpsb3Fwc2RxcVN6WW8iLCJqdGkiOiI1NjY0MzNhZi0yYTVlLTQ5NDItYmYwZC1kN2NjMzMxZTNkNzciLCJhdWQiOiJxbGlrLmFwaSIsImlzcyI6InFsaWsuYXBpL2FwaS1rZXlzIiwic3ViIjoiNjVjZjFkMTJkNDdmMjBkZjk4MWU5ZGUwIn0.D7_lHmEutes1rbEL9HwTX8eRQZ28_RXX-6joKfvzGbOXtAHyJl5JihfdQDus-darhFLb7c6d0OEYhXVuu7nrVcR1WtZ2TaON8Dl9qCw-Rrg6Y-S_sw0e0RywxZ3R1vXN',
-    description: 'SysAid Internal IT tenant',
+    id: 'qmb-main',
+    name: 'QMB Main',
+    url: 'https://iyil7lpmybpzhbm.de.qlikcloud.com',
+    apiKey: process.env.QLIK_API_KEY || '',
+    description: 'Qlik Model Builder main tenant',
   },
 ];
 
 // Global state for active tenant
-let activeTenantId: string = 'sysaid-internal';
+let activeTenantId: string = 'qmb-main';
 
 /**
  * Get all configured tenants

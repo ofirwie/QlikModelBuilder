@@ -1,0 +1,10 @@
+﻿table_name,table_type,num_fields,approx_rows,key_field,purpose
+olist_orders_dataset,Fact,8,"99,441",order_id,הזמנות מרכזי - לב המודל
+olist_order_items_dataset,Fact,7,"112,650",order_id + order_item_id,פירוט פריטים בהזמנה
+olist_customers_dataset,Dimension,5,"99,441",customer_id,מימד לקוחות עם מיקום
+olist_products_dataset,Dimension,9,"32,951",product_id,מימד מוצרים עם מאפיינים
+olist_sellers_dataset,Dimension,4,"3,095",seller_id,מימד מוכרים עם מיקום
+olist_order_payments_dataset,Fact,5,"103,886",order_id + payment_sequential,תשלומים ואמצעי תשלום
+olist_order_reviews_dataset,Fact,7,"99,224",review_id,ביקורות ודירוגי לקוחות
+olist_geolocation_dataset,Dimension,5,"1,000,163",geolocation_zip_code_prefix,נתונים גיאוגרפיים מפורטים
+product_category_name_translation,Dimension,2,71,product_category_name,תרגום קטגוריות לאנגלית

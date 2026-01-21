@@ -12,7 +12,7 @@ const __dirname = path.dirname(__filename);
 
 const KNOWLEDGE_DIR = path.join(__dirname, '../../../docs/knowledge');
 
-// SysAid Main app ID
+// QMB Main app ID
 const APP_ID = 'e2f1700e-98dc-4ac9-b483-ca4a0de183ce';
 
 // Load semantic layer files
@@ -28,7 +28,7 @@ import { CacheManager } from '../../utils/cache-manager.js';
 
 // REAL environment variables - saved before setup.ts overwrites them
 // These are set when running: QLIK_API_KEY=xxx npm test
-const REAL_TENANT_URL = 'https://sysaid-main.eu.qlikcloud.com';
+const REAL_TENANT_URL = 'https://iyil7lpmybpzhbm.de.qlikcloud.com';
 const REAL_API_KEY = process.env.QLIK_API_KEY_REAL || process.env.QLIK_API_KEY;
 
 // Helper to evaluate expression via handler

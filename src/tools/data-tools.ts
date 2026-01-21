@@ -154,8 +154,8 @@ Create a custom hypercube query (~2000ms) - only when pre-built objects don't ex
 - You need a custom dimension/measure combination
 
 **SysAid App IDs:**
-- sysaid-internal: a30ab30d-cf2a-41fa-86ef-cf4f189deecf
-- sysaid-main: e2f1700e-98dc-4ac9-b483-ca4a0de183ce
+- qmb-main: a30ab30d-cf2a-41fa-86ef-cf4f189deecf
+- qmb-main: e2f1700e-98dc-4ac9-b483-ca4a0de183ce
 
 Example:
 {
@@ -590,7 +590,7 @@ Takes structured analysis output and automatically generates:
 - Rule 81: No data manipulation
 
 **Parameters:**
-- appId: Target app ID (defaults to sysaid-internal)
+- appId: Target app ID (defaults to qmb-main)
 - analysis: Structured analysis object (see example)
 - sheetTitle: Optional sheet name (defaults to analysis.title)
 
@@ -639,7 +639,7 @@ Takes structured analysis output and automatically generates:
       properties: {
         appId: {
           type: 'string',
-          description: 'App ID (defaults to sysaid-internal: a30ab30d-cf2a-41fa-86ef-cf4f189deecf)'
+          description: 'App ID (defaults to qmb-main: a30ab30d-cf2a-41fa-86ef-cf4f189deecf)'
         },
         analysis: {
           type: 'object',

@@ -1,5 +1,5 @@
 // ===== KNOWLEDGE BASE LOADER =====
-// Loads SysAid field intelligence and business context for MCP Resources
+// Loads QMB field intelligence and business context for MCP Resources
 
 import * as fs from 'fs';
 import * as path from 'path';
@@ -70,15 +70,15 @@ export function getBusinessContext(): any {
  */
 export const KNOWLEDGE_RESOURCES = [
   {
-    uri: 'knowledge://sysaid/field-intelligence',
-    name: 'SysAid Field Intelligence',
-    description: 'Complete mapping of 232 SysAid fields with Hebrew/English aliases, correlations, and benchmarks',
+    uri: 'knowledge://qmb/field-intelligence',
+    name: 'QMB Field Intelligence',
+    description: 'Complete mapping of 232 QMB fields with Hebrew/English aliases, correlations, and benchmarks',
     mimeType: 'application/json',
   },
   {
-    uri: 'knowledge://sysaid/business-context',
-    name: 'SysAid Business Context',
-    description: 'SLA facts, benchmarks, and team information for SysAid analytics',
+    uri: 'knowledge://qmb/business-context',
+    name: 'QMB Business Context',
+    description: 'SLA facts, benchmarks, and team information for QMB analytics',
     mimeType: 'application/json',
   },
 ];
@@ -89,11 +89,11 @@ export const KNOWLEDGE_RESOURCES = [
 export function readKnowledgeResource(uri: string): string | null {
   const kb = loadKnowledgeBase();
 
-  if (uri === 'knowledge://sysaid/field-intelligence') {
+  if (uri === 'knowledge://qmb/field-intelligence') {
     return JSON.stringify(kb.fieldIntelligence, null, 2);
   }
 
-  if (uri === 'knowledge://sysaid/business-context') {
+  if (uri === 'knowledge://qmb/business-context') {
     return JSON.stringify(kb.businessContext, null, 2);
   }
 

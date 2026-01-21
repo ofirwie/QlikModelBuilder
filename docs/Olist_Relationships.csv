@@ -1,0 +1,10 @@
+﻿relationship_id,source_table,source_field,target_table,target_field,relationship_type,description,cardinality,is_required
+REL_01,olist_orders_dataset,order_id,olist_order_items_dataset,order_id,One-to-Many (1:M),הזמנה אחת יכולה להכיל פריטים מרובים,1 order → many items,Yes
+REL_02,olist_customers_dataset,customer_id,olist_orders_dataset,customer_id,One-to-Many (1:M),לקוח אחד יכול לבצע הזמנות מרובות,1 customer → many orders,Yes
+REL_03,olist_products_dataset,product_id,olist_order_items_dataset,product_id,One-to-Many (1:M),מוצר אחד יכול להימכר בהזמנות מרובות,1 product → many order items,Yes
+REL_04,olist_sellers_dataset,seller_id,olist_order_items_dataset,seller_id,One-to-Many (1:M),מוכר אחד יכול למכור פריטים מרובים,1 seller → many order items,Yes
+REL_05,olist_orders_dataset,order_id,olist_order_payments_dataset,order_id,One-to-Many (1:M),הזמנה יכולה לכלול מספר תשלומים,1 order → many payments,Yes
+REL_06,olist_orders_dataset,order_id,olist_order_reviews_dataset,order_id,One-to-One (1:1),הזמנה יכולה לקבל ביקורת אחת,1 order → 0 or 1 review,No (optional)
+REL_07,product_category_name_translation,product_category_name,olist_products_dataset,product_category_name,One-to-Many (1:M),קטגוריה אחת יכולה להכיל מוצרים מרובים,1 category → many products,No (some products without category)
+REL_08,olist_geolocation_dataset,geolocation_zip_code_prefix,olist_customers_dataset,customer_zip_code_prefix,Many-to-One (M:1),לקוחות מרובים יכולים לשתף מיקוד,many customers → 1 geolocation,No (lookup table)
+REL_09,olist_geolocation_dataset,geolocation_zip_code_prefix,olist_sellers_dataset,seller_zip_code_prefix,Many-to-One (M:1),מוכרים מרובים יכולים לשתף מיקוד,many sellers → 1 geolocation,No (lookup table)

@@ -16,8 +16,8 @@ For questions about incidents, tickets, SLA, satisfaction - use the semantic lay
 3. qlik_create_hypercube → get data with FIXED App ID
 
 **Fixed App IDs (use directly, don't search):**
-- sysaid-internal: a30ab30d-cf2a-41fa-86ef-cf4f189deecf
-- sysaid-main: e2f1700e-98dc-4ac9-b483-ca4a0de183ce
+- qmb-main: a30ab30d-cf2a-41fa-86ef-cf4f189deecf
+- qmb-main: e2f1700e-98dc-4ac9-b483-ca4a0de183ce
 
 **Use qlik_search ONLY for:**
 - Finding apps by name when you don't know the ID

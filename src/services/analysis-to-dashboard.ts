@@ -24,7 +24,7 @@ const log = logger.child({ service: 'AnalysisToDashboard' });
 
 // ===== CONSTANTS =====
 
-/** Default App ID for sysaid-internal tenant */
+/** Default App ID for qmb-main tenant */
 const DEFAULT_APP_ID = 'a30ab30d-cf2a-41fa-86ef-cf4f189deecf';
 
 /** Grid dimensions (Qlik standard) */

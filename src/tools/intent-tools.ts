@@ -32,8 +32,8 @@ This is the FIRST tool to call for questions about incidents, tickets, SLA, sati
    └── NO  → qlik_get_domain_schema → qlik_create_hypercube [SLOW: ~2000ms]
 
 **Fixed App IDs (use directly):**
-- sysaid-internal: a30ab30d-cf2a-41fa-86ef-cf4f189deecf
-- sysaid-main: e2f1700e-98dc-4ac9-b483-ca4a0de183ce
+- qmb-main: a30ab30d-cf2a-41fa-86ef-cf4f189deecf
+- qmb-main: e2f1700e-98dc-4ac9-b483-ca4a0de183ce
 
 **What it does:**
 - Analyzes user query to determine intent

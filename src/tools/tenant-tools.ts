@@ -26,21 +26,21 @@ Use this to see which tenants are available before switching.`,
     description: `Switch to a different Qlik Cloud tenant.
 
 **Available Tenants:**
-- sysaid-main: SysAid Main (sysaid-main.eu.qlikcloud.com)
-- sysaid-internal: SysAid Internal IT (sysaid-sysaidinternalit.eu.qlikcloud.com)
+- qmb-main: QMB Main (iyil7lpmybpzhbm.de.qlikcloud.com)
+- qmb-main: QMB Main (iyil7lpmybpzhbm.de.qlikcloud.com)
 
 **Usage:**
 After switching, all subsequent Qlik tools will use the new tenant.
 
 **Example:**
-{ "tenantId": "sysaid-internal" }`,
+{ "tenantId": "qmb-main" }`,
     inputSchema: {
       type: 'object',
       properties: {
         tenantId: {
           type: 'string',
-          description: 'Tenant ID to switch to (e.g., "sysaid-main" or "sysaid-internal")',
-          enum: ['sysaid-main', 'sysaid-internal'],
+          description: 'Tenant ID to switch to (e.g., "qmb-main" or "qmb-main")',
+          enum: ['qmb-main', 'qmb-main'],
         },
       },
       required: ['tenantId'],

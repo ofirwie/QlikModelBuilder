@@ -8,7 +8,7 @@
 // Save REAL environment variables for integration tests BEFORE mocking
 if (process.env.QLIK_API_KEY && process.env.QLIK_API_KEY !== 'test-api-key') {
   process.env.QLIK_API_KEY_REAL = process.env.QLIK_API_KEY;
-  process.env.QLIK_TENANT_URL_REAL = process.env.QLIK_TENANT_URL || 'https://sysaid-main.eu.qlikcloud.com';
+  process.env.QLIK_TENANT_URL_REAL = process.env.QLIK_TENANT_URL || 'https://iyil7lpmybpzhbm.de.qlikcloud.com';
 }
 
 // Mock environment variables for unit testing

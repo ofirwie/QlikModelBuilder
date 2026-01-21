@@ -1323,7 +1323,7 @@ export async function handleGetExistingKpis(
     }
 
     const objectConfig = EXISTING_APP_OBJECTS[objectKey];
-    const appId = 'a30ab30d-cf2a-41fa-86ef-cf4f189deecf'; // sysaid-internal app
+    const appId = 'a30ab30d-cf2a-41fa-86ef-cf4f189deecf'; // qmb-main app
     const maxRows = args?.maxRows || 50;
 
     // Use QlikAppService to get object data (same pattern as handleGetObjectData)

@@ -8,6 +8,7 @@ dist/
 .env
 .env.local
 .env.*.local
+.env.test
 
 # IDE
 .vscode/
@@ -29,3 +30,26 @@ coverage/
 # Temporary files
 *.tmp
 *.temp
+
+# TaskGuard
+.taskguard/
+
+# QMB session files (auto-generated)
+.qmb/
+
+# Large data files
+Project files/
+
+# Test artifacts
+test-results/
+*.png
+e2e-log-*.json
+
+# Windows reserved names
+nul
+
+# VS Code test output
+.vscode-test/
+
+# Playwright
+playwright-report/

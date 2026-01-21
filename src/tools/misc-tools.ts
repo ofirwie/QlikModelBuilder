@@ -25,8 +25,8 @@ export const MISC_TOOLS = {
 3. qlik_create_hypercube → Execute query with known App ID
 
 **App IDs (don't search - use these):**
-- sysaid-main: e2f1700e-98dc-4ac9-b483-ca4a0de183ce
-- sysaid-internal: a30ab30d-cf2a-41fa-86ef-cf4f189deecf`,
+- qmb-main: e2f1700e-98dc-4ac9-b483-ca4a0de183ce
+- qmb-main: a30ab30d-cf2a-41fa-86ef-cf4f189deecf`,
     inputSchema: {
       type: 'object',
       properties: {

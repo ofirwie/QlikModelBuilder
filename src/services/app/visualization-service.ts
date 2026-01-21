@@ -15,8 +15,8 @@ const log = logger.child({ service: 'Visualization' });
 
 // ===== APP IDs PER TENANT =====
 export const TENANT_APP_IDS: Record<string, string> = {
-  'sysaid-main': 'e2f1700e-98dc-4ac9-b483-ca4a0de183ce',
-  'sysaid-internal': 'a30ab30d-cf2a-41fa-86ef-cf4f189deecf'
+  'qmb-main': 'e2f1700e-98dc-4ac9-b483-ca4a0de183ce',
+  'qmb-main': 'a30ab30d-cf2a-41fa-86ef-cf4f189deecf'
 };
 
 // AI Analytics Cache configuration
@@ -31,7 +31,7 @@ export const AI_CACHE_OBJECTS = {
 };
 
 // ===== EXISTING OBJECTS IN APP =====
-// These are pre-built hypercubes that already exist in SysAid BI Analytics app
+// These are pre-built hypercubes that already exist in QMB BI Analytics app
 // Use these FIRST before creating new ones - they have all the KPIs ready!
 export const EXISTING_APP_OBJECTS = {
   // Sheet: Incidents vs. Requests (3a4166af-ad69-4273-a36f-ed9e86e273ce)
@@ -194,7 +194,7 @@ export const EXISTING_APP_OBJECTS = {
     keywords: ['ai', 'agents', 'סוכנים', 'executions', 'הפעלות', 'total']
   },
 
-  // Sheet: SysAid Copilot Usage Dashboard (JfdRFGV)
+  // Sheet: QMB Copilot Usage Dashboard (JfdRFGV)
   COPILOT_TREND: {
     objectId: 'ZEmyMJ',
     sheetId: 'JfdRFGV',
@@ -422,7 +422,7 @@ export const QUERY_TO_OBJECT_MAPPINGS: QueryToObjectMapping[] = [
     },
     objectKey: 'COPILOT_TREND',
     priority: 8,
-    description: 'SysAid Copilot usage trend'
+    description: 'QMB Copilot usage trend'
   }
 ];
 

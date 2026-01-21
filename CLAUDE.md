@@ -178,3 +178,197 @@ ALWAYS validate before deploying:
 3. **Show progress** - User should always know where they are
 4. **Suggest, don't force** - Give recommendations but let user decide
 5. **Handle errors gracefully** - Explain what went wrong and how to fix
+
+---
+
+## 🚨 CRITICAL: Approval Rules 🚨
+
+**NEVER run without explicit approval:**
+- Before writing ANY code - ask for approval
+- Before running ANY command - ask for approval
+- Before creating ANY file - ask for approval
+- If uncertain about anything - ASK
+
+**ALWAYS use real data:**
+- Read specification documents BEFORE writing tests
+- Use `docs/Olist_Tables_Summary.csv` for table definitions (9 tables, 52 fields)
+- Use `docs/Olist_Relationships.csv` for relationships (9 relationships)
+- NEVER invent test data - use existing fixtures
+
+---
+
+## Domain Knowledge: Star Schema & Dimensional Modeling
+
+### Core Concepts
+
+**Fact Tables** (טבלאות עובדה):
+- Contain measurable, quantitative data (measures)
+- Examples: Sales, Orders, Transactions, Events
+- Keys: Surrogate Key (PK), Foreign Keys to Dimensions
+- Grain: One row per transaction/event
+- In Olist: `olist_orders_dataset`, `olist_order_items_dataset`, `olist_order_payments_dataset`, `olist_order_reviews_dataset`
+
+**Dimension Tables** (טבלאות מימד):
+- Contain descriptive attributes (dimensions)
+- Examples: Customer, Product, Date, Location
+- Keys: Surrogate Key (PK), Business Key (BK)
+- SCD Types: Type 1 (overwrite), Type 2 (history)
+- In Olist: `olist_customers_dataset`, `olist_products_dataset`, `olist_sellers_dataset`, `olist_geolocation_dataset`, `product_category_name_translation`
+
+**Key Types:**
+| Type | Code | Purpose | Example |
+|------|------|---------|---------|
+| Primary Key | PK | Unique identifier | CustomerKey |
+| Business Key | BK | Natural key from source | CustomerID |
+| Foreign Key | FK | Link to dimension | Customer_FK |
+
+### Olist Dataset (Real Specification)
+
+**9 Tables:**
+```
+FACT TABLES (4):
+├── olist_orders_dataset (8 fields, ~99K rows) - Central fact
+├── olist_order_items_dataset (7 fields, ~113K rows) - Line items
+├── olist_order_payments_dataset (5 fields, ~104K rows) - Payments
+└── olist_order_reviews_dataset (7 fields, ~99K rows) - Reviews
+
+DIMENSION TABLES (5):
+├── olist_customers_dataset (5 fields, ~99K rows)
+├── olist_products_dataset (9 fields, ~33K rows)
+├── olist_sellers_dataset (4 fields, ~3K rows)
+├── olist_geolocation_dataset (5 fields, ~1M rows)
+└── product_category_name_translation (2 fields, 71 rows)
+```
+
+**9 Relationships:**
+```
+REL_01: orders → order_items (1:M) via order_id
+REL_02: customers → orders (1:M) via customer_id
+REL_03: products → order_items (1:M) via product_id
+REL_04: sellers → order_items (1:M) via seller_id
+REL_05: orders → order_payments (1:M) via order_id
+REL_06: orders → order_reviews (1:1) via order_id
+REL_07: category_translation → products (1:M) via product_category_name
+REL_08: geolocation → customers (M:1) via zip_code_prefix
+REL_09: geolocation → sellers (M:1) via zip_code_prefix
+```
+
+---
+
+## Domain Knowledge: Qlik Script Syntax
+
+### Essential Constructs
+
+**LOAD Statement:**
+```qlik
+// Basic LOAD
+TableName:
+LOAD
+    field1,
+    field2 as AliasName,
+    field3 * field4 as CalculatedField
+FROM [lib://DataFiles/file.qvd] (qvd);
+
+// SQL LOAD
+TableName:
+LOAD *;
+SQL SELECT * FROM schema.table;
+```
+
+**Incremental Load Patterns:**
+```qlik
+// Pattern 1: By Date (Most Common for Facts)
+LET vLastLoad = Peek('MaxModifiedDate', 0, 'LastLoadInfo');
+
+NewRecords:
+LOAD * FROM source WHERE ModifiedDate > '$(vLastLoad)';
+
+Concatenate(ExistingTable)
+LOAD * Resident NewRecords;
+
+// Pattern 2: By ID
+LET vMaxID = Peek('MaxID', 0, 'LastLoadInfo');
+
+LOAD * FROM source WHERE ID > $(vMaxID);
+
+// Pattern 3: Full Reload (For Dimensions)
+DROP TABLE IF EXISTS DimCustomer;
+DimCustomer:
+LOAD * FROM source;
+```
+
+**QVD Operations:**
+```qlik
+// Store to QVD
+STORE TableName INTO [lib://DataFiles/TableName.qvd] (qvd);
+
+// Load from QVD (Optimized)
+TableName:
+LOAD * FROM [lib://DataFiles/TableName.qvd] (qvd);
+
+// Load with transformation (Non-optimized)
+TableName:
+LOAD
+    *,
+    Upper(Name) as NameUpper
+FROM [lib://DataFiles/TableName.qvd] (qvd);
+```
+
+**Mapping Tables:**
+```qlik
+// Create mapping
+CategoryMap:
+MAPPING LOAD
+    category_id,
+    category_name
+FROM categories.qvd (qvd);
+
+// Apply mapping
+Products:
+LOAD
+    product_id,
+    ApplyMap('CategoryMap', category_id, 'Unknown') as CategoryName
+FROM products.qvd (qvd);
+```
+
+---
+
+## Domain Knowledge: ETL Patterns
+
+### Incremental Load Decision Tree
+
+```
+Is table a Dimension?
+├── YES → Is it small (<10K rows)?
+│         ├── YES → Full Reload (simplest)
+│         └── NO → SCD Type 2 with history
+└── NO (Fact Table) → Does it have ModifiedDate?
+                      ├── YES → by_date incremental
+                      └── NO → Does it have auto-increment ID?
+                               ├── YES → by_id incremental
+                               └── NO → time_window (last N days)
+```
+
+### Testing Requirements
+
+**ALWAYS use real specification:**
+```javascript
+// ✅ CORRECT - Use real Olist data
+const specPath = 'docs/Olist_Tables_Summary.csv';
+const tables = parseCSV(fs.readFileSync(specPath));
+assert.strictEqual(tables.length, 9); // Real count
+
+// ❌ WRONG - Invented data
+const fakeData = 'Table1,Field1\nTable2,Field2';
+assert.strictEqual(tables.length, 2); // Made up!
+```
+
+### Data Validation Rules
+
+| Rule | Check | Action |
+|------|-------|--------|
+| Referential Integrity | FK exists in PK | Reject or flag |
+| Null Keys | PK/BK is null | Reject record |
+| Duplicate Keys | PK not unique | Merge or reject |
+| Date Range | Date within bounds | Flag or correct |
+| Data Types | Match expected type | Convert or reject |

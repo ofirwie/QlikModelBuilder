@@ -68,7 +68,7 @@ class QlikConnectionPool {
     const schemaPath = path.join(__dirname, '../../node_modules/enigma.js/schemas/12.20.0.json');
     this.schema = JSON.parse(fs.readFileSync(schemaPath, 'utf-8'));
 
-    this.tenantUrl = process.env.QLIK_TENANT_URL || 'https://sysaid-main.eu.qlikcloud.com';
+    this.tenantUrl = process.env.QLIK_TENANT_URL || 'https://iyil7lpmybpzhbm.de.qlikcloud.com';
     this.apiKey = process.env.QLIK_API_KEY || '';
 
     // Start cleanup timer
