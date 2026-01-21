@@ -223,10 +223,16 @@ export interface EnrichedRelationship {
   to_field: string;
   /** Relationship cardinality */
   type: RelationshipType;
+  /** Cardinality of from field */
+  from_cardinality: number;
+  /** Cardinality of to field */
+  to_cardinality: number;
+  /** Whether relationship was validated (both tables/fields exist) */
+  validated: boolean;
   /** Confidence score (0-1) */
-  confidence: number;
+  confidence?: number;
   /** Whether this was inferred or explicit from spec */
-  inferred: boolean;
+  inferred?: boolean;
 }
 
 /**
@@ -237,6 +243,10 @@ export interface DateFieldInfo {
   table_name: string;
   /** Field name */
   field_name: string;
+  /** Field data type */
+  type: string;
+  /** Sample values from the field */
+  sample_values?: string[];
   /** Minimum date value */
   min_date?: string;
   /** Maximum date value */
