@@ -732,7 +732,17 @@ export function getDashboardScript(): string {
       createConnectionLoading: false,
       connectionsError: null,
       connectionsErrorType: null,  // 'auth', 'network', 'server', 'validation'
-      connectionsCorrelationId: null  // For error reporting
+      connectionsCorrelationId: null,  // For error reporting
+
+      // Table selection state (Step 4)
+      availableTables: [],
+      filteredTables: [],
+      selectedTables: [],
+      tablesLoading: true,
+      tablesError: null,
+      tablesErrorType: null,
+      tablesCorrelationId: null,
+      tablesSearchQuery: ''
     };
 
     // =============================================
@@ -805,6 +815,13 @@ export function getDashboardScript(): string {
         state.connectionsLoading = true;
         renderConnections();
         vscode.postMessage({ type: 'getConnections' });
+      }
+
+      // When entering Step 4, fetch tables
+      if (state.currentStep === 4) {
+        state.tablesLoading = true;
+        renderTables();
+        vscode.postMessage({ type: 'getTables', connectionId: state.selectedConnectionId });
       }
 
       // Save state
@@ -1081,6 +1098,84 @@ export function getDashboardScript(): string {
           state.connectionString = e.target.value;
         });
       }
+
+      // =============================================
+      // Step 4: Table Selection Event Listeners
+      // =============================================
+
+      // Step 4: Next button
+      var btnNext4 = document.getElementById('btn-next-4');
+      if (btnNext4) {
+        btnNext4.addEventListener('click', function() {
+          if (window.nextStep) window.nextStep();
+        });
+      }
+
+      // Step 4: Back button
+      var btnBack4 = document.getElementById('btn-back-4');
+      if (btnBack4) {
+        btnBack4.addEventListener('click', function() {
+          if (window.prevStep) window.prevStep();
+        });
+      }
+
+      // Step 4: Retry tables button
+      var btnTablesRetry = document.getElementById('btn-tables-retry');
+      if (btnTablesRetry) {
+        btnTablesRetry.addEventListener('click', function() {
+          state.tablesLoading = true;
+          state.tablesError = null;
+          state.tablesErrorType = null;
+          state.tablesCorrelationId = null;
+          renderTables();
+          vscode.postMessage({ type: 'getTables', connectionId: state.selectedConnectionId });
+        });
+      }
+
+      // Step 4: Search filter
+      var tablesSearch = document.getElementById('tables-search');
+      if (tablesSearch) {
+        tablesSearch.addEventListener('input', function(e) {
+          state.tablesSearchQuery = e.target.value;
+          renderTables();
+        });
+      }
+
+      // Step 4: Select all checkbox
+      var tablesSelectAll = document.getElementById('tables-select-all');
+      if (tablesSelectAll) {
+        tablesSelectAll.addEventListener('change', function(e) {
+          if (e.target.checked) {
+            // Select all filtered tables
+            state.filteredTables.forEach(function(t) {
+              if (!state.selectedTables.includes(t.name)) {
+                state.selectedTables.push(t.name);
+              }
+            });
+          } else {
+            // Deselect all filtered tables
+            state.selectedTables = state.selectedTables.filter(function(name) {
+              return !state.filteredTables.some(function(t) { return t.name === name; });
+            });
+          }
+          renderTables();
+        });
+      }
+
+      // Step 4: Table checkbox selection (delegate)
+      document.addEventListener('change', function(e) {
+        var target = e.target;
+        if (target && target.name === 'table') {
+          if (target.checked) {
+            if (!state.selectedTables.includes(target.value)) {
+              state.selectedTables.push(target.value);
+            }
+          } else {
+            state.selectedTables = state.selectedTables.filter(function(t) { return t !== target.value; });
+          }
+          renderTables();
+        }
+      });
     }
 
     // Call setup after DOM is ready
@@ -1218,6 +1313,26 @@ export function getDashboardScript(): string {
             }
           }
           updateCreateConnectionButton();
+          break;
+
+        // Step 4: Table Selection handlers
+        case 'tables':
+          state.availableTables = msg.data || [];
+          state.filteredTables = state.availableTables;
+          state.tablesLoading = false;
+          state.tablesError = null;
+          state.tablesErrorType = null;
+          state.tablesCorrelationId = null;
+          renderTables();
+          break;
+
+        case 'tablesError':
+          state.tablesLoading = false;
+          state.tablesError = msg.message || 'Failed to load tables';
+          state.tablesErrorType = msg.errorType || 'unknown';
+          state.tablesCorrelationId = msg.correlationId || null;
+          console.error('[' + state.tablesCorrelationId + '] Tables error (' + state.tablesErrorType + '): ' + state.tablesError);
+          renderTables();
           break;
 
         case 'specParsed':
@@ -1655,6 +1770,96 @@ export function getDashboardScript(): string {
         var hasName = nameInput.value.trim().length > 0;
         var hasType = typeSelect.value !== '';
         btnCreate.disabled = !hasName || !hasType || state.createConnectionLoading;
+      }
+    }
+
+    // =============================================
+    // Step 4: Table Selection Render
+    // =============================================
+    function renderTables() {
+      var loadingEl = document.getElementById('tables-loading');
+      var errorEl = document.getElementById('tables-error');
+      var emptyEl = document.getElementById('tables-empty');
+      var listEl = document.getElementById('tables-list');
+      var checkboxList = document.getElementById('tables-checkbox-list');
+      var countEl = document.getElementById('tables-count');
+      var selectAllEl = document.getElementById('tables-select-all');
+
+      // Hide all states
+      if (loadingEl) loadingEl.style.display = 'none';
+      if (errorEl) errorEl.style.display = 'none';
+      if (emptyEl) emptyEl.style.display = 'none';
+      if (listEl) listEl.style.display = 'none';
+
+      if (state.tablesLoading) {
+        if (loadingEl) loadingEl.style.display = 'flex';
+        return;
+      }
+
+      if (state.tablesError) {
+        if (errorEl) {
+          errorEl.style.display = 'block';
+          var errorMsg = errorEl.querySelector('.error-message');
+          if (errorMsg) errorMsg.textContent = state.tablesError;
+
+          // Show correlation ID
+          var errorIdEl = document.getElementById('tables-error-id');
+          if (errorIdEl && state.tablesCorrelationId) {
+            errorIdEl.style.display = 'block';
+            var idSpan = errorIdEl.querySelector('span');
+            if (idSpan) idSpan.textContent = state.tablesCorrelationId;
+          }
+        }
+        return;
+      }
+
+      if (state.availableTables.length === 0) {
+        if (emptyEl) emptyEl.style.display = 'block';
+        return;
+      }
+
+      // Filter tables
+      state.filteredTables = state.availableTables.filter(function(table) {
+        if (!state.tablesSearchQuery) return true;
+        var query = state.tablesSearchQuery.toLowerCase();
+        return table.name.toLowerCase().includes(query) ||
+               (table.schema && table.schema.toLowerCase().includes(query));
+      });
+
+      if (listEl) listEl.style.display = 'block';
+      if (checkboxList) {
+        checkboxList.innerHTML = state.filteredTables.map(function(table) {
+          var isSelected = state.selectedTables.includes(table.name);
+          return '<label class="checkbox-item" style="display: flex; align-items: center; gap: 8px; padding: 8px; border-bottom: 1px solid var(--input-border); cursor: pointer;">' +
+            '<input type="checkbox" name="table" value="' + escapeHtml(table.name) + '"' +
+            (isSelected ? ' checked' : '') + '>' +
+            '<span class="checkbox-label" style="flex: 1;">' + escapeHtml(table.name) + '</span>' +
+            (table.schema ? '<span class="checkbox-schema" style="color: var(--text-secondary); font-size: 12px;">' + escapeHtml(table.schema) + '</span>' : '') +
+            (table.rowCount ? '<span class="checkbox-count" style="color: var(--text-secondary); font-size: 11px;">' + table.rowCount.toLocaleString() + ' rows</span>' : '') +
+            '</label>';
+        }).join('');
+      }
+
+      // Update select all checkbox state
+      if (selectAllEl) {
+        var allSelected = state.filteredTables.length > 0 &&
+          state.filteredTables.every(function(t) { return state.selectedTables.includes(t.name); });
+        var someSelected = state.selectedTables.length > 0 && !allSelected;
+        selectAllEl.checked = allSelected;
+        selectAllEl.indeterminate = someSelected;
+      }
+
+      if (countEl) {
+        countEl.textContent = state.selectedTables.length + ' selected';
+      }
+
+      updateStep4NextButton();
+    }
+
+    function updateStep4NextButton() {
+      var btnNext = document.getElementById('btn-next-4');
+      if (btnNext) {
+        btnNext.disabled = state.selectedTables.length === 0;
       }
     }
 

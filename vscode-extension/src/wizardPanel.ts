@@ -321,6 +321,46 @@ export class WizardPanel {
             await this.sendConnections();
             break;
 
+          case 'createConnection':
+            try {
+              const connection = await this._qlikApi.createConnection({
+                name: message.name,
+                type: message.connectionType,
+                spaceId: message.spaceId,
+                connectionString: message.connectionString
+              });
+              this._panel.webview.postMessage({ type: 'connectionCreated', connection });
+            } catch (error) {
+              const errorMessage = error instanceof Error ? error.message : 'Failed to create connection';
+              const correlationId = `create-conn-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+              // Determine error type
+              let errorType: 'auth' | 'network' | 'server' | 'validation' | 'unknown' = 'unknown';
+              if (errorMessage.includes('400') || errorMessage.includes('already exists') || errorMessage.includes('invalid')) {
+                errorType = 'validation';
+              } else if (errorMessage.includes('401') || errorMessage.includes('Unauthorized')) {
+                errorType = 'auth';
+              }
+
+              console.error(`[${correlationId}] Create connection error (${errorType}): ${errorMessage}`);
+
+              this._panel.webview.postMessage({
+                type: 'createConnectionError',
+                message: errorMessage,
+                errorType: errorType,
+                correlationId: correlationId
+              });
+            }
+            break;
+
+          case 'openSettings':
+            vscode.commands.executeCommand('workbench.action.openSettings', 'qlik');
+            break;
+
+          case 'getTables':
+            await this.sendTables(message.connectionId);
+            break;
+
           case 'showInfo':
             vscode.window.showInformationMessage(message.text);
             break;
@@ -388,10 +428,61 @@ export class WizardPanel {
       const connections = await this._qlikApi.getConnections();
       this._panel.webview.postMessage({ type: 'connections', data: connections });
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load connections';
+      const correlationId = `conn-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+      // Determine error type based on error message/status
+      let errorType: 'auth' | 'network' | 'server' | 'validation' | 'unknown' = 'unknown';
+      if (errorMessage.includes('401') || errorMessage.includes('Unauthorized') || errorMessage.includes('authentication')) {
+        errorType = 'auth';
+      } else if (errorMessage.includes('network') || errorMessage.includes('ECONNREFUSED') || errorMessage.includes('timeout')) {
+        errorType = 'network';
+      } else if (errorMessage.includes('500') || errorMessage.includes('502') || errorMessage.includes('503')) {
+        errorType = 'server';
+      } else if (errorMessage.includes('400') || errorMessage.includes('validation')) {
+        errorType = 'validation';
+      }
+
+      // Log to VS Code Output channel
+      console.error(`[${correlationId}] Connections error (${errorType}): ${errorMessage}`);
+
       this._panel.webview.postMessage({
-        type: 'error',
-        source: 'connections',
-        message: err instanceof Error ? err.message : 'Failed to load connections'
+        type: 'connectionsError',
+        message: errorMessage,
+        errorType: errorType,
+        correlationId: correlationId
+      });
+    }
+  }
+
+  private async sendTables(connectionId: string): Promise<void> {
+    try {
+      const tables = await this._qlikApi.getTables(connectionId);
+      this._panel.webview.postMessage({ type: 'tables', data: tables });
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load tables';
+      const correlationId = `tables-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+      // Determine error type based on error message/status
+      let errorType: 'auth' | 'network' | 'server' | 'validation' | 'unknown' = 'unknown';
+      if (errorMessage.includes('401') || errorMessage.includes('Unauthorized') || errorMessage.includes('authentication')) {
+        errorType = 'auth';
+      } else if (errorMessage.includes('network') || errorMessage.includes('ECONNREFUSED') || errorMessage.includes('timeout')) {
+        errorType = 'network';
+      } else if (errorMessage.includes('500') || errorMessage.includes('502') || errorMessage.includes('503')) {
+        errorType = 'server';
+      } else if (errorMessage.includes('400') || errorMessage.includes('validation')) {
+        errorType = 'validation';
+      }
+
+      // Log to VS Code Output channel
+      console.error(`[${correlationId}] Tables error (${errorType}): ${errorMessage}`);
+
+      this._panel.webview.postMessage({
+        type: 'tablesError',
+        message: errorMessage,
+        errorType: errorType,
+        correlationId: correlationId
       });
     }
   }
@@ -1742,31 +1833,46 @@ JSON OUTPUT:`;
     <p style="margin-bottom: 16px; color: var(--text-secondary);">
       Select tables to include in your data model
     </p>
-    <div id="tables-list">
-      <ul class="item-list">
-        <li data-table="customers">
-          <div class="item-info">
-            <span class="item-name">Customers</span>
-            <span class="item-type">Customer master data</span>
-          </div>
-        </li>
-        <li data-table="orders">
-          <div class="item-info">
-            <span class="item-name">Orders</span>
-            <span class="item-type">Sales orders</span>
-          </div>
-        </li>
-        <li data-table="products">
-          <div class="item-info">
-            <span class="item-name">Products</span>
-            <span class="item-type">Product catalog</span>
-          </div>
-        </li>
-      </ul>
+
+    <div id="tables-loading" class="loading-section" style="display: flex; align-items: center; gap: 12px; padding: 24px; justify-content: center;">
+      <div class="spinner"></div>
+      <span>Loading tables...</span>
     </div>
-    <div class="button-row">
-      <button class="btn btn-secondary btn-back-action">Back</button>
-      <button class="btn btn-primary btn-next-action">Next</button>
+
+    <div id="tables-error" class="error-section" style="display: none; background: var(--error-bg, rgba(255,0,0,0.1)); padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+      <p class="error-message" style="color: var(--error-color, #f44336); margin-bottom: 12px;"></p>
+      <p id="tables-error-id" style="font-size: 11px; color: var(--text-secondary); margin-bottom: 12px;">Error ID: <span></span></p>
+      <div class="error-actions" style="display: flex; gap: 8px;">
+        <button id="btn-tables-retry" class="btn btn-secondary">
+          <span class="codicon codicon-refresh"></span> Retry
+        </button>
+      </div>
+    </div>
+
+    <div id="tables-empty" class="empty-section" style="display: none; text-align: center; padding: 32px; color: var(--text-secondary);">
+      <p>No tables found in this connection.</p>
+      <p class="empty-hint" style="font-size: 12px; margin-top: 8px;">Check that the connection has proper permissions.</p>
+    </div>
+
+    <div id="tables-list" style="display: none;">
+      <div class="tables-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <label class="select-all-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+          <input type="checkbox" id="tables-select-all">
+          <span>Select All</span>
+        </label>
+        <span id="tables-count" class="count-badge" style="background: var(--button-primary-bg, #0078d4); color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px;">0 selected</span>
+      </div>
+      <div class="tables-filter" style="margin-bottom: 12px;">
+        <input type="text" id="tables-search" placeholder="Filter tables..." style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 4px; background: var(--input-bg); color: var(--input-fg);">
+      </div>
+      <div id="tables-checkbox-list" class="checkbox-list" style="max-height: 300px; overflow-y: auto; border: 1px solid var(--input-border); border-radius: 4px; padding: 8px;">
+        <!-- Dynamic table checkboxes -->
+      </div>
+    </div>
+
+    <div class="button-row" style="margin-top: 24px; display: flex; justify-content: space-between;">
+      <button class="btn btn-secondary" id="btn-back-4">Back</button>
+      <button class="btn btn-primary" id="btn-next-4" disabled>Next</button>
     </div>
   </div>
 
