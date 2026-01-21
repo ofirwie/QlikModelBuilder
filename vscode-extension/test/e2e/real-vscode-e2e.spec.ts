@@ -563,4 +563,220 @@ test.describe('Real VS Code E2E', () => {
 
     await page.screenshot({ path: 'test-results/step4-next-disabled.png' });
   });
+
+  // ============================================
+  // Level 5: Step 5 Field Configuration Tests
+  // ============================================
+
+  /**
+   * Helper to navigate to Step 5
+   */
+  async function navigateToStep5(page: any) {
+    const innerFrame = await navigateToStep4(page);
+
+    // Force navigate to Step 5
+    await innerFrame.evaluate(() => {
+      const btn = document.getElementById('btn-next-4');
+      if (btn) btn.removeAttribute('disabled');
+    });
+    await innerFrame.locator('#btn-next-4').click();
+    await page.waitForTimeout(2000);
+
+    return innerFrame;
+  }
+
+  test('Level 5.1: Navigate to Step 5 and see fields section', async ({ page }) => {
+    const innerFrame = await navigateToStep5(page);
+
+    // Verify Step 5 is visible
+    const step5 = innerFrame.locator('#step-5');
+    await expect(step5).toBeVisible({ timeout: 5000 });
+    await page.screenshot({ path: 'test-results/step5-visible.png' });
+
+    // Should see one of the states (loading, list, error, or empty)
+    const anyState = innerFrame.locator('#fields-loading, #fields-list, #fields-error, #fields-empty');
+    await expect(anyState.first()).toBeVisible({ timeout: 10000 });
+  });
+
+  test('Level 5.2: Table selector dropdown exists', async ({ page }) => {
+    const innerFrame = await navigateToStep5(page);
+
+    await expect(innerFrame.locator('#step-5')).toBeVisible({ timeout: 5000 });
+
+    // Table selector should be visible
+    const tableSelector = innerFrame.locator('#fields-table-selector');
+    await expect(tableSelector).toBeVisible();
+
+    await page.screenshot({ path: 'test-results/step5-table-selector.png' });
+  });
+
+  test('Level 5.3: Back button returns to Step 4', async ({ page }) => {
+    const innerFrame = await navigateToStep5(page);
+
+    await expect(innerFrame.locator('#step-5')).toBeVisible({ timeout: 5000 });
+
+    // Click Back button
+    await innerFrame.locator('#btn-back-5').click();
+    await page.waitForTimeout(500);
+
+    // Should be back at Step 4
+    await expect(innerFrame.locator('#step-4')).toBeVisible({ timeout: 3000 });
+    await page.screenshot({ path: 'test-results/step5-back-to-step4.png' });
+  });
+
+  // ============================================
+  // Level 6: Step 6 Incremental Settings Tests
+  // ============================================
+
+  /**
+   * Helper to navigate to Step 6
+   */
+  async function navigateToStep6(page: any) {
+    const innerFrame = await navigateToStep5(page);
+
+    // Force navigate to Step 6
+    await innerFrame.evaluate(() => {
+      const btn = document.getElementById('btn-next-5');
+      if (btn) btn.removeAttribute('disabled');
+    });
+    await innerFrame.locator('#btn-next-5').click();
+    await page.waitForTimeout(2000);
+
+    return innerFrame;
+  }
+
+  test('Level 6.1: Navigate to Step 6 and see incremental settings', async ({ page }) => {
+    const innerFrame = await navigateToStep6(page);
+
+    // Verify Step 6 is visible
+    const step6 = innerFrame.locator('#step-6');
+    await expect(step6).toBeVisible({ timeout: 5000 });
+    await page.screenshot({ path: 'test-results/step6-visible.png' });
+  });
+
+  test('Level 6.2: Table selector exists', async ({ page }) => {
+    const innerFrame = await navigateToStep6(page);
+
+    await expect(innerFrame.locator('#step-6')).toBeVisible({ timeout: 5000 });
+
+    // Table selector should be visible
+    const tableSelector = innerFrame.locator('#incremental-table-selector');
+    await expect(tableSelector).toBeVisible();
+
+    await page.screenshot({ path: 'test-results/step6-table-selector.png' });
+  });
+
+  test('Level 6.3: Incremental mode dropdown exists', async ({ page }) => {
+    const innerFrame = await navigateToStep6(page);
+
+    await expect(innerFrame.locator('#step-6')).toBeVisible({ timeout: 5000 });
+
+    // Mode dropdown should be visible
+    const modeDropdown = innerFrame.locator('#incremental-mode');
+    await expect(modeDropdown).toBeVisible();
+
+    await page.screenshot({ path: 'test-results/step6-mode-dropdown.png' });
+  });
+
+  test('Level 6.4: Back button returns to Step 5', async ({ page }) => {
+    const innerFrame = await navigateToStep6(page);
+
+    await expect(innerFrame.locator('#step-6')).toBeVisible({ timeout: 5000 });
+
+    // Click Back button
+    await innerFrame.locator('#btn-back-6').click();
+    await page.waitForTimeout(500);
+
+    // Should be back at Step 5
+    await expect(innerFrame.locator('#step-5')).toBeVisible({ timeout: 3000 });
+    await page.screenshot({ path: 'test-results/step6-back-to-step5.png' });
+  });
+
+  // ============================================
+  // Level 7: Step 7 Deploy Tests
+  // ============================================
+
+  /**
+   * Helper to navigate to Step 7
+   */
+  async function navigateToStep7(page: any) {
+    const innerFrame = await navigateToStep6(page);
+
+    // Force navigate to Step 7
+    await innerFrame.evaluate(() => {
+      const btn = document.getElementById('btn-next-6');
+      if (btn) btn.removeAttribute('disabled');
+    });
+    await innerFrame.locator('#btn-next-6').click();
+    await page.waitForTimeout(2000);
+
+    return innerFrame;
+  }
+
+  test('Level 7.1: Navigate to Step 7 and see review section', async ({ page }) => {
+    const innerFrame = await navigateToStep7(page);
+
+    // Verify Step 7 is visible
+    const step7 = innerFrame.locator('#step-7');
+    await expect(step7).toBeVisible({ timeout: 5000 });
+    await page.screenshot({ path: 'test-results/step7-visible.png' });
+
+    // Review summary should be visible
+    const reviewSummary = innerFrame.locator('#review-summary');
+    await expect(reviewSummary).toBeVisible({ timeout: 5000 });
+  });
+
+  test('Level 7.2: App name input exists', async ({ page }) => {
+    const innerFrame = await navigateToStep7(page);
+
+    await expect(innerFrame.locator('#step-7')).toBeVisible({ timeout: 5000 });
+
+    // App name input should be visible
+    const appNameInput = innerFrame.locator('#app-name');
+    await expect(appNameInput).toBeVisible();
+
+    await page.screenshot({ path: 'test-results/step7-app-name.png' });
+  });
+
+  test('Level 7.3: Deploy button exists', async ({ page }) => {
+    const innerFrame = await navigateToStep7(page);
+
+    await expect(innerFrame.locator('#step-7')).toBeVisible({ timeout: 5000 });
+
+    // Deploy button should be visible
+    const deployBtn = innerFrame.locator('#btn-deploy');
+    await expect(deployBtn).toBeVisible();
+
+    await page.screenshot({ path: 'test-results/step7-deploy-button.png' });
+  });
+
+  test('Level 7.4: Back button returns to Step 6', async ({ page }) => {
+    const innerFrame = await navigateToStep7(page);
+
+    await expect(innerFrame.locator('#step-7')).toBeVisible({ timeout: 5000 });
+
+    // Click Back button
+    await innerFrame.locator('#btn-back-7').click();
+    await page.waitForTimeout(500);
+
+    // Should be back at Step 6
+    await expect(innerFrame.locator('#step-6')).toBeVisible({ timeout: 3000 });
+    await page.screenshot({ path: 'test-results/step7-back-to-step6.png' });
+  });
+
+  test('Level 7.5: Deploy button disabled without app name', async ({ page }) => {
+    const innerFrame = await navigateToStep7(page);
+
+    await expect(innerFrame.locator('#step-7')).toBeVisible({ timeout: 5000 });
+
+    // Clear app name if it has a value
+    await innerFrame.locator('#app-name').fill('');
+    await page.waitForTimeout(300);
+
+    // Deploy button should be disabled
+    const deployBtn = innerFrame.locator('#btn-deploy');
+    await expect(deployBtn).toBeDisabled();
+
+    await page.screenshot({ path: 'test-results/step7-deploy-disabled.png' });
+  });
 });
