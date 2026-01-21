@@ -742,7 +742,18 @@ export function getDashboardScript(): string {
       tablesError: null,
       tablesErrorType: null,
       tablesCorrelationId: null,
-      tablesSearchQuery: ''
+      tablesSearchQuery: '',
+
+      // Field configuration state (Step 5)
+      fieldsByTable: {},          // { tableName: [{ name, type, ... }] }
+      selectedFieldsByTable: {},   // { tableName: [fieldName, ...] }
+      currentFieldsTable: '',      // Currently selected table for field editing
+      filteredFields: [],
+      fieldsLoading: true,
+      fieldsError: null,
+      fieldsErrorType: null,
+      fieldsCorrelationId: null,
+      fieldsSearchQuery: ''
     };
 
     // =============================================
@@ -822,6 +833,13 @@ export function getDashboardScript(): string {
         state.tablesLoading = true;
         renderTables();
         vscode.postMessage({ type: 'getTables', connectionId: state.selectedConnectionId });
+      }
+
+      // When entering Step 5, fetch fields
+      if (state.currentStep === 5) {
+        state.fieldsLoading = true;
+        renderFields();
+        vscode.postMessage({ type: 'getFields', tables: state.selectedTables });
       }
 
       // Save state
@@ -1176,6 +1194,110 @@ export function getDashboardScript(): string {
           renderTables();
         }
       });
+
+      // =============================================
+      // Step 5: Field Configuration Event Listeners
+      // =============================================
+
+      // Step 5: Next button
+      var btnNext5 = document.getElementById('btn-next-5');
+      if (btnNext5) {
+        btnNext5.addEventListener('click', function() {
+          if (window.nextStep) window.nextStep();
+        });
+      }
+
+      // Step 5: Back button
+      var btnBack5 = document.getElementById('btn-back-5');
+      if (btnBack5) {
+        btnBack5.addEventListener('click', function() {
+          if (window.prevStep) window.prevStep();
+        });
+      }
+
+      // Step 5: Retry fields button
+      var btnFieldsRetry = document.getElementById('btn-fields-retry');
+      if (btnFieldsRetry) {
+        btnFieldsRetry.addEventListener('click', function() {
+          state.fieldsLoading = true;
+          state.fieldsError = null;
+          state.fieldsErrorType = null;
+          state.fieldsCorrelationId = null;
+          renderFields();
+          vscode.postMessage({ type: 'getFields', tables: state.selectedTables });
+        });
+      }
+
+      // Step 5: Table selector
+      var fieldTableSelect = document.getElementById('field-table-select');
+      if (fieldTableSelect) {
+        fieldTableSelect.addEventListener('change', function(e) {
+          state.currentFieldsTable = e.target.value;
+          state.fieldsSearchQuery = '';
+          var searchInput = document.getElementById('fields-search');
+          if (searchInput) searchInput.value = '';
+          renderFields();
+        });
+      }
+
+      // Step 5: Search filter
+      var fieldsSearch = document.getElementById('fields-search');
+      if (fieldsSearch) {
+        fieldsSearch.addEventListener('input', function(e) {
+          state.fieldsSearchQuery = e.target.value;
+          renderFields();
+        });
+      }
+
+      // Step 5: Select all checkbox
+      var fieldsSelectAll = document.getElementById('fields-select-all');
+      if (fieldsSelectAll) {
+        fieldsSelectAll.addEventListener('change', function(e) {
+          var tableName = state.currentFieldsTable;
+          if (!tableName) return;
+
+          if (!state.selectedFieldsByTable[tableName]) {
+            state.selectedFieldsByTable[tableName] = [];
+          }
+
+          if (e.target.checked) {
+            // Select all filtered fields
+            state.filteredFields.forEach(function(f) {
+              if (!state.selectedFieldsByTable[tableName].includes(f.name)) {
+                state.selectedFieldsByTable[tableName].push(f.name);
+              }
+            });
+          } else {
+            // Deselect all filtered fields
+            state.selectedFieldsByTable[tableName] = state.selectedFieldsByTable[tableName].filter(function(name) {
+              return !state.filteredFields.some(function(f) { return f.name === name; });
+            });
+          }
+          renderFields();
+        });
+      }
+
+      // Step 5: Field checkbox selection (delegate)
+      document.addEventListener('change', function(e) {
+        var target = e.target;
+        if (target && target.name === 'field') {
+          var tableName = state.currentFieldsTable;
+          if (!tableName) return;
+
+          if (!state.selectedFieldsByTable[tableName]) {
+            state.selectedFieldsByTable[tableName] = [];
+          }
+
+          if (target.checked) {
+            if (!state.selectedFieldsByTable[tableName].includes(target.value)) {
+              state.selectedFieldsByTable[tableName].push(target.value);
+            }
+          } else {
+            state.selectedFieldsByTable[tableName] = state.selectedFieldsByTable[tableName].filter(function(f) { return f !== target.value; });
+          }
+          renderFields();
+        }
+      });
     }
 
     // Call setup after DOM is ready
@@ -1333,6 +1455,31 @@ export function getDashboardScript(): string {
           state.tablesCorrelationId = msg.correlationId || null;
           console.error('[' + state.tablesCorrelationId + '] Tables error (' + state.tablesErrorType + '): ' + state.tablesError);
           renderTables();
+          break;
+
+        // Step 5: Field Configuration handlers
+        case 'fields':
+          state.fieldsByTable = msg.data || {};
+          // Initialize selected fields for each table (select all by default)
+          Object.keys(state.fieldsByTable).forEach(function(tableName) {
+            if (!state.selectedFieldsByTable[tableName]) {
+              state.selectedFieldsByTable[tableName] = state.fieldsByTable[tableName].map(function(f) { return f.name; });
+            }
+          });
+          state.fieldsLoading = false;
+          state.fieldsError = null;
+          state.fieldsErrorType = null;
+          state.fieldsCorrelationId = null;
+          renderFields();
+          break;
+
+        case 'fieldsError':
+          state.fieldsLoading = false;
+          state.fieldsError = msg.message || 'Failed to load fields';
+          state.fieldsErrorType = msg.errorType || 'unknown';
+          state.fieldsCorrelationId = msg.correlationId || null;
+          console.error('[' + state.fieldsCorrelationId + '] Fields error (' + state.fieldsErrorType + '): ' + state.fieldsError);
+          renderFields();
           break;
 
         case 'specParsed':
@@ -1860,6 +2007,113 @@ export function getDashboardScript(): string {
       var btnNext = document.getElementById('btn-next-4');
       if (btnNext) {
         btnNext.disabled = state.selectedTables.length === 0;
+      }
+    }
+
+    // =============================================
+    // Step 5: Field Configuration Render
+    // =============================================
+    function renderFields() {
+      var loadingEl = document.getElementById('fields-loading');
+      var errorEl = document.getElementById('fields-error');
+      var listEl = document.getElementById('fields-list');
+      var checkboxList = document.getElementById('fields-checkbox-list');
+      var countEl = document.getElementById('fields-count');
+      var selectAllEl = document.getElementById('fields-select-all');
+      var tableSelect = document.getElementById('field-table-select');
+
+      // Hide all states
+      if (loadingEl) loadingEl.style.display = 'none';
+      if (errorEl) errorEl.style.display = 'none';
+      if (listEl) listEl.style.display = 'none';
+
+      if (state.fieldsLoading) {
+        if (loadingEl) loadingEl.style.display = 'flex';
+        return;
+      }
+
+      if (state.fieldsError) {
+        if (errorEl) {
+          errorEl.style.display = 'block';
+          var errorMsg = errorEl.querySelector('.error-message');
+          if (errorMsg) errorMsg.textContent = state.fieldsError;
+
+          var errorIdEl = document.getElementById('fields-error-id');
+          if (errorIdEl && state.fieldsCorrelationId) {
+            errorIdEl.style.display = 'block';
+            var idSpan = errorIdEl.querySelector('span');
+            if (idSpan) idSpan.textContent = state.fieldsCorrelationId;
+          }
+        }
+        return;
+      }
+
+      // Populate table selector
+      if (tableSelect) {
+        tableSelect.innerHTML = state.selectedTables.map(function(tableName) {
+          return '<option value="' + escapeHtml(tableName) + '"' +
+            (tableName === state.currentFieldsTable ? ' selected' : '') + '>' +
+            escapeHtml(tableName) + '</option>';
+        }).join('');
+
+        // Default to first table if none selected
+        if (!state.currentFieldsTable && state.selectedTables.length > 0) {
+          state.currentFieldsTable = state.selectedTables[0];
+        }
+      }
+
+      // Get fields for current table
+      var currentFields = state.fieldsByTable[state.currentFieldsTable] || [];
+      var selectedFields = state.selectedFieldsByTable[state.currentFieldsTable] || [];
+
+      // Filter fields
+      state.filteredFields = currentFields.filter(function(field) {
+        if (!state.fieldsSearchQuery) return true;
+        var query = state.fieldsSearchQuery.toLowerCase();
+        return field.name.toLowerCase().includes(query) ||
+               (field.type && field.type.toLowerCase().includes(query));
+      });
+
+      if (listEl) listEl.style.display = 'block';
+      if (checkboxList) {
+        checkboxList.innerHTML = state.filteredFields.map(function(field) {
+          var isSelected = selectedFields.includes(field.name);
+          return '<label class="checkbox-item" style="display: flex; align-items: center; gap: 8px; padding: 8px; border-bottom: 1px solid var(--input-border); cursor: pointer;">' +
+            '<input type="checkbox" name="field" value="' + escapeHtml(field.name) + '"' +
+            (isSelected ? ' checked' : '') + '>' +
+            '<span class="checkbox-label" style="flex: 1;">' + escapeHtml(field.name) + '</span>' +
+            (field.type ? '<span class="checkbox-type" style="color: var(--text-secondary); font-size: 12px;">' + escapeHtml(field.type) + '</span>' : '') +
+            '</label>';
+        }).join('');
+      }
+
+      // Update select all checkbox state
+      if (selectAllEl) {
+        var allSelected = state.filteredFields.length > 0 &&
+          state.filteredFields.every(function(f) { return selectedFields.includes(f.name); });
+        var someSelected = selectedFields.length > 0 && !allSelected;
+        selectAllEl.checked = allSelected;
+        selectAllEl.indeterminate = someSelected;
+      }
+
+      if (countEl) {
+        var totalSelected = Object.values(state.selectedFieldsByTable).reduce(function(sum, arr) {
+          return sum + (arr ? arr.length : 0);
+        }, 0);
+        countEl.textContent = totalSelected + ' fields selected';
+      }
+
+      updateStep5NextButton();
+    }
+
+    function updateStep5NextButton() {
+      var btnNext = document.getElementById('btn-next-5');
+      if (btnNext) {
+        // At least one field must be selected in any table
+        var hasFields = Object.values(state.selectedFieldsByTable).some(function(arr) {
+          return arr && arr.length > 0;
+        });
+        btnNext.disabled = !hasFields;
       }
     }
 

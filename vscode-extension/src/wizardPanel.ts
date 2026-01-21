@@ -361,6 +361,10 @@ export class WizardPanel {
             await this.sendTables(message.connectionId);
             break;
 
+          case 'getFields':
+            await this.sendFields(message.tables);
+            break;
+
           case 'showInfo':
             vscode.window.showInformationMessage(message.text);
             break;
@@ -480,6 +484,38 @@ export class WizardPanel {
 
       this._panel.webview.postMessage({
         type: 'tablesError',
+        message: errorMessage,
+        errorType: errorType,
+        correlationId: correlationId
+      });
+    }
+  }
+
+  private async sendFields(tables: string[]): Promise<void> {
+    try {
+      const fieldsByTable = await this._qlikApi.getFields(tables);
+      this._panel.webview.postMessage({ type: 'fields', data: fieldsByTable });
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load fields';
+      const correlationId = `fields-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+      // Determine error type based on error message/status
+      let errorType: 'auth' | 'network' | 'server' | 'validation' | 'unknown' = 'unknown';
+      if (errorMessage.includes('401') || errorMessage.includes('Unauthorized') || errorMessage.includes('authentication')) {
+        errorType = 'auth';
+      } else if (errorMessage.includes('network') || errorMessage.includes('ECONNREFUSED') || errorMessage.includes('timeout')) {
+        errorType = 'network';
+      } else if (errorMessage.includes('500') || errorMessage.includes('502') || errorMessage.includes('503')) {
+        errorType = 'server';
+      } else if (errorMessage.includes('400') || errorMessage.includes('validation')) {
+        errorType = 'validation';
+      }
+
+      // Log to VS Code Output channel
+      console.error(`[${correlationId}] Fields error (${errorType}): ${errorMessage}`);
+
+      this._panel.webview.postMessage({
+        type: 'fieldsError',
         message: errorMessage,
         errorType: errorType,
         correlationId: correlationId
@@ -1876,18 +1912,56 @@ JSON OUTPUT:`;
     </div>
   </div>
 
-  <!-- Step 5: Field Mapping -->
+  <!-- Step 5: Field Configuration -->
   <div id="step-5" class="step-content" data-step="5" style="display: none;">
-    <h2>🔧 Field Mapping</h2>
+    <h2>🔧 Field Configuration</h2>
     <p style="margin-bottom: 16px; color: var(--text-secondary);">
-      Configure field mappings and relationships
+      Select fields to include for each table
     </p>
-    <div id="fields-config">
-      <p>Field mapping configuration will appear here based on selected tables.</p>
+
+    <div id="fields-loading" class="loading-section" style="display: flex; align-items: center; gap: 12px; padding: 24px; justify-content: center;">
+      <div class="spinner"></div>
+      <span>Loading fields...</span>
     </div>
-    <div class="button-row">
-      <button class="btn btn-secondary btn-back-action">Back</button>
-      <button class="btn btn-primary btn-next-action">Next</button>
+
+    <div id="fields-error" class="error-section" style="display: none; background: var(--error-bg, rgba(255,0,0,0.1)); padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+      <p class="error-message" style="color: var(--error-color, #f44336); margin-bottom: 12px;"></p>
+      <p id="fields-error-id" style="font-size: 11px; color: var(--text-secondary); margin-bottom: 12px;">Error ID: <span></span></p>
+      <div class="error-actions" style="display: flex; gap: 8px;">
+        <button id="btn-fields-retry" class="btn btn-secondary">
+          <span class="codicon codicon-refresh"></span> Retry
+        </button>
+      </div>
+    </div>
+
+    <div id="fields-list" style="display: none;">
+      <div class="fields-table-selector" style="margin-bottom: 16px;">
+        <label for="field-table-select" style="display: block; margin-bottom: 4px; font-weight: 500;">Select Table:</label>
+        <select id="field-table-select" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 4px; background: var(--input-bg); color: var(--input-fg);">
+          <!-- Dynamic table options -->
+        </select>
+      </div>
+
+      <div class="fields-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <label class="select-all-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+          <input type="checkbox" id="fields-select-all">
+          <span>Select All Fields</span>
+        </label>
+        <span id="fields-count" class="count-badge" style="background: var(--button-primary-bg, #0078d4); color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px;">0 selected</span>
+      </div>
+
+      <div class="fields-filter" style="margin-bottom: 12px;">
+        <input type="text" id="fields-search" placeholder="Filter fields..." style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 4px; background: var(--input-bg); color: var(--input-fg);">
+      </div>
+
+      <div id="fields-checkbox-list" class="checkbox-list" style="max-height: 300px; overflow-y: auto; border: 1px solid var(--input-border); border-radius: 4px; padding: 8px;">
+        <!-- Dynamic field checkboxes -->
+      </div>
+    </div>
+
+    <div class="button-row" style="margin-top: 24px; display: flex; justify-content: space-between;">
+      <button class="btn btn-secondary" id="btn-back-5">Back</button>
+      <button class="btn btn-primary" id="btn-next-5" disabled>Next</button>
     </div>
   </div>
 

@@ -23,6 +23,13 @@ export interface TableInfo {
     rowCount?: number;
 }
 
+export interface FieldInfo {
+    name: string;
+    type?: string;
+    nullable?: boolean;
+    primaryKey?: boolean;
+}
+
 export interface QlikApp {
     id: string;
     name: string;
@@ -407,6 +414,67 @@ export class QlikApiService {
             { name: 'order_items', schema: 'public', rowCount: 75000 },
             { name: 'categories', schema: 'public', rowCount: 25 }
         ];
+    }
+
+    /**
+     * Get fields for tables
+     * Note: Full implementation requires engine session. Returns mock data for UI testing.
+     */
+    async getFields(tables: string[]): Promise<Record<string, FieldInfo[]>> {
+        if (!this.isConfigured()) {
+            throw new Error('Qlik Cloud credentials not configured');
+        }
+
+        console.log(`[QlikApi] Getting fields for tables: ${tables.join(', ')}`);
+
+        // Mock data for testing UI flow
+        // TODO: Implement via Qlik engine API
+        const fieldsByTable: Record<string, FieldInfo[]> = {};
+
+        const mockFields: Record<string, FieldInfo[]> = {
+            'customers': [
+                { name: 'customer_id', type: 'INTEGER' },
+                { name: 'name', type: 'VARCHAR' },
+                { name: 'email', type: 'VARCHAR' },
+                { name: 'phone', type: 'VARCHAR' },
+                { name: 'created_at', type: 'TIMESTAMP' }
+            ],
+            'orders': [
+                { name: 'order_id', type: 'INTEGER' },
+                { name: 'customer_id', type: 'INTEGER' },
+                { name: 'order_date', type: 'DATE' },
+                { name: 'total', type: 'DECIMAL' },
+                { name: 'status', type: 'VARCHAR' }
+            ],
+            'products': [
+                { name: 'product_id', type: 'INTEGER' },
+                { name: 'name', type: 'VARCHAR' },
+                { name: 'category_id', type: 'INTEGER' },
+                { name: 'price', type: 'DECIMAL' },
+                { name: 'stock', type: 'INTEGER' }
+            ],
+            'order_items': [
+                { name: 'item_id', type: 'INTEGER' },
+                { name: 'order_id', type: 'INTEGER' },
+                { name: 'product_id', type: 'INTEGER' },
+                { name: 'quantity', type: 'INTEGER' },
+                { name: 'unit_price', type: 'DECIMAL' }
+            ],
+            'categories': [
+                { name: 'category_id', type: 'INTEGER' },
+                { name: 'name', type: 'VARCHAR' },
+                { name: 'description', type: 'TEXT' }
+            ]
+        };
+
+        tables.forEach(table => {
+            fieldsByTable[table] = mockFields[table] || [
+                { name: 'id', type: 'INTEGER' },
+                { name: 'name', type: 'VARCHAR' }
+            ];
+        });
+
+        return fieldsByTable;
     }
 
     // ==========================================
