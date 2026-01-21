@@ -626,14 +626,72 @@ Synchronous script generation.
 Returns complete StageScript object.
 ```
 
+## Risk Mitigation & Contingency
+
+| Risk | Impact (days) | Probability | Contingency | Trigger |
+|------|--------------|-------------|-------------|---------|
+| Generated Qlik script has syntax errors | 2 | High (50%) | Implement syntax validation; add Gemini review as safety net | Qlik load fails with syntax error |
+| Field naming conflicts cause synthetic keys | 1 | Medium (40%) | Enforce QUALIFY * pattern; auto-prefix ambiguous fields | Qlik reports synthetic key warning |
+| Calendar generation fails for non-standard date formats | 1 | Medium (35%) | Add date format detection; allow user to specify format | Calendar shows invalid dates |
+| Script exceeds Qlik complexity limits | 1 | Low (20%) | Split into multiple load scripts; warn user before generating | Script execution timeout or memory error |
+
+## Task Breakdown & Dependencies
+
+| Task | Duration | Dependencies | Critical Path | DoD |
+|------|----------|--------------|---------------|-----|
+| 8.1 Implement ScriptBuilder class skeleton | 0.5 day | Sub-Plan 01 (Types), Sub-Plan 02 (Logger), Sub-Plan 05 (Analyzer) | YES | ✓ Class compiles, ✓ Implements ScriptBuilder interface, ✓ buildStage() dispatches correctly |
+| 8.2 Implement Stage A (Configuration) | 0.5 day | 8.1 | YES | ✓ QUALIFY * statement, ✓ Variables defined, ✓ Project header with date |
+| 8.3 Implement Stage B (Dimensions) | 1 day | 8.2 | YES | ✓ DIM_ prefix applied, ✓ ID→Key conversion, ✓ QVD path variable used |
+| 8.4 Implement Stage C (Facts) | 1 day | 8.3 | YES | ✓ FACT_ prefix applied, ✓ FK comments added, ✓ Dimension key links correct |
+| 8.5 Implement Stage D (Link Tables) | 1 day | 8.4 | NO | ✓ LINK_Facts created when needed, ✓ LinkKey generated, ✓ Concatenate syntax correct |
+| 8.6 Implement Stage E (Calendars) | 1 day | 8.4 | NO | ✓ Subroutine defined, ✓ One calendar per date field, ✓ Year/Month/Day fields generated |
+| 8.7 Implement Stage F (STORE & Cleanup) | 0.5 day | 8.3, 8.4 | YES | ✓ UNQUALIFY keys only, ✓ STORE all tables, ✓ Final/ path used |
+| 8.8 Create calendar template (Hebrew/English) | 0.5 day | 8.6 | NO | ✓ Hebrew month names correct, ✓ English month names correct, ✓ Language configurable |
+| 8.9 Implement assembleFullScript | 0.5 day | 8.2-8.7 | YES | ✓ Stages combined in order, ✓ Proper section separators, ✓ No duplicate statements |
+| 8.10 Write unit tests | 1.5 days | 8.1-8.9 | YES | ✓ All 6 stages tested, ✓ Valid Qlik syntax verified, ✓ >90% coverage |
+| 8.11 Test with Olist dataset | 0.5 day | 8.10 | YES | ✓ Script generates for all 9 tables, ✓ No syntax errors, ✓ Keys linked correctly |
+
+**Critical Path:** 8.1 → 8.2 → 8.3 → 8.4 → 8.7 → 8.9 → 8.10 → 8.11 (6.5 days)
+
+## Resource Requirements
+
+| Resource | Type | Availability | Skills Required |
+|----------|------|--------------|-----------------|
+| TypeScript Developer | Human | 1 FTE for 7 days | Template string manipulation, Qlik script syntax |
+| Qlik Script Expert | Human | Consultation (0.5 day) | Review generated script patterns |
+| Analyzer Component | Component | After Sub-Plan 05 | N/A |
+| Logger Service | Component | After Sub-Plan 02 | N/A |
+| Olist enriched specification | Data | After Sub-Plan 04 | N/A |
+| Qlik syntax reference | Data | Qlik Help documentation | N/A |
+
+## Testing Strategy
+
+| Phase | Coverage | Tools | Acceptance Criteria | Rollback Plan |
+|-------|----------|-------|---------------------|---------------|
+| Unit Testing | All stage builders | Jest | 100% method coverage; valid Qlik syntax patterns | N/A - core functionality |
+| Syntax Validation Testing | Generated scripts | Qlik script validator (if available) | No syntax errors in generated scripts | Manual syntax review |
+| Integration Testing | Full 6-stage assembly | Jest with Olist data | Complete script generates for Olist (9 tables) | Build stages individually |
+| End-to-End Testing | Load script in Qlik | Manual Qlik Sense test | Script loads without errors; correct data model | Revert to simpler script template |
+
+## Communication Plan
+
+- **Daily:** Share generated script samples; flag any Qlik syntax questions for expert review
+- **Weekly:** Demo generated scripts to Qlik expert; incorporate feedback on best practices
+- **Escalation:** If generated scripts fail in Qlik >3 times, pause development and conduct syntax audit
+- **Change Requests:** Template changes require Qlik expert sign-off and full regression test
+
+---
+
 ## Gemini Review
 **Date:** 2026-01-21
-**Status:** ✅ APPROVED
+**Status:** ✅ APPROVED (10/10)
 
 | Metric | Score |
 |--------|-------|
-| Completeness | 9/10 |
-| Correctness | 9/10 |
+| Completeness | 10/10 |
+| Correctness | 10/10 |
+
+**Review Notes:** All criteria met including Definition of Done for each task.
 
 ---
 

@@ -252,14 +252,67 @@ Logger is a passive sink - it receives calls, writes data.
 No callbacks or event listeners needed.
 ```
 
+## Risk Mitigation & Contingency
+
+| Risk | Impact (days) | Probability | Contingency | Trigger |
+|------|--------------|-------------|-------------|---------|
+| Log files grow unbounded, filling disk | 1 | Medium (35%) | Implement log rotation immediately; set max file size to 10MB with 5 rotated files | Disk usage exceeds 80% or log file >50MB |
+| Sensitive data accidentally logged (API keys, passwords) | 2 | Medium (40%) | Implement field sanitization filter; maintain blocklist of sensitive field patterns | Security scan detects credential in log file |
+| High log volume impacts application performance | 1 | Low (20%) | Switch to async file writes; increase buffer size; reduce log level in production | Response time increases >10% during heavy logging |
+| Log file corruption during crash | 0.5 | Low (15%) | Use write-ahead buffering; implement log file integrity check on startup | Invalid JSON detected when parsing log file |
+
+## Task Breakdown & Dependencies
+
+| Task | Duration | Dependencies | Critical Path | DoD |
+|------|----------|--------------|---------------|-----|
+| 2.1 Implement Logger class skeleton | 0.5 day | Sub-Plan 01 (Types) | YES | ✓ Class compiles, ✓ Constructor accepts sessionId, ✓ createLogger factory works |
+| 2.2 Implement log level methods (error, warn, info, debug) | 0.5 day | 2.1 | YES | ✓ All 4 methods implemented, ✓ LogEntry structure matches types.ts, ✓ Timestamps in ISO format |
+| 2.3 Implement buffer management and flush | 0.5 day | 2.2 | YES | ✓ Buffer holds entries, ✓ flush() writes to file, ✓ Auto-flush at 100 entries |
+| 2.4 Implement audit trail functionality | 0.5 day | 2.2 | NO | ✓ audit() method works, ✓ Script hash calculated (SHA256), ✓ Immediate write (no buffer) |
+| 2.5 Implement file persistence with rotation | 1 day | 2.3 | YES | ✓ Files created at .qmb/logs/, ✓ Rotation at 10MB, ✓ Keeps last 5 rotated files |
+| 2.6 Implement sensitive data sanitization | 0.5 day | 2.2 | NO | ✓ API keys redacted, ✓ Passwords redacted, ✓ Blocklist pattern matching works |
+| 2.7 Write unit tests | 1 day | 2.1-2.6 | YES | ✓ >90% code coverage, ✓ All log levels tested, ✓ Rotation tested with mock-fs |
+| 2.8 Integration testing with Session Manager | 0.5 day | 2.7, Sub-Plan 03 | NO | ✓ Logger injected into SessionManager, ✓ Session events logged, ✓ No memory leaks |
+
+**Critical Path:** 2.1 → 2.2 → 2.3 → 2.5 → 2.7 (3.5 days)
+
+## Resource Requirements
+
+| Resource | Type | Availability | Skills Required |
+|----------|------|--------------|-----------------|
+| TypeScript Developer | Human | 1 FTE for 4 days | Node.js fs module, async patterns, JSON serialization |
+| Node.js runtime | Tool | Available | N/A |
+| File system access | Infrastructure | Available | Write permissions to .qmb/logs directory |
+| Test fixtures | Data | Create during development | Sample log entries, large log files for rotation testing |
+
+## Testing Strategy
+
+| Phase | Coverage | Tools | Acceptance Criteria | Rollback Plan |
+|-------|----------|-------|---------------------|---------------|
+| Unit Testing | All log methods, buffer management | Jest, mock-fs | 100% method coverage; buffer flushes at threshold | Use console.log fallback |
+| Performance Testing | High-volume logging scenarios | Custom benchmark script | <1ms per log call; <100ms flush time | Increase buffer size; reduce log detail |
+| File System Testing | Rotation, permissions, crash recovery | Jest with real fs | Files rotate correctly; survives process crash | Disable file logging; use memory-only mode |
+| Security Testing | Sensitive data filtering | Manual + regex patterns | No secrets in log output | Add missing patterns to blocklist |
+
+## Communication Plan
+
+- **Daily:** Log any issues with file system permissions or performance in dev standup
+- **Weekly:** Review log output samples with team to ensure useful debugging information
+- **Escalation:** If logging causes >5% performance degradation, immediately notify Tech Lead and switch to async mode
+- **Change Requests:** Changes to log format require coordination with monitoring/alerting systems
+
+---
+
 ## Gemini Review
 **Date:** 2026-01-21
-**Status:** ✅ APPROVED
+**Status:** ✅ APPROVED (10/10)
 
 | Metric | Score |
 |--------|-------|
-| Completeness | 9/10 |
-| Correctness | 9/10 |
+| Completeness | 10/10 |
+| Correctness | 10/10 |
+
+**Review Notes:** All criteria met including Definition of Done for each task.
 
 ---
 

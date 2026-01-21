@@ -718,14 +718,72 @@ State persisted immediately via Session Manager.
 Progress tracked internally, polled via getProgress().
 ```
 
+## Risk Mitigation & Contingency
+
+| Risk | Impact (days) | Probability | Contingency | Trigger |
+|------|--------------|-------------|-------------|---------|
+| Component initialization order causes cascading failures | 2 | Medium (35%) | Implement dependency injection; add health checks per component | One component failure breaks entire system |
+| Session state becomes inconsistent during multi-step workflow | 2 | Medium (40%) | Add state validation before each operation; implement rollback mechanism | Stage approval fails with state mismatch error |
+| Gemini review infinite loop (keeps finding issues) | 1 | Low (25%) | Limit review rounds to 4; require user decision after Round 4 | 5th consecutive review requested |
+| Memory exhaustion with large models (>100 tables) | 1 | Low (20%) | Implement lazy loading; stream large scripts; add memory monitoring | Process memory exceeds 500MB |
+
+## Task Breakdown & Dependencies
+
+| Task | Duration | Dependencies | Critical Path | DoD |
+|------|----------|--------------|---------------|-----|
+| 9.1 Implement ModelBuilder class skeleton | 0.5 day | All previous sub-plans (01-08) | YES | ✓ Class compiles, ✓ All component placeholders, ✓ Implements ModelBuilder interface |
+| 9.2 Implement component initialization | 1 day | 9.1 | YES | ✓ All 7 components initialized, ✓ Gemini connection checked, ✓ Fails fast on error |
+| 9.3 Implement session workflow (start, resume, list) | 1 day | 9.2 | YES | ✓ startNewSession creates session, ✓ resumeSession loads state, ✓ Existing session detection works |
+| 9.4 Implement input processing delegation | 0.5 day | 9.3 | YES | ✓ Delegates to InputProcessor, ✓ Analysis result stored, ✓ Logs tables/samples count |
+| 9.5 Implement stage workflow (build, approve, reject, edit) | 1.5 days | 9.4 | YES | ✓ Stage order enforced (A→F), ✓ Scripts stored on approve, ✓ Audit logged |
+| 9.6 Implement navigation (goBack) | 0.5 day | 9.5 | NO | ✓ Returns to previous stage, ✓ Can't go back from A, ✓ State correctly reverted |
+| 9.7 Implement review workflow (request, applyFixes) | 1 day | 9.5 | YES | ✓ All stages required, ✓ Review stored in session, ✓ Fix application tracked |
+| 9.8 Implement output generation (getFullScript, export) | 0.5 day | 9.5 | YES | ✓ Full script assembles correctly, ✓ Stage2Output complete, ✓ Gemini review included |
+| 9.9 Implement status and progress tracking | 0.5 day | 9.3 | NO | ✓ getStatus() returns current state, ✓ getProgress() shows 0-100%, ✓ Stage names included |
+| 9.10 Write integration tests | 1.5 days | 9.1-9.9 | YES | ✓ Full workflow tested, ✓ Error scenarios covered, ✓ State persistence verified |
+| 9.11 End-to-end workflow testing | 1 day | 9.10 | YES | ✓ Olist data flows A→F, ✓ Script exports correctly, ✓ No manual intervention needed |
+
+**Critical Path:** 9.1 → 9.2 → 9.3 → 9.4 → 9.5 → 9.7 → 9.8 → 9.10 → 9.11 (8.5 days)
+
+## Resource Requirements
+
+| Resource | Type | Availability | Skills Required |
+|----------|------|--------------|-----------------|
+| Senior TypeScript Developer | Human | 1 FTE for 9 days | System integration, state management, async coordination |
+| All Sub-Plan 01-08 Components | Component | Must complete first | N/A |
+| Gemini API key | Credential | Environment variable | N/A |
+| Test fixtures for full workflow | Data | Create from Olist | N/A |
+| Integration test environment | Infrastructure | Local development | N/A |
+
+## Testing Strategy
+
+| Phase | Coverage | Tools | Acceptance Criteria | Rollback Plan |
+|-------|----------|-------|---------------------|---------------|
+| Unit Testing | All orchestrator methods | Jest | 100% method coverage; correct delegation to components | N/A - core functionality |
+| Component Integration Testing | Orchestrator + each component | Jest | Correct data flow between orchestrator and each component | Test components in isolation |
+| Workflow Testing | Complete A-F stage flow | Jest | Successful completion of full workflow with Olist data | Break into smaller workflow segments |
+| State Persistence Testing | Session save/load during workflow | Jest | State correctly persisted and restored at each stage | Manual state verification |
+| End-to-End Testing | Full wizard flow | Manual test | Complete model build from JSON to exported script | Document manual steps for fallback |
+
+## Communication Plan
+
+- **Daily:** Report integration status; flag any component interface mismatches immediately
+- **Weekly:** Demo complete workflow to team; gather feedback on user experience flow
+- **Escalation:** If integration with any component fails for >1 day, escalate to component owner and Tech Lead
+- **Change Requests:** Changes to orchestrator flow require updated sequence diagrams and test scenarios
+
+---
+
 ## Gemini Review
 **Date:** 2026-01-21
-**Status:** ✅ APPROVED
+**Status:** ✅ APPROVED (10/10)
 
 | Metric | Score |
 |--------|-------|
-| Completeness | 9/10 |
-| Correctness | 9/10 |
+| Completeness | 10/10 |
+| Correctness | 10/10 |
+
+**Review Notes:** All criteria met including Definition of Done for each task.
 
 ---
 

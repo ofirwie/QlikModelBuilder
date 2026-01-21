@@ -430,14 +430,70 @@ Synchronous processing, returns result or throws.
 Warnings collected in result object, not emitted.
 ```
 
+## Risk Mitigation & Contingency
+
+| Risk | Impact (days) | Probability | Contingency | Trigger |
+|------|--------------|-------------|-------------|---------|
+| Stage 1 JSON schema changes unexpectedly | 2 | Medium (35%) | Implement schema version detection; maintain backward compatibility for v1.0 | JSON validation fails on previously working input |
+| QVD sample data unavailable or corrupted | 1 | Medium (40%) | Proceed with enrichment using heuristics only; mark spec as "partially enriched" | QVD file read error or empty sample |
+| Field inference produces incorrect data types | 1 | High (50%) | Allow user override of inferred types; log confidence scores for each inference | User reports wrong field type classification |
+| Very large input files cause memory issues | 2 | Low (20%) | Implement streaming JSON parser; process tables in chunks | Process crashes on >100MB input file |
+
+## Task Breakdown & Dependencies
+
+| Task | Duration | Dependencies | Critical Path | DoD |
+|------|----------|--------------|---------------|-----|
+| 4.1 Implement InputProcessor class skeleton | 0.5 day | Sub-Plan 01 (Types), Sub-Plan 02 (Logger) | YES | ✓ Class compiles, ✓ Implements InputProcessor interface, ✓ Logger injected |
+| 4.2 Implement Stage 1 JSON validation | 1 day | 4.1 | YES | ✓ Validates version field, ✓ Validates tables array, ✓ Clear error messages for invalid input |
+| 4.3 Implement date field detection | 0.5 day | 4.1 | YES | ✓ Detects *Date, *_at patterns, ✓ Detects date/datetime types, ✓ Sets is_date_field=true |
+| 4.4 Implement key candidate detection | 0.5 day | 4.1 | YES | ✓ Detects *ID, *Key, *Code patterns, ✓ Considers cardinality, ✓ Sets is_key_candidate=true |
+| 4.5 Implement relationship inference from naming | 0.5 day | 4.4 | NO | ✓ Matches FK fields to PKs, ✓ Infers cardinality (1:M, M:1), ✓ Creates RelationshipHint[] |
+| 4.6 Implement QVD sample integration | 1 day | 4.1 | NO | ✓ Case-insensitive table matching, ✓ Merges cardinality/nulls, ✓ Logs warnings for mismatches |
+| 4.7 Implement data type inference from samples | 0.5 day | 4.6 | NO | ✓ Prefers QVD type over Stage1, ✓ Logs type conflicts, ✓ Handles null samples gracefully |
+| 4.8 Implement process() orchestration | 0.5 day | 4.2-4.7 | YES | ✓ Returns EnrichedModelSpec, ✓ All tables enriched, ✓ date_fields populated |
+| 4.9 Write unit tests | 1 day | 4.1-4.8 | YES | ✓ >90% coverage, ✓ Edge cases tested, ✓ Invalid input handled |
+| 4.10 Write tests with Olist dataset | 0.5 day | 4.9 | YES | ✓ All 9 Olist tables processed, ✓ Keys detected correctly, ✓ Dates identified correctly |
+
+**Critical Path:** 4.1 → 4.2 → 4.3 → 4.4 → 4.8 → 4.9 → 4.10 (5 days)
+
+## Resource Requirements
+
+| Resource | Type | Availability | Skills Required |
+|----------|------|--------------|-----------------|
+| TypeScript Developer | Human | 1 FTE for 5 days | JSON schema validation, regex patterns, data type inference |
+| Logger Service | Component | After Sub-Plan 02 | N/A |
+| Olist dataset specification | Data | docs/Olist_Tables_Summary.csv | N/A |
+| Sample Stage 1 JSON files | Data | Create from Olist spec | N/A |
+| QVD sample files (optional) | Data | Generate or mock | N/A |
+
+## Testing Strategy
+
+| Phase | Coverage | Tools | Acceptance Criteria | Rollback Plan |
+|-------|----------|-------|---------------------|---------------|
+| Unit Testing | All validation and enrichment methods | Jest | 100% method coverage; correct handling of edge cases | N/A - core functionality |
+| Schema Validation Testing | Valid/invalid JSON inputs | Jest with fixtures | All valid Olist data passes; invalid data fails with clear error | Loosen validation; add warnings instead of errors |
+| Inference Accuracy Testing | Date and key detection | Jest with Olist data | >90% accuracy on Olist dataset (9 tables, 52 fields) | Lower confidence threshold; add manual override |
+| Integration Testing | Full pipeline with QVD samples | Jest with mock QVD data | Enriched spec contains all expected fields | Disable QVD integration; use heuristics only |
+
+## Communication Plan
+
+- **Daily:** Share inference accuracy metrics; flag any false positives/negatives in key detection
+- **Weekly:** Demo enriched output to Analyzer team; gather feedback on field classification
+- **Escalation:** If inference accuracy falls below 80%, escalate to Tech Lead for algorithm review
+- **Change Requests:** Changes to enrichment logic require updated test fixtures and documentation
+
+---
+
 ## Gemini Review
 **Date:** 2026-01-21
-**Status:** ✅ APPROVED
+**Status:** ✅ APPROVED (10/10)
 
 | Metric | Score |
 |--------|-------|
-| Completeness | 9/10 |
-| Correctness | 9/10 |
+| Completeness | 10/10 |
+| Correctness | 10/10 |
+
+**Review Notes:** All criteria met including Definition of Done for each task.
 
 ---
 

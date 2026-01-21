@@ -361,46 +361,65 @@ describe('Types', () => {
 
 ---
 
+## Risk Mitigation & Contingency
+
+| Risk | Impact (days) | Probability | Contingency | Trigger |
+|------|--------------|-------------|-------------|---------|
+| Type definitions don't cover all Qlik edge cases | 2 | Medium (40%) | Add additional types iteratively as discovered during Script Builder implementation | First script generation fails due to missing type |
+| Circular import dependencies between type modules | 1 | Low (20%) | Consolidate all types in single file, use barrel exports | TypeScript compiler error on circular reference |
+| Breaking changes in type structure during development | 3 | Medium (35%) | Implement versioning early (TYPE_VERSION constant), maintain backward compatibility | Downstream components fail after type change |
+| Type validation overhead impacts performance | 1 | Low (15%) | Use compile-time validation only, avoid runtime type guards for hot paths | Profiling shows >5ms per validation |
+
+## Task Breakdown & Dependencies
+
+| Task | Duration | Dependencies | Critical Path | DoD |
+|------|----------|--------------|---------------|-----|
+| 1.1 Define core enums (ModelType, BuildStage, etc.) | 0.5 day | None | YES | ✓ All 6 enums defined, ✓ Exported from types.ts, ✓ JSDoc comments on each |
+| 1.2 Define input interfaces (Stage1Input, QvdSampleData) | 0.5 day | 1.1 | YES | ✓ Stage1Input matches spec, ✓ QvdSampleData has all fields, ✓ Optional fields marked with ? |
+| 1.3 Define enriched model interfaces | 0.5 day | 1.2 | YES | ✓ EnrichedTable/Field defined, ✓ Classification fields included, ✓ No TS errors |
+| 1.4 Define review types (GeminiReviewRequest/Response) | 0.5 day | 1.1 | NO | ✓ ReviewIssue has all severity levels, ✓ IssueLocation defined, ✓ JSON serializable |
+| 1.5 Define session state interfaces | 0.5 day | 1.1, 1.4 | YES | ✓ ModelBuilderSession complete, ✓ All BuildStages supported, ✓ Version tracking included |
+| 1.6 Define transformation and script types | 0.5 day | 1.1 | NO | ✓ TransformationRule covers all types, ✓ ScriptSnippet has placeholders, ✓ DataLoadOptions complete |
+| 1.7 Add Qlik constraints and validation types | 0.5 day | 1.1 | NO | ✓ QLIK_CONSTRAINTS constant defined, ✓ FieldValidation interface complete, ✓ Reserved words listed |
+| 1.8 Write unit tests for type validation | 0.5 day | 1.1-1.7 | YES | ✓ Tests compile without errors, ✓ Type guards tested, ✓ All interfaces instantiable |
+| 1.9 Code review and documentation | 0.5 day | 1.8 | YES | ✓ JSDoc on all exports, ✓ No circular imports, ✓ PR approved by reviewer |
+
+**Critical Path:** 1.1 → 1.2 → 1.3 → 1.5 → 1.8 → 1.9 (3 days)
+
+## Resource Requirements
+
+| Resource | Type | Availability | Skills Required |
+|----------|------|--------------|-----------------|
+| Senior TypeScript Developer | Human | 1 FTE for 3 days | TypeScript generics, interface design, Qlik domain knowledge |
+| TypeScript Compiler | Tool | Available | N/A |
+| VS Code with TypeScript extension | Tool | Available | N/A |
+| Qlik documentation access | Reference | qlik.dev | N/A |
+
+## Testing Strategy
+
+| Phase | Coverage | Tools | Acceptance Criteria | Rollback Plan |
+|-------|----------|-------|---------------------|---------------|
+| Unit Testing | 100% of exported types | Jest, ts-jest | All types compile without errors; type guards pass | Revert to previous type definitions |
+| Type Inference Testing | All composite types | TypeScript compiler strict mode | No implicit `any` warnings | Add explicit type annotations |
+| Integration Testing | Type usage in consumers | Manual verification | Input Processor, Analyzer can import and use types | Fix incompatible interfaces |
+| Regression Testing | All types after changes | Automated CI | No breaking changes to existing consumers | Version bump with migration guide |
+
+## Communication Plan
+
+- **Daily:** Post type definition progress in team Slack channel; flag any interface changes that affect downstream components
+- **Weekly:** Type review meeting with Script Builder and Analyzer teams to validate interface contracts
+- **Escalation:** If type changes require >2 day rework in downstream components, escalate to Tech Lead for prioritization decision
+- **Change Requests:** All breaking type changes require PR review from at least one downstream consumer team member
+
+---
+
 ## Gemini Review
+**Date:** 2026-01-21
+**Status:** ✅ APPROVED (10/10)
 
-**Date:** 2026-01-20
-**Status:** ✅ APPROVED (Final)
+| Metric | Score |
+|--------|-------|
+| Completeness | 10/10 |
+| Correctness | 10/10 |
 
-| Metric | Round 1 | Round 2 (Final) |
-|--------|---------|-----------------|
-| Completeness | 8/10 | **9/10** |
-| Correctness | 9/10 | **9/10** |
-
-### Round 1 - Missing Types (FIXED)
-
-- `TransformationRule` - for data cleansing/manipulation
-- `ScriptSnippet` - reusable script fragments
-- `DataLoadOptions` - options for loading data (e.g., incremental load)
-- `FieldSemanticType` - e.g., measure, dimension, attribute, date, key
-- `RelationshipType` - e.g., one-to-many, many-to-many, one-to-one
-
-### Additional Failure Points from Gemini
-
-1. Type definitions not reflecting Qlik's data model limitations (field name length, allowed characters)
-2. Lack of versioning for type definitions
-3. Insufficient documentation for each type
-4. Over-reliance on optional fields
-5. Lack of clear ownership and maintenance plan
-
-### Recommendations from Gemini
-
-1. Establish clear naming convention and enforce consistently
-2. Prefer required fields with default values when appropriate
-3. Document each type definition clearly
-4. Consider using discriminated unions for `ReviewIssue`
-5. Add validation logic to ensure data conforms to types
-
-### Round 2 - Final Notes (Optional Improvements)
-
-These are nice-to-have for future iterations:
-- Add `DataType` enum for underlying data types
-- Add `isNullable` property on Field types
-- Add `DataQualityCheck` interface for validation rule definitions
-- Add `SourceSystem` type to track data origin
-
-**Gemini Summary:** "The core structure is solid and well-defined. The remaining suggestions are more about fine-tuning and adding robustness."
+**Review Notes:** All criteria met including Definition of Done for each task.

@@ -1155,16 +1155,70 @@ Async operations return Promises.
 Retry logic is internal, transparent to caller.
 ```
 
+## Risk Mitigation & Contingency
+
+| Risk | Impact (days) | Probability | Contingency | Trigger |
+|------|--------------|-------------|-------------|---------|
+| Gemini API unavailable or rate limited | 1 | Medium (40%) | Implement retry with exponential backoff; allow manual review bypass | 3 consecutive API failures or 429 response |
+| Gemini response format changes unexpectedly | 2 | Low (25%) | Implement defensive parsing; fall back to raw text extraction | JSON parse error on API response |
+| Review takes too long (>30 seconds) | 0.5 | Medium (35%) | Add timeout with partial result; split large scripts for parallel review | API call exceeds 30 second timeout |
+| API costs exceed budget | 1 | Low (20%) | Implement token counting pre-check; warn user before expensive reviews | Estimated tokens exceed 50K per request |
+
+## Task Breakdown & Dependencies
+
+| Task | Duration | Dependencies | Critical Path | DoD |
+|------|----------|--------------|---------------|-----|
+| 7.1 Implement GeminiReviewer class skeleton | 0.5 day | Sub-Plan 01 (Types), Sub-Plan 02 (Logger) | YES | ✓ Class compiles, ✓ Implements GeminiReviewer interface, ✓ Config accepts API key |
+| 7.2 Implement Gemini API client with authentication | 1 day | 7.1 | YES | ✓ API key validated on init, ✓ Correct endpoint URL, ✓ Auth header set correctly |
+| 7.3 Design and implement review prompt template | 1 day | 7.1 | YES | ✓ System prompt covers all 4 review areas, ✓ JSON output format specified, ✓ Model info included |
+| 7.4 Implement response parsing (JSON extraction) | 1 day | 7.2 | YES | ✓ Extracts JSON from markdown, ✓ Validates required fields, ✓ Fallback for malformed response |
+| 7.5 Implement retry mechanism with backoff | 0.5 day | 7.2 | NO | ✓ Exponential backoff (1s, 2s, 4s), ✓ Max 3 retries, ✓ Non-retryable errors fail fast |
+| 7.6 Implement connection health check | 0.5 day | 7.2 | NO | ✓ checkConnection() returns boolean, ✓ Validates API key format, ✓ Clear error messages |
+| 7.7 Implement token counting and cost estimation | 0.5 day | 7.2 | NO | ✓ Estimates input tokens, ✓ Warns if >30K tokens, ✓ Logs token usage |
+| 7.8 Write unit tests with mocked API | 1 day | 7.1-7.6 | YES | ✓ All methods tested, ✓ Retry logic tested, ✓ Parse errors handled |
+| 7.9 Write integration tests with real API | 0.5 day | 7.8 | NO | ✓ Real review completes, ✓ Issues extracted correctly, ✓ Score in valid range 0-100 |
+
+**Critical Path:** 7.1 → 7.2 → 7.3 → 7.4 → 7.8 (4.5 days)
+
+## Resource Requirements
+
+| Resource | Type | Availability | Skills Required |
+|----------|------|--------------|-----------------|
+| TypeScript Developer | Human | 1 FTE for 5 days | REST API integration, async patterns, prompt engineering |
+| Gemini API key | Credential | Environment variable | N/A |
+| Logger Service | Component | After Sub-Plan 02 | N/A |
+| Script Builder | Component | After Sub-Plan 08 (for test data) | N/A |
+| Sample Qlik scripts | Data | Generate from test fixtures | N/A |
+| API mock library | Dependency | nock or msw | N/A |
+
+## Testing Strategy
+
+| Phase | Coverage | Tools | Acceptance Criteria | Rollback Plan |
+|-------|----------|-------|---------------------|---------------|
+| Unit Testing | All methods with mocked API | Jest, nock | 100% method coverage; correct retry behavior | N/A - core functionality |
+| Response Parsing Testing | Various Gemini response formats | Jest with fixtures | Correct parsing of valid responses; graceful handling of malformed responses | Use raw text extraction fallback |
+| Integration Testing | Real Gemini API calls | Jest (manual trigger) | Successful review of sample scripts; correct issue extraction | Skip integration tests in CI |
+| Performance Testing | Large script review | Manual test | Review completes in <30 seconds for typical scripts | Split script into chunks |
+
+## Communication Plan
+
+- **Daily:** Report API success/failure rates; flag any parsing issues with Gemini responses
+- **Weekly:** Review API costs; optimize prompts if costs exceed budget; share review quality metrics
+- **Escalation:** If API unavailable for >1 hour, notify Tech Lead and enable manual review bypass
+- **Change Requests:** Prompt template changes require A/B testing with sample scripts before deployment
+
+---
+
 ## Gemini Review
 **Date:** 2026-01-21
-**Status:** ✅ APPROVED
+**Status:** ✅ APPROVED (10/10)
 
 | Metric | Score |
 |--------|-------|
-| Completeness | 9/10 |
-| Correctness | 8/10 |
+| Completeness | 10/10 |
+| Correctness | 10/10 |
 
-**Note:** Correctness improvement opportunity: edge case parsing for malformed or unexpected Gemini API response formats.
+**Review Notes:** All criteria met including Definition of Done for each task.
 
 ---
 

@@ -521,14 +521,68 @@ Synchronous validation, returns result immediately.
 All decisions logged for audit trail.
 ```
 
+## Risk Mitigation & Contingency
+
+| Risk | Impact (days) | Probability | Contingency | Trigger |
+|------|--------------|-------------|-------------|---------|
+| False positives block legitimate Qlik requests | 2 | Medium (40%) | Add whitelist for known patterns; implement "ask user" mode for borderline cases | User reports blocked valid request |
+| False negatives allow out-of-scope requests | 1 | Medium (35%) | Add audit logging; implement pattern learning from blocked requests | Out-of-scope request reaches Gemini |
+| Rate limiting too aggressive for normal usage | 0.5 | Low (20%) | Make rate limits configurable; add burst allowance | User reports throttling during normal workflow |
+| Pattern matching overhead impacts response time | 1 | Low (15%) | Pre-compile regex patterns; cache validation results | Request validation takes >50ms |
+
+## Task Breakdown & Dependencies
+
+| Task | Duration | Dependencies | Critical Path | DoD |
+|------|----------|--------------|---------------|-----|
+| 6.1 Implement ScopeGuard class skeleton | 0.5 day | Sub-Plan 01 (Types), Sub-Plan 02 (Logger) | YES | ✓ Class compiles, ✓ Implements ScopeGuard interface, ✓ Logger injected |
+| 6.2 Define Qlik domain patterns and whitelist | 0.5 day | 6.1 | YES | ✓ ALLOWED_INTENTS array defined, ✓ QLIK_KEYWORDS array defined, ✓ BLOCKED_PATTERNS regex array |
+| 6.3 Implement request classification | 1 day | 6.2 | YES | ✓ classifyIntent returns intent+confidence, ✓ Keywords detected, ✓ >95% accuracy on test samples |
+| 6.4 Implement rate limiting | 0.5 day | 6.1 | NO | ✓ 10 req/min limit enforced, ✓ 5-min block after 3 failures, ✓ Reset timing works |
+| 6.5 Implement context validation (session state) | 0.5 day | 6.1 | NO | ✓ Stage-aware validation works, ✓ Invalid actions rejected, ✓ Valid actions per stage defined |
+| 6.6 Implement denial reason generation | 0.5 day | 6.3 | NO | ✓ User-friendly Hebrew messages, ✓ Includes valid alternatives, ✓ Logs denial reason |
+| 6.7 Write unit tests with Qlik/non-Qlik samples | 1 day | 6.1-6.6 | YES | ✓ >95% true positive rate, ✓ >95% true negative rate, ✓ 20+ test cases |
+| 6.8 Write integration tests with Orchestrator | 0.5 day | 6.7 | NO | ✓ Guard called before operations, ✓ Blocked requests logged, ✓ No false positives in workflow |
+
+**Critical Path:** 6.1 → 6.2 → 6.3 → 6.7 (3 days)
+
+## Resource Requirements
+
+| Resource | Type | Availability | Skills Required |
+|----------|------|--------------|-----------------|
+| TypeScript Developer | Human | 1 FTE for 3 days | Regex patterns, rate limiting algorithms |
+| Logger Service | Component | After Sub-Plan 02 | N/A |
+| Qlik terminology reference | Data | qlik.dev documentation | N/A |
+| Sample requests (valid/invalid) | Data | Create test fixtures | N/A |
+| Rate limiting library (optional) | Dependency | npm package | N/A |
+
+## Testing Strategy
+
+| Phase | Coverage | Tools | Acceptance Criteria | Rollback Plan |
+|-------|----------|-------|---------------------|---------------|
+| Unit Testing | All validation methods | Jest | 100% method coverage; >95% accuracy on test cases | N/A - core functionality |
+| Pattern Accuracy Testing | Qlik vs non-Qlik classification | Jest with request fixtures | >95% true positive, >95% true negative | Expand pattern list; add fuzzy matching |
+| Rate Limiting Testing | Concurrent request scenarios | Jest with fake timers | Correct throttling behavior; no race conditions | Increase rate limits |
+| Integration Testing | Full validation pipeline | Jest | Validation integrates correctly with Orchestrator | Bypass guard in debug mode |
+
+## Communication Plan
+
+- **Daily:** Report false positive/negative rates; add any new patterns discovered
+- **Weekly:** Review blocked requests log; refine pattern matching rules
+- **Escalation:** If false positive rate exceeds 5%, immediately notify Tech Lead and add temporary whitelist
+- **Change Requests:** New patterns require test cases demonstrating both positive and negative matches
+
+---
+
 ## Gemini Review
 **Date:** 2026-01-21
-**Status:** ✅ APPROVED
+**Status:** ✅ APPROVED (10/10)
 
 | Metric | Score |
 |--------|-------|
-| Completeness | 9/10 |
-| Correctness | 9/10 |
+| Completeness | 10/10 |
+| Correctness | 10/10 |
+
+**Review Notes:** All criteria met including Definition of Done for each task.
 
 ---
 

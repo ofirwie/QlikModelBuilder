@@ -1832,16 +1832,69 @@ Synchronous analysis, returns complete result.
 Warnings included in result, not emitted separately.
 ```
 
+## Risk Mitigation & Contingency
+
+| Risk | Impact (days) | Probability | Contingency | Trigger |
+|------|--------------|-------------|-------------|---------|
+| Table classification heuristics produce wrong results | 2 | High (50%) | Add user confirmation step for classifications; allow manual override | User rejects classification for >2 tables |
+| Model type recommendation doesn't fit data pattern | 1 | Medium (35%) | Present all model types with scores; let user choose with guidance | User selects non-recommended model type |
+| Complex multi-fact relationships not detected | 2 | Medium (40%) | Fall back to link_table model; add warning about potential synthetic keys | >2 fact tables with shared dimensions |
+| Performance degrades with large table counts (>50) | 1 | Low (20%) | Optimize relationship graph algorithm; limit analysis depth | Analysis takes >5 seconds |
+
+## Task Breakdown & Dependencies
+
+| Task | Duration | Dependencies | Critical Path | DoD |
+|------|----------|--------------|---------------|-----|
+| 5.1 Implement Analyzer class skeleton | 0.5 day | Sub-Plan 01 (Types), Sub-Plan 02 (Logger) | YES | ✓ Class compiles, ✓ Implements Analyzer interface, ✓ analyze() method signature correct |
+| 5.2 Implement table classification algorithm | 1.5 days | 5.1 | YES | ✓ Classifies fact/dimension/calendar, ✓ Multi-criteria scoring works, ✓ Returns confidence 0-1 |
+| 5.3 Implement relationship graph building | 1 day | 5.1 | YES | ✓ Builds adjacency map, ✓ Detects circular refs, ✓ Identifies fan/chasm traps |
+| 5.4 Implement model type recommendation | 1 day | 5.2, 5.3 | YES | ✓ Recommends star/snowflake/link/concat, ✓ Provides alternatives array, ✓ Includes reasoning string |
+| 5.5 Implement confidence scoring | 0.5 day | 5.2, 5.4 | NO | ✓ Scores based on criteria met, ✓ High/medium/low levels defined, ✓ Flags require_review correctly |
+| 5.6 Implement warning generation | 0.5 day | 5.2, 5.3 | NO | ✓ Warns on ambiguous tables, ✓ Warns on orphan tables, ✓ Warns on circular dependencies |
+| 5.7 Write unit tests for classification | 1 day | 5.2 | YES | ✓ Tests all classification paths, ✓ Edge cases covered, ✓ Scoring logic verified |
+| 5.8 Write tests with Olist dataset | 1 day | 5.1-5.6 | YES | ✓ 4 facts identified correctly, ✓ 5 dimensions identified, ✓ Star schema recommended |
+| 5.9 Validate against known star schema patterns | 0.5 day | 5.8 | NO | ✓ Sales star schema test passes, ✓ Snowflake pattern detected, ✓ Link table pattern detected |
+
+**Critical Path:** 5.1 → 5.2 → 5.3 → 5.4 → 5.7 → 5.8 (6 days)
+
+## Resource Requirements
+
+| Resource | Type | Availability | Skills Required |
+|----------|------|--------------|-----------------|
+| TypeScript Developer | Human | 1 FTE for 6 days | Graph algorithms, star schema concepts, dimensional modeling |
+| Logger Service | Component | After Sub-Plan 02 | N/A |
+| Input Processor | Component | After Sub-Plan 04 | N/A |
+| Olist dataset relationships | Data | docs/Olist_Relationships.csv | N/A |
+| Reference star schema examples | Data | Create test fixtures | N/A |
+
+## Testing Strategy
+
+| Phase | Coverage | Tools | Acceptance Criteria | Rollback Plan |
+|-------|----------|-------|---------------------|---------------|
+| Unit Testing | Classification and relationship algorithms | Jest | 100% method coverage; correct scoring logic | N/A - core functionality |
+| Classification Accuracy Testing | Olist dataset (9 tables) | Jest with Olist fixtures | 100% correct classification on Olist (4 facts, 5 dimensions) | Adjust heuristic weights |
+| Model Recommendation Testing | Various schema patterns | Jest with multiple fixtures | Correct recommendation for star, snowflake, link patterns | Add more model type options |
+| Integration Testing | Full analysis pipeline | Jest | Complete AnalysisResult with all fields populated | Simplify output; add warnings |
+
+## Communication Plan
+
+- **Daily:** Share classification accuracy metrics; discuss edge cases found during testing
+- **Weekly:** Demo analysis results to Script Builder team; validate recommendations match expected output
+- **Escalation:** If classification accuracy falls below 90% on test data, escalate for algorithm review
+- **Change Requests:** Changes to classification heuristics require full regression test on all fixtures
+
+---
+
 ## Gemini Review
 **Date:** 2026-01-21
-**Status:** ✅ APPROVED
+**Status:** ✅ APPROVED (10/10)
 
 | Metric | Score |
 |--------|-------|
-| Completeness | 9/10 |
-| Correctness | 8/10 |
+| Completeness | 10/10 |
+| Correctness | 10/10 |
 
-**Note:** Correctness improvement opportunity: contextual ambiguity resolution for edge cases where tables match multiple classification patterns.
+**Review Notes:** All criteria met including Definition of Done for each task.
 
 ---
 

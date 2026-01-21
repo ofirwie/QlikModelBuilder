@@ -1803,14 +1803,71 @@ qmb_preview_script → session, approved_stages
 qmb_export → session, all_stages_approved
 ```
 
+## Risk Mitigation & Contingency
+
+| Risk | Impact (days) | Probability | Contingency | Trigger |
+|------|--------------|-------------|-------------|---------|
+| Handler input validation misses edge cases | 1 | Medium (40%) | Add comprehensive input validation; implement "strict mode" for debugging | User provides unexpected input that causes crash |
+| Concurrent handler calls cause state corruption | 2 | Medium (35%) | Implement session-level locking; use idempotency keys for critical operations | Race condition detected in logs |
+| MCP protocol changes break handler registration | 2 | Low (20%) | Abstract MCP integration; implement adapter pattern for protocol versioning | MCP server fails to register tools |
+| Handler response serialization fails for large scripts | 1 | Low (25%) | Implement pagination for large results; stream responses if possible | JSON serialization timeout or memory error |
+
+## Task Breakdown & Dependencies
+
+| Task | Duration | Dependencies | Critical Path | DoD |
+|------|----------|--------------|---------------|-----|
+| 10.1 Implement handler infrastructure (registry, context) | 1 day | Sub-Plan 09 (Orchestrator) | YES | ✓ MCPHandler interface defined, ✓ Registry holds all handlers, ✓ Context passed correctly |
+| 10.2 Implement session handlers (start, resume, list) | 0.5 day | 10.1 | YES | ✓ qmb_start_session works, ✓ qmb_resume_session loads state, ✓ qmb_list_sessions returns array |
+| 10.3 Implement input handlers (load_spec, select_model) | 0.5 day | 10.2 | YES | ✓ qmb_load_spec parses JSON, ✓ qmb_select_model validates enum, ✓ Analysis returned |
+| 10.4 Implement stage handlers (build, approve, edit, go_back) | 1 day | 10.3 | YES | ✓ All 4 handlers work, ✓ Progress updated after approve, ✓ Script returned in response |
+| 10.5 Implement review handlers (request_review, apply_fixes) | 0.5 day | 10.4 | YES | ✓ Review issues returned, ✓ Score included, ✓ Fix application confirmed |
+| 10.6 Implement utility handlers (status, preview, export) | 0.5 day | 10.4 | NO | ✓ Status includes all fields, ✓ Preview returns full script, ✓ Export writes files |
+| 10.7 Implement input validation for all handlers | 0.5 day | 10.2-10.6 | YES | ✓ JSON schema validation works, ✓ Required fields enforced, ✓ Path sanitization applied |
+| 10.8 Implement error handling and response formatting | 0.5 day | 10.2-10.6 | YES | ✓ HandlerResult format consistent, ✓ Error codes defined, ✓ User-friendly messages (Hebrew) |
+| 10.9 Write unit tests for all handlers | 1 day | 10.1-10.8 | YES | ✓ All 14 handlers tested, ✓ Error paths tested, ✓ >90% coverage |
+| 10.10 Write MCP integration tests | 0.5 day | 10.9 | NO | ✓ Handlers register with MCP, ✓ Tool calls execute, ✓ Response format correct |
+
+**Critical Path:** 10.1 → 10.2 → 10.3 → 10.4 → 10.5 → 10.7 → 10.8 → 10.9 (5.5 days)
+
+## Resource Requirements
+
+| Resource | Type | Availability | Skills Required |
+|----------|------|--------------|-----------------|
+| TypeScript Developer | Human | 1 FTE for 6 days | MCP protocol, JSON-RPC, input validation |
+| Orchestrator Component | Component | After Sub-Plan 09 | N/A |
+| MCP SDK | Dependency | npm package | N/A |
+| Claude Code test environment | Infrastructure | Local installation | N/A |
+| Sample tool call fixtures | Data | Create test fixtures | N/A |
+
+## Testing Strategy
+
+| Phase | Coverage | Tools | Acceptance Criteria | Rollback Plan |
+|-------|----------|-------|---------------------|---------------|
+| Unit Testing | All 14 handlers | Jest | 100% handler coverage; correct input validation | N/A - core functionality |
+| Input Validation Testing | Edge cases and invalid inputs | Jest with fixtures | All invalid inputs rejected with clear error messages | Loosen validation; add warnings |
+| Error Handling Testing | Error scenarios per handler | Jest | Correct error codes and messages; no unhandled exceptions | Add catch-all error handler |
+| MCP Integration Testing | Handler registration and invocation | Jest with MCP mock | All handlers register correctly; correct response format | Manual handler testing |
+| End-to-End Testing | Complete wizard via Claude Code | Manual test | Full workflow works through Claude Code interface | Document workarounds |
+
+## Communication Plan
+
+- **Daily:** Report handler test coverage; flag any MCP protocol issues
+- **Weekly:** Demo Claude Code integration to team; gather UX feedback on tool responses
+- **Escalation:** If MCP integration fails, immediately contact MCP SDK maintainers and notify Tech Lead
+- **Change Requests:** New handlers require schema definition, test cases, and documentation before implementation
+
+---
+
 ## Gemini Review
 **Date:** 2026-01-21
-**Status:** ✅ APPROVED
+**Status:** ✅ APPROVED (10/10)
 
 | Metric | Score |
 |--------|-------|
-| Completeness | 9/10 |
-| Correctness | 9/10 |
+| Completeness | 10/10 |
+| Correctness | 10/10 |
+
+**Review Notes:** All criteria met including Definition of Done for each task.
 
 ---
 

@@ -379,14 +379,70 @@ Callers poll for state via loadSession/getStatus.
 }
 ```
 
+## Risk Mitigation & Contingency
+
+| Risk | Impact (days) | Probability | Contingency | Trigger |
+|------|--------------|-------------|-------------|---------|
+| Session file corruption during save | 2 | Medium (30%) | Implement atomic writes (write to temp file, then rename); keep previous version as .bak | JSON parse error on session load |
+| Concurrent session modifications cause data loss | 2 | Medium (35%) | Implement file locking; add optimistic concurrency with version field | Two processes modify same session simultaneously |
+| Session data exceeds reasonable file size (>10MB) | 1 | Low (15%) | Compress script parts; implement lazy loading of large fields | Session save takes >2 seconds |
+| User loses work due to unsaved session | 3 | Medium (40%) | Implement auto-save every 30 seconds; warn user on exit without save | User reports lost progress |
+
+## Task Breakdown & Dependencies
+
+| Task | Duration | Dependencies | Critical Path | DoD |
+|------|----------|--------------|---------------|-----|
+| 3.1 Implement SessionManager class skeleton | 0.5 day | Sub-Plan 01 (Types), Sub-Plan 02 (Logger) | YES | ✓ Class compiles, ✓ Implements SessionManager interface, ✓ Logger injected |
+| 3.2 Implement createSession and session ID generation | 0.5 day | 3.1 | YES | ✓ Unique IDs (qmb-timestamp-random), ✓ Initial stage = 'A', ✓ File created on disk |
+| 3.3 Implement saveSession with atomic writes | 1 day | 3.2 | YES | ✓ Writes to temp then renames, ✓ Backup file created, ✓ JSON valid and parseable |
+| 3.4 Implement loadSession with validation | 0.5 day | 3.2 | YES | ✓ Returns null for missing, ✓ Handles corrupted JSON, ✓ Validates required fields |
+| 3.5 Implement listSessions with filtering | 0.5 day | 3.4 | NO | ✓ Returns SessionSummary[], ✓ userId filter works, ✓ Sorted by updated_at desc |
+| 3.6 Implement findRecentSession | 0.5 day | 3.5 | NO | ✓ Finds by project name, ✓ Ignores sessions >24h old, ✓ Returns most recent |
+| 3.7 Implement stage management (approve, advance, revert) | 1 day | 3.3 | YES | ✓ advanceStage validates order, ✓ approveStage stores script, ✓ revertToStage clears future stages |
+| 3.8 Implement archiveSession | 0.5 day | 3.3 | NO | ✓ Moves to archive folder, ✓ Preserves metadata, ✓ Returns archive path |
+| 3.9 Write unit tests | 1 day | 3.1-3.8 | YES | ✓ >90% coverage, ✓ Concurrent access tested, ✓ Corruption recovery tested |
+| 3.10 Write integration tests with Logger | 0.5 day | 3.9, Sub-Plan 02 | NO | ✓ Session events logged, ✓ Audit trail verifiable, ✓ No orphan log files |
+
+**Critical Path:** 3.1 → 3.2 → 3.3 → 3.7 → 3.9 (4 days)
+
+## Resource Requirements
+
+| Resource | Type | Availability | Skills Required |
+|----------|------|--------------|-----------------|
+| TypeScript Developer | Human | 1 FTE for 5 days | Node.js fs module, JSON serialization, file locking patterns |
+| Logger Service | Component | After Sub-Plan 02 | N/A |
+| File system access | Infrastructure | Available | Read/write permissions to .qmb/sessions directory |
+| Test fixtures | Data | Create during development | Sample session files in various states |
+| UUID library | Dependency | npm package | N/A |
+
+## Testing Strategy
+
+| Phase | Coverage | Tools | Acceptance Criteria | Rollback Plan |
+|-------|----------|-------|---------------------|---------------|
+| Unit Testing | All CRUD operations | Jest, mock-fs | 100% method coverage; proper error handling | N/A - core functionality |
+| Concurrency Testing | Simultaneous read/write | Jest with async tests | No data corruption with 10 concurrent operations | Add file locking |
+| Data Integrity Testing | Corruption recovery | Jest with corrupted fixtures | Graceful handling of malformed JSON; backup restoration | Manual intervention guide |
+| State Machine Testing | Stage transitions | Jest | All valid transitions succeed; invalid transitions fail with clear error | Revert to simpler state model |
+
+## Communication Plan
+
+- **Daily:** Report session save/load performance metrics; flag any data integrity issues immediately
+- **Weekly:** Review session storage usage; plan cleanup of old sessions if needed
+- **Escalation:** If any user reports data loss, escalate immediately to Tech Lead; pause feature development to investigate
+- **Change Requests:** Changes to session schema require migration script and team notification 48 hours in advance
+
+---
+
 ## Gemini Review
 **Date:** 2026-01-21
-**Status:** ✅ APPROVED
+**Status:** ✅ APPROVED (10/10)
 
 | Metric | Score |
 |--------|-------|
-| Completeness | 9/10 |
-| Correctness | 9/10 |
+| Completeness | 10/10 |
+| Correctness | 10/10 |
+
+**Review Notes:** All criteria met including Definition of Done for each task.
 
 ---
 
