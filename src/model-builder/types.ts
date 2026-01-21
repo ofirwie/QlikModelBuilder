@@ -344,6 +344,62 @@ export interface GeminiReviewResponse {
 }
 
 // ============================================================================
+// Section 5.4b: Analysis Types (for BuildContext)
+// Note: TableClassification is already defined above in Section 2.3
+// ============================================================================
+
+/**
+ * Result of classifying a single table
+ */
+export interface TableClassificationResult {
+  table_name: string;
+  classification: TableClassification;
+  confidence: number;
+  reasoning: string[];
+}
+
+/**
+ * Alternative model type suggestion
+ */
+export interface ModelTypeAlternative {
+  model: ModelType;
+  reason: string;
+  pros: string[];
+  cons: string[];
+}
+
+/**
+ * Model type recommendation
+ */
+export interface ModelTypeRecommendation {
+  recommended_model: ModelType;
+  confidence: number;
+  alternatives: ModelTypeAlternative[];
+  reasoning: string;
+}
+
+/**
+ * Warning from analysis
+ */
+export interface AnalysisWarning {
+  type: string;
+  severity: string;
+  message: string;
+  tables_involved: string[];
+  recommendation?: string;
+}
+
+/**
+ * Complete analysis result
+ */
+export interface AnalysisResult {
+  classifications: Map<string, TableClassificationResult>;
+  model_recommendation: ModelTypeRecommendation;
+  warnings: AnalysisWarning[];
+  recommendations: string[];
+}
+
+// ============================================================================
 // Section 5.5: Script Builder Types
 // ============================================================================
 

@@ -13,64 +13,22 @@ import {
   EnrichedRelationship,
   TableClassification,
   ModelType,
+  TableClassificationResult,
+  ModelTypeAlternative,
+  ModelTypeRecommendation,
+  AnalysisWarning,
+  AnalysisResult,
 } from '../types.js';
 import { Logger } from './logger.js';
 
-// ============================================================================
-// Types
-// ============================================================================
-
-/**
- * Result of table classification
- */
-export interface TableClassificationResult {
-  table_name: string;
-  classification: TableClassification;
-  confidence: number;
-  reasoning: string[];
-}
-
-/**
- * Alternative model type suggestion
- */
-export interface ModelTypeAlternative {
-  model: ModelType;
-  reason: string;
-  pros: string[];
-  cons: string[];
-}
-
-/**
- * Model type recommendation
- */
-export interface ModelTypeRecommendation {
-  recommended_model: ModelType;
-  confidence: number;
-  alternatives: ModelTypeAlternative[];
-  reasoning: string;
-}
-
-/**
- * Analysis warning
- */
-export interface AnalysisWarning {
-  type: 'ambiguous_classification' | 'orphan_table' | 'circular_relationship' |
-        'fan_trap' | 'chasm_trap' | 'missing_relationships' | 'low_confidence';
-  severity: 'critical' | 'warning' | 'info';
-  message: string;
-  tables_involved: string[];
-  recommendation?: string;
-}
-
-/**
- * Complete analysis result
- */
-export interface AnalysisResult {
-  classifications: Map<string, TableClassificationResult>;
-  model_recommendation: ModelTypeRecommendation;
-  warnings: AnalysisWarning[];
-  recommendations: string[];
-}
+// Re-export for convenience
+export type {
+  TableClassificationResult,
+  ModelTypeAlternative,
+  ModelTypeRecommendation,
+  AnalysisWarning,
+  AnalysisResult,
+};
 
 // ============================================================================
 // Constants
