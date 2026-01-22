@@ -2,61 +2,41 @@ import type { ReactNode } from 'react'
 import { Header } from './Header'
 import { Sidebar } from './Sidebar'
 
-type Phase = 'connect' | 'plan' | 'build' | 'validate' | 'deploy'
-type ChapterStatus = 'completed' | 'current' | 'pending'
-
-interface Chapter {
-  id: string
-  name: string
-  status: ChapterStatus
-}
-
 interface LayoutProps {
   children: ReactNode
   projectName: string
-  currentPhase: Phase
-  chapters?: Chapter[]
-  buildProgress?: {
-    currentChapter: number
-    totalChapters: number
-  }
-  onChapterClick?: (chapterId: string) => void
+  currentStep: number
+  maxReachedStep: number
+  onStepClick?: (step: number) => void
 }
 
 export function Layout({
   children,
   projectName,
-  currentPhase,
-  chapters = [],
-  buildProgress,
-  onChapterClick,
+  currentStep,
+  maxReachedStep,
+  onStepClick,
 }: LayoutProps) {
   return (
     <div className="h-screen flex flex-col bg-background">
       {/* Header */}
-      <Header
-        projectName={projectName}
-        currentPhase={currentPhase}
-        buildProgress={buildProgress}
-      />
+      <Header projectName={projectName} currentStep={currentStep} />
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
         <Sidebar
-          currentPhase={currentPhase}
-          chapters={chapters}
-          onChapterClick={onChapterClick}
+          currentStep={currentStep}
+          maxReachedStep={maxReachedStep}
+          onStepClick={onStepClick}
         />
 
         {/* Main Content */}
-        <main className="flex-1 overflow-auto p-6">
-          {children}
-        </main>
+        <main className="flex-1 overflow-auto">{children}</main>
       </div>
 
       {/* AI Assistant (collapsed by default) */}
       <div className="h-14 border-t border-border bg-white px-4 flex items-center">
-        <div className="flex items-center gap-3 text-muted-foreground">
+        <div className="flex items-center gap-3 text-muted-foreground flex-1">
           <span className="text-lg">💬</span>
           <input
             type="text"

@@ -1,103 +1,46 @@
 import { Progress } from '@/components/ui/progress'
-import { Check, Circle, Settings, HelpCircle, User } from 'lucide-react'
-
-type Phase = 'connect' | 'plan' | 'build' | 'validate' | 'deploy'
+import { Settings, HelpCircle, User } from 'lucide-react'
+import { STEPS } from '@/types'
 
 interface HeaderProps {
   projectName: string
-  currentPhase: Phase
-  buildProgress?: {
-    currentChapter: number
-    totalChapters: number
-  }
+  currentStep: number
 }
 
-const phases: { id: Phase; label: string }[] = [
-  { id: 'connect', label: 'Connect' },
-  { id: 'plan', label: 'Plan' },
-  { id: 'build', label: 'Build' },
-  { id: 'validate', label: 'Validate' },
-  { id: 'deploy', label: 'Deploy' },
-]
-
-export function Header({ projectName, currentPhase, buildProgress }: HeaderProps) {
-  const currentPhaseIndex = phases.findIndex(p => p.id === currentPhase)
-  const overallProgress = ((currentPhaseIndex + 1) / phases.length) * 100
-
-  const getPhaseStatus = (index: number) => {
-    if (index < currentPhaseIndex) return 'completed'
-    if (index === currentPhaseIndex) return 'current'
-    return 'upcoming'
-  }
+export function Header({ projectName, currentStep }: HeaderProps) {
+  const step = STEPS.find(s => s.id === currentStep)
+  const stage = step?.stage === 1 ? 'Data Extraction' : 'Model Building'
+  const overallProgress = ((currentStep - 1) / 10) * 100
 
   return (
     <header className="h-16 bg-white border-b border-border px-4 flex items-center justify-between">
       {/* Left: Logo and Project Name */}
       <div className="flex items-center gap-4">
-        <div className="w-8 h-8 bg-primary rounded flex items-center justify-center">
-          <span className="text-white font-bold text-sm">Q</span>
+        <div className="flex items-center gap-2">
+          <span className="text-2xl">🦊</span>
+          <span className="font-bold text-xl">QlikFox</span>
         </div>
-        <div>
+        <div className="border-l pl-4">
           <span className="text-sm text-muted-foreground">Project:</span>
           <span className="ml-2 font-medium">{projectName}</span>
         </div>
       </div>
 
       {/* Center: Progress Indicator */}
-      <div className="flex-1 max-w-2xl mx-8">
+      <div className="flex-1 max-w-lg mx-8">
         <div className="flex items-center justify-between mb-1">
-          {phases.map((phase, index) => {
-            const status = getPhaseStatus(index)
-            return (
-              <div key={phase.id} className="flex flex-col items-center">
-                <div className="flex items-center">
-                  {index > 0 && (
-                    <div
-                      className={`h-0.5 w-12 -mr-1 ${
-                        index <= currentPhaseIndex ? 'bg-primary' : 'bg-gray-200'
-                      }`}
-                    />
-                  )}
-                  <div
-                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
-                      status === 'completed'
-                        ? 'bg-primary text-white'
-                        : status === 'current'
-                        ? 'bg-primary text-white ring-2 ring-accent ring-offset-2'
-                        : 'bg-gray-200 text-gray-500'
-                    }`}
-                  >
-                    {status === 'completed' ? (
-                      <Check className="w-3 h-3" />
-                    ) : (
-                      <Circle className="w-3 h-3" />
-                    )}
-                  </div>
-                  {index < phases.length - 1 && (
-                    <div
-                      className={`h-0.5 w-12 -ml-1 ${
-                        index < currentPhaseIndex ? 'bg-primary' : 'bg-gray-200'
-                      }`}
-                    />
-                  )}
-                </div>
-                <span className={`text-xs mt-1 ${
-                  status === 'current' ? 'font-medium text-primary' : 'text-muted-foreground'
-                }`}>
-                  {phase.label}
-                </span>
-                {status === 'current' && buildProgress && phase.id === 'build' && (
-                  <span className="text-xs text-accent">
-                    Ch {buildProgress.currentChapter}/{buildProgress.totalChapters}
-                  </span>
-                )}
-              </div>
-            )
-          })}
+          <div>
+            <span className="text-xs text-muted-foreground">{stage}</span>
+            <p className="text-sm font-medium">
+              Step {currentStep}: {step?.name}
+            </p>
+          </div>
+          <span className="text-sm font-medium">{Math.round(overallProgress)}%</span>
         </div>
-        <Progress value={overallProgress} className="h-1.5" />
-        <div className="text-center text-xs text-muted-foreground mt-1">
-          {Math.round(overallProgress)}% Complete
+        <Progress value={overallProgress} className="h-2" />
+        <div className="flex justify-between text-xs text-muted-foreground mt-1">
+          <span>Stage 1</span>
+          <span>Stage 2</span>
         </div>
       </div>
 

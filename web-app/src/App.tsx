@@ -1,46 +1,47 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Layout } from '@/components/layout'
-import { useAppStore } from '@/store/appStore'
-import { ConnectPage, PlanPage, BuildPage, ValidatePage, DeployPage } from '@/pages'
+import { useAppStore } from '@/store'
+import {
+  ConnectStep,
+  SourceStep,
+  TablesStep,
+  FieldsStep,
+  IncrementalStep,
+  ExtractStep,
+  AnalyzeStep,
+  ModelTypeStep,
+  BuildStep,
+  ReviewStep,
+  DeployStep,
+} from '@/features'
 
-function AppLayout({ children }: { children: React.ReactNode }) {
-  const { projectName, currentPhase, chapters } = useAppStore()
+const stepComponents: Record<number, React.ComponentType> = {
+  1: ConnectStep,
+  2: SourceStep,
+  3: TablesStep,
+  4: FieldsStep,
+  5: IncrementalStep,
+  6: ExtractStep,
+  7: AnalyzeStep,
+  8: ModelTypeStep,
+  9: BuildStep,
+  10: ReviewStep,
+  11: DeployStep,
+}
 
-  const currentChapterIndex = chapters.findIndex(c => c.status === 'current')
+function App() {
+  const { projectName, currentStep, maxReachedStep, setStep } = useAppStore()
+
+  const StepComponent = stepComponents[currentStep] || ConnectStep
 
   return (
     <Layout
       projectName={projectName || 'New Project'}
-      currentPhase={currentPhase}
-      chapters={chapters}
-      buildProgress={
-        currentPhase === 'build' && chapters.length > 0
-          ? {
-              currentChapter: currentChapterIndex + 1,
-              totalChapters: chapters.length,
-            }
-          : undefined
-      }
+      currentStep={currentStep}
+      maxReachedStep={maxReachedStep}
+      onStepClick={setStep}
     >
-      {children}
+      <StepComponent />
     </Layout>
-  )
-}
-
-function App() {
-  return (
-    <BrowserRouter>
-      <AppLayout>
-        <Routes>
-          <Route path="/" element={<Navigate to="/connect" replace />} />
-          <Route path="/connect" element={<ConnectPage />} />
-          <Route path="/plan" element={<PlanPage />} />
-          <Route path="/build" element={<BuildPage />} />
-          <Route path="/validate" element={<ValidatePage />} />
-          <Route path="/deploy" element={<DeployPage />} />
-        </Routes>
-      </AppLayout>
-    </BrowserRouter>
   )
 }
 

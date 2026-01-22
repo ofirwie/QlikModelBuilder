@@ -1,155 +1,93 @@
+/**
+ * App Store - Global application state with persistence
+ * Manages navigation, project info, and UI state
+ */
 import { create } from 'zustand'
-
-export type Phase = 'connect' | 'plan' | 'build' | 'validate' | 'deploy'
-export type ChapterStatus = 'completed' | 'current' | 'pending'
-
-export interface Chapter {
-  id: string
-  name: string
-  status: ChapterStatus
-}
-
-export interface QlikConnection {
-  tenantUrl: string
-  isConnected: boolean
-  spaceName?: string
-  userId?: string
-}
-
-export interface ModelPlan {
-  modelType: 'star_schema' | 'snowflake' | 'link_table' | 'concatenated' | null
-  tables: string[]
-  approved: boolean
-}
-
-export interface ValidationResult {
-  id: string
-  type: 'success' | 'warning' | 'error'
-  message: string
-  details?: string
-}
+import { persist, createJSONStorage } from 'zustand/middleware'
+import type { AppError } from '@/types'
 
 interface AppState {
-  // Project
+  // State
+  currentStep: number
+  maxReachedStep: number
   projectName: string
-  setProjectName: (name: string) => void
+  projectId: string | null
 
-  // Navigation
-  currentPhase: Phase
-  setPhase: (phase: Phase) => void
-  canNavigateToPhase: (phase: Phase) => boolean
-
-  // Connect Phase
-  connection: QlikConnection
-  setConnection: (connection: Partial<QlikConnection>) => void
-
-  // Plan Phase
-  plan: ModelPlan
-  setPlan: (plan: Partial<ModelPlan>) => void
-  approvePlan: () => void
-
-  // Build Phase
-  chapters: Chapter[]
-  setChapters: (chapters: Chapter[]) => void
-  updateChapterStatus: (id: string, status: ChapterStatus) => void
-  currentChapterIndex: number
-
-  // Validation
-  validations: ValidationResult[]
-  addValidation: (result: ValidationResult) => void
-  clearValidations: () => void
+  // UI State
+  isLoading: boolean
+  error: AppError | null
 
   // Actions
+  setStep: (step: number) => void
+  nextStep: () => void
+  prevStep: () => void
+  canGoToStep: (step: number) => boolean
+  setProjectName: (name: string) => void
+  setProjectId: (id: string) => void
+  setLoading: (loading: boolean) => void
+  setError: (error: AppError | null) => void
   reset: () => void
 }
 
 const initialState = {
+  currentStep: 1,
+  maxReachedStep: 1,
   projectName: '',
-  currentPhase: 'connect' as Phase,
-  connection: {
-    tenantUrl: '',
-    isConnected: false,
-  },
-  plan: {
-    modelType: null,
-    tables: [],
-    approved: false,
-  },
-  chapters: [],
-  currentChapterIndex: 0,
-  validations: [],
+  projectId: null,
+  isLoading: false,
+  error: null,
 }
 
-export const useAppStore = create<AppState>((set, get) => ({
-  ...initialState,
+export const useAppStore = create<AppState>()(
+  persist(
+    (set, get) => ({
+      ...initialState,
 
-  setProjectName: (name) => set({ projectName: name }),
+      setStep: (step) => {
+        const { maxReachedStep } = get()
+        set({
+          currentStep: step,
+          maxReachedStep: Math.max(step, maxReachedStep)
+        })
+      },
 
-  setPhase: (phase) => {
-    if (get().canNavigateToPhase(phase)) {
-      set({ currentPhase: phase })
+      nextStep: () => {
+        const { currentStep, maxReachedStep } = get()
+        if (currentStep < 11) {
+          set({
+            currentStep: currentStep + 1,
+            maxReachedStep: Math.max(currentStep + 1, maxReachedStep)
+          })
+        }
+      },
+
+      prevStep: () => {
+        const { currentStep } = get()
+        if (currentStep > 1) {
+          set({ currentStep: currentStep - 1 })
+        }
+      },
+
+      canGoToStep: (step) => {
+        const { maxReachedStep } = get()
+        return step <= maxReachedStep
+      },
+
+      setProjectName: (name) => set({ projectName: name }),
+      setProjectId: (id) => set({ projectId: id }),
+      setLoading: (loading) => set({ isLoading: loading }),
+      setError: (error) => set({ error }),
+      reset: () => set(initialState),
+    }),
+    {
+      name: 'qlikfox-app-state',
+      storage: createJSONStorage(() => sessionStorage),
+      partialize: (state) => ({
+        currentStep: state.currentStep,
+        maxReachedStep: state.maxReachedStep,
+        projectName: state.projectName,
+        projectId: state.projectId,
+      }),
     }
-  },
-
-  canNavigateToPhase: (phase) => {
-    const state = get()
-    const phases: Phase[] = ['connect', 'plan', 'build', 'validate', 'deploy']
-    const currentIndex = phases.indexOf(state.currentPhase)
-    const targetIndex = phases.indexOf(phase)
-
-    // Can go back freely, forward only if previous phase is complete
-    if (targetIndex <= currentIndex) return true
-
-    // Check completion for forward navigation
-    switch (phase) {
-      case 'plan':
-        return state.connection.isConnected
-      case 'build':
-        return state.plan.approved
-      case 'validate':
-        return state.chapters.every(c => c.status === 'completed')
-      case 'deploy':
-        return state.validations.every(v => v.type !== 'error')
-      default:
-        return true
-    }
-  },
-
-  setConnection: (connection) =>
-    set((state) => ({
-      connection: { ...state.connection, ...connection },
-    })),
-
-  setPlan: (plan) =>
-    set((state) => ({
-      plan: { ...state.plan, ...plan },
-    })),
-
-  approvePlan: () =>
-    set((state) => ({
-      plan: { ...state.plan, approved: true },
-      currentPhase: 'build',
-    })),
-
-  setChapters: (chapters) => set({ chapters }),
-
-  updateChapterStatus: (id, status) =>
-    set((state) => ({
-      chapters: state.chapters.map((c) =>
-        c.id === id ? { ...c, status } : c
-      ),
-      currentChapterIndex:
-        status === 'current'
-          ? state.chapters.findIndex((c) => c.id === id)
-          : state.currentChapterIndex,
-    })),
-
-  addValidation: (result) =>
-    set((state) => ({
-      validations: [...state.validations, result],
-    })),
-
-  clearValidations: () => set({ validations: [] }),
-
-  reset: () => set(initialState),
-}))
+  )
+)
