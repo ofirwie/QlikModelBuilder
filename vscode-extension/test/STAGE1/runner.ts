@@ -146,11 +146,41 @@ class CheckpointManager {
 
     // Backup existing file
     if (fs.existsSync(filePath)) {
-      fs.copyFileSync(filePath, bakFile);
+      try {
+        fs.copyFileSync(filePath, bakFile);
+      } catch {
+        // Ignore backup failures (OneDrive sync issues)
+      }
     }
 
-    // Rename temp to final
-    fs.renameSync(tmpFile, filePath);
+    // Rename temp to final with retry for OneDrive file locking
+    const maxRetries = 3;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        fs.renameSync(tmpFile, filePath);
+        return; // Success
+      } catch (err: unknown) {
+        const error = err as NodeJS.ErrnoException;
+        if (error.code === 'EPERM' && attempt < maxRetries) {
+          // OneDrive might be locking the file, wait and retry
+          const delay = attempt * 100; // 100ms, 200ms, 300ms
+          const start = Date.now();
+          while (Date.now() - start < delay) {
+            // Busy wait (synchronous delay)
+          }
+          continue;
+        }
+        // Last resort: direct write (not atomic but works)
+        try {
+          fs.writeFileSync(filePath, content);
+          // Clean up temp file
+          try { fs.unlinkSync(tmpFile); } catch { /* ignore */ }
+          return;
+        } catch {
+          throw err; // Re-throw original error
+        }
+      }
+    }
   }
 
   /**

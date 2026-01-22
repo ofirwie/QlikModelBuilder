@@ -1,0 +1,896 @@
+{
+  "tables": [
+    {
+      "name": "olist_orders_dataset",
+      "type": "Fact",
+      "description": "טבלת עובדות - הזמנות",
+      "fields": [
+        {
+          "name": "order_id",
+          "description": "מפתח ראשי - מזהה ייחודי להזמנה",
+          "dataType": "string",
+          "isKey": true
+        },
+        {
+          "name": "customer_id",
+          "description": "מפתח זר - מזהה לקוח",
+          "dataType": "string",
+          "isKey": false
+        },
+        {
+          "name": "order_status",
+          "description": "סטטוס הזמנה (delivered, canceled, etc.)",
+          "dataType": "string",
+          "isKey": false
+        },
+        {
+          "name": "order_purchase_timestamp",
+          "description": "תאריך ושעת רכישה",
+          "dataType": "date",
+          "isKey": false
+        },
+        {
+          "name": "order_delivered_customer_date",
+          "description": "תאריך אספקה ללקוח",
+          "dataType": "date",
+          "isKey": false
+        },
+        {
+          "name": "order_estimated_delivery_date",
+          "description": "תאריך אספקה משוער",
+          "dataType": "date",
+          "isKey": false
+        }
+      ],
+      "keyField": "order_id"
+    },
+    {
+      "name": "olist_order_items_dataset",
+      "type": "Fact",
+      "description": "פירוט פריטים בהזמנה",
+      "fields": [
+        {
+          "name": "order_id",
+          "description": "מפתח זר - מזהה הזמנה",
+          "dataType": "string",
+          "isKey": true
+        },
+        {
+          "name": "order_item_id",
+          "description": "מזהה פריט בהזמנה",
+          "dataType": "string",
+          "isKey": true
+        },
+        {
+          "name": "product_id",
+          "description": "מפתח זר - מזהה מוצר",
+          "dataType": "string",
+          "isKey": false
+        },
+        {
+          "name": "seller_id",
+          "description": "מפתח זר - מזהה מוכר",
+          "dataType": "string",
+          "isKey": false
+        },
+        {
+          "name": "price",
+          "description": "מחיר פריט",
+          "dataType": "number",
+          "isKey": false
+        },
+        {
+          "name": "freight_value",
+          "description": "עלות משלוח",
+          "dataType": "number",
+          "isKey": false
+        }
+      ],
+      "keyField": "order_id"
+    },
+    {
+      "name": "olist_customers_dataset",
+      "type": "Dimension",
+      "description": "מימד לקוחות",
+      "fields": [
+        {
+          "name": "customer_id",
+          "description": "מפתח ראשי - מזהה לקוח",
+          "dataType": "string",
+          "isKey": true
+        },
+        {
+          "name": "customer_unique_id",
+          "description": "מזהה לקוח ייחודי - לזיהוי לקוחות חוזרים",
+          "dataType": "string",
+          "isKey": false
+        },
+        {
+          "name": "customer_city",
+          "description": "עיר של לקוח",
+          "dataType": "string",
+          "isKey": false
+        },
+        {
+          "name": "customer_state",
+          "description": "מדינה של לקוח",
+          "dataType": "string",
+          "isKey": false
+        },
+        {
+          "name": "customer_zip_code_prefix",
+          "description": "קידומת מיקוד של לקוח",
+          "dataType": "string",
+          "isKey": false
+        }
+      ],
+      "keyField": "customer_id"
+    },
+    {
+      "name": "olist_products_dataset",
+      "type": "Dimension",
+      "description": "מימד מוצרים",
+      "fields": [
+        {
+          "name": "product_id",
+          "description": "מפתח ראשי - מזהה מוצר",
+          "dataType": "string",
+          "isKey": true
+        },
+        {
+          "name": "product_category_name",
+          "description": "שם קטגוריה (פורטוגזית)",
+          "dataType": "string",
+          "isKey": false
+        },
+        {
+          "name": "product_name_length",
+          "description": "אורך שם מוצר",
+          "dataType": "number",
+          "isKey": false
+        },
+        {
+          "name": "product_description_length",
+          "description": "אורך תאור מוצר",
+          "dataType": "number",
+          "isKey": false
+        },
+        {
+          "name": "product_photos_qty",
+          "description": "כמות תמונות של מוצר",
+          "dataType": "number",
+          "isKey": false
+        },
+        {
+          "name": "product_weight_g",
+          "description": "משקל מוצר (בגרם)",
+          "dataType": "number",
+          "isKey": false
+        },
+        {
+          "name": "product_length_cm",
+          "description": "אורך מוצר (בסנטימטר)",
+          "dataType": "number",
+          "isKey": false
+        },
+        {
+          "name": "product_height_cm",
+          "description": "גובה מוצר (בסנטימטר)",
+          "dataType": "number",
+          "isKey": false
+        },
+        {
+          "name": "product_width_cm",
+          "description": "רוחב מוצר (בסנטימטר)",
+          "dataType": "number",
+          "isKey": false
+        }
+      ],
+      "keyField": "product_id"
+    },
+    {
+      "name": "olist_sellers_dataset",
+      "type": "Dimension",
+      "description": "מימד מוכרים",
+      "fields": [
+        {
+          "name": "seller_id",
+          "description": "מפתח ראשי - מזהה מוכר",
+          "dataType": "string",
+          "isKey": true
+        },
+        {
+          "name": "seller_city",
+          "description": "עיר של מוכר",
+          "dataType": "string",
+          "isKey": false
+        },
+        {
+          "name": "seller_state",
+          "description": "מדינה של מוכר",
+          "dataType": "string",
+          "isKey": false
+        },
+        {
+          "name": "seller_zip_code_prefix",
+          "description": "קידומת מיקוד של מוכר",
+          "dataType": "string",
+          "isKey": false
+        }
+      ],
+      "keyField": "seller_id"
+    },
+    {
+      "name": "olist_order_payments_dataset",
+      "type": "Fact",
+      "description": "תשלומים",
+      "fields": [
+        {
+          "name": "order_id",
+          "description": "מפתח זר - מזהה הזמנה",
+          "dataType": "string",
+          "isKey": true
+        },
+        {
+          "name": "payment_type",
+          "description": "אמצעי תשלום",
+          "dataType": "string",
+          "isKey": false
+        },
+        {
+          "name": "payment_installments",
+          "description": "מספר תשלומים",
+          "dataType": "number",
+          "isKey": false
+        },
+        {
+          "name": "payment_value",
+          "description": "סכום תשלום",
+          "dataType": "number",
+          "isKey": false
+        }
+      ],
+      "keyField": "order_id"
+    },
+    {
+      "name": "olist_order_reviews_dataset",
+      "type": "Fact",
+      "description": "ביקורות לקוחות",
+      "fields": [
+        {
+          "name": "review_id",
+          "description": "מזהה ביקורת",
+          "dataType": "string",
+          "isKey": true
+        },
+        {
+          "name": "order_id",
+          "description": "מפתח זר - מזהה הזמנה",
+          "dataType": "string",
+          "isKey": false
+        },
+        {
+          "name": "review_score",
+          "description": "דירוג (1-5)",
+          "dataType": "number",
+          "isKey": false
+        },
+        {
+          "name": "review_comment_message",
+          "description": "תוכן הביקורת",
+          "dataType": "string",
+          "isKey": false
+        },
+        {
+          "name": "review_creation_date",
+          "description": "תאריך יצירת ביקורת",
+          "dataType": "date",
+          "isKey": false
+        },
+        {
+          "name": "review_answer_timestamp",
+          "description": "תאריך מענה לביקורת",
+          "dataType": "date",
+          "isKey": false
+        }
+      ],
+      "keyField": "review_id"
+    },
+    {
+      "name": "olist_geolocation_dataset",
+      "type": "Dimension",
+      "description": "נתונים גיאוגרפיים",
+      "fields": [
+        {
+          "name": "geolocation_zip_code_prefix",
+          "description": "קידומת מיקוד גיאוגרפי",
+          "dataType": "string",
+          "isKey": true
+        },
+        {
+          "name": "geolocation_lat",
+          "description": "קו רוחב",
+          "dataType": "number",
+          "isKey": false
+        },
+        {
+          "name": "geolocation_lng",
+          "description": "קו אורך",
+          "dataType": "number",
+          "isKey": false
+        },
+        {
+          "name": "geolocation_city",
+          "description": "עיר",
+          "dataType": "string",
+          "isKey": false
+        },
+        {
+          "name": "geolocation_state",
+          "description": "מדינה",
+          "dataType": "string",
+          "isKey": false
+        }
+      ],
+      "keyField": "geolocation_zip_code_prefix"
+    },
+    {
+      "name": "product_category_translation",
+      "type": "Dimension",
+      "description": "תרגום קטגוריות",
+      "fields": [
+        {
+          "name": "product_category_name",
+          "description": "שם קטגוריה (פורטוגזית)",
+          "dataType": "string",
+          "isKey": true
+        },
+        {
+          "name": "product_category_name_english",
+          "description": "שם קטגוריה (אנגלית)",
+          "dataType": "string",
+          "isKey": false
+        }
+      ],
+      "keyField": "product_category_name"
+    },
+    {
+      "name": "DIM_Date",
+      "type": "Dimension",
+      "description": "מימד זמן",
+      "fields": [
+        {
+          "name": "date",
+          "description": "תאריך",
+          "dataType": "date",
+          "isKey": true
+        },
+        {
+          "name": "day",
+          "description": "יום",
+          "dataType": "number",
+          "isKey": false
+        },
+        {
+          "name": "week",
+          "description": "שבוע",
+          "dataType": "number",
+          "isKey": false
+        },
+        {
+          "name": "month",
+          "description": "חודש",
+          "dataType": "number",
+          "isKey": false
+        },
+        {
+          "name": "quarter",
+          "description": "רבעון",
+          "dataType": "number",
+          "isKey": false
+        },
+        {
+          "name": "year",
+          "description": "שנה",
+          "dataType": "number",
+          "isKey": false
+        }
+      ],
+      "keyField": "date"
+    }
+  ],
+  "relationships": [
+    {
+      "source": "olist_orders_dataset",
+      "target": "olist_order_items_dataset",
+      "sourceField": "order_id",
+      "targetField": "order_id",
+      "cardinality": "1:N"
+    },
+    {
+      "source": "olist_orders_dataset",
+      "target": "olist_customers_dataset",
+      "sourceField": "customer_id",
+      "targetField": "customer_id",
+      "cardinality": "N:1"
+    },
+    {
+      "source": "olist_order_items_dataset",
+      "target": "olist_products_dataset",
+      "sourceField": "product_id",
+      "targetField": "product_id",
+      "cardinality": "M:1"
+    },
+    {
+      "source": "olist_order_items_dataset",
+      "target": "olist_sellers_dataset",
+      "sourceField": "seller_id",
+      "targetField": "seller_id",
+      "cardinality": "M:1"
+    },
+    {
+      "source": "olist_orders_dataset",
+      "target": "olist_order_payments_dataset",
+      "sourceField": "order_id",
+      "targetField": "order_id",
+      "cardinality": "1:N"
+    },
+    {
+      "source": "olist_orders_dataset",
+      "target": "olist_order_reviews_dataset",
+      "sourceField": "order_id",
+      "targetField": "order_id",
+      "cardinality": "1:1"
+    },
+    {
+      "source": "olist_products_dataset",
+      "target": "product_category_translation",
+      "sourceField": "product_category_name",
+      "targetField": "product_category_name",
+      "cardinality": "M:1"
+    }
+  ],
+  "metadata": {
+    "modelName": "Olist_Brazilian_Ecommerce",
+    "parsedAt": "2026-01-18T13:16:04.066Z",
+    "sourceFile": "Olist_Brazilian_Ecommerce_Specification.docx"
+  },
+  "appInfo": {
+    "appId": "b6a4ee29-c063-4e05-86b2-458f511b6ccf",
+    "tenantUrl": "https://iyil7lpmybpzhbm.de.qlikcloud.com",
+    "createdAt": "2026-01-18T13:16:09.008Z"
+  },
+  "fieldCatalog": [
+    {
+      "tableName": "olist_orders_dataset",
+      "tableType": "Fact",
+      "fieldName": "order_id",
+      "fieldDescription": "מפתח ראשי - מזהה ייחודי להזמנה",
+      "fieldDataType": "string",
+      "isKey": true
+    },
+    {
+      "tableName": "olist_orders_dataset",
+      "tableType": "Fact",
+      "fieldName": "customer_id",
+      "fieldDescription": "מפתח זר - מזהה לקוח",
+      "fieldDataType": "string",
+      "isKey": false
+    },
+    {
+      "tableName": "olist_orders_dataset",
+      "tableType": "Fact",
+      "fieldName": "order_status",
+      "fieldDescription": "סטטוס הזמנה (delivered, canceled, etc.)",
+      "fieldDataType": "string",
+      "isKey": false
+    },
+    {
+      "tableName": "olist_orders_dataset",
+      "tableType": "Fact",
+      "fieldName": "order_purchase_timestamp",
+      "fieldDescription": "תאריך ושעת רכישה",
+      "fieldDataType": "date",
+      "isKey": false
+    },
+    {
+      "tableName": "olist_orders_dataset",
+      "tableType": "Fact",
+      "fieldName": "order_delivered_customer_date",
+      "fieldDescription": "תאריך אספקה ללקוח",
+      "fieldDataType": "date",
+      "isKey": false
+    },
+    {
+      "tableName": "olist_orders_dataset",
+      "tableType": "Fact",
+      "fieldName": "order_estimated_delivery_date",
+      "fieldDescription": "תאריך אספקה משוער",
+      "fieldDataType": "date",
+      "isKey": false
+    },
+    {
+      "tableName": "olist_order_items_dataset",
+      "tableType": "Fact",
+      "fieldName": "order_id",
+      "fieldDescription": "מפתח זר - מזהה הזמנה",
+      "fieldDataType": "string",
+      "isKey": true
+    },
+    {
+      "tableName": "olist_order_items_dataset",
+      "tableType": "Fact",
+      "fieldName": "order_item_id",
+      "fieldDescription": "מזהה פריט בהזמנה",
+      "fieldDataType": "string",
+      "isKey": true
+    },
+    {
+      "tableName": "olist_order_items_dataset",
+      "tableType": "Fact",
+      "fieldName": "product_id",
+      "fieldDescription": "מפתח זר - מזהה מוצר",
+      "fieldDataType": "string",
+      "isKey": false
+    },
+    {
+      "tableName": "olist_order_items_dataset",
+      "tableType": "Fact",
+      "fieldName": "seller_id",
+      "fieldDescription": "מפתח זר - מזהה מוכר",
+      "fieldDataType": "string",
+      "isKey": false
+    },
+    {
+      "tableName": "olist_order_items_dataset",
+      "tableType": "Fact",
+      "fieldName": "price",
+      "fieldDescription": "מחיר פריט",
+      "fieldDataType": "number",
+      "isKey": false
+    },
+    {
+      "tableName": "olist_order_items_dataset",
+      "tableType": "Fact",
+      "fieldName": "freight_value",
+      "fieldDescription": "עלות משלוח",
+      "fieldDataType": "number",
+      "isKey": false
+    },
+    {
+      "tableName": "olist_customers_dataset",
+      "tableType": "Dimension",
+      "fieldName": "customer_id",
+      "fieldDescription": "מפתח ראשי - מזהה לקוח",
+      "fieldDataType": "string",
+      "isKey": true
+    },
+    {
+      "tableName": "olist_customers_dataset",
+      "tableType": "Dimension",
+      "fieldName": "customer_unique_id",
+      "fieldDescription": "מזהה לקוח ייחודי - לזיהוי לקוחות חוזרים",
+      "fieldDataType": "string",
+      "isKey": false
+    },
+    {
+      "tableName": "olist_customers_dataset",
+      "tableType": "Dimension",
+      "fieldName": "customer_city",
+      "fieldDescription": "עיר של לקוח",
+      "fieldDataType": "string",
+      "isKey": false
+    },
+    {
+      "tableName": "olist_customers_dataset",
+      "tableType": "Dimension",
+      "fieldName": "customer_state",
+      "fieldDescription": "מדינה של לקוח",
+      "fieldDataType": "string",
+      "isKey": false
+    },
+    {
+      "tableName": "olist_customers_dataset",
+      "tableType": "Dimension",
+      "fieldName": "customer_zip_code_prefix",
+      "fieldDescription": "קידומת מיקוד של לקוח",
+      "fieldDataType": "string",
+      "isKey": false
+    },
+    {
+      "tableName": "olist_products_dataset",
+      "tableType": "Dimension",
+      "fieldName": "product_id",
+      "fieldDescription": "מפתח ראשי - מזהה מוצר",
+      "fieldDataType": "string",
+      "isKey": true
+    },
+    {
+      "tableName": "olist_products_dataset",
+      "tableType": "Dimension",
+      "fieldName": "product_category_name",
+      "fieldDescription": "שם קטגוריה (פורטוגזית)",
+      "fieldDataType": "string",
+      "isKey": false
+    },
+    {
+      "tableName": "olist_products_dataset",
+      "tableType": "Dimension",
+      "fieldName": "product_name_length",
+      "fieldDescription": "אורך שם מוצר",
+      "fieldDataType": "number",
+      "isKey": false
+    },
+    {
+      "tableName": "olist_products_dataset",
+      "tableType": "Dimension",
+      "fieldName": "product_description_length",
+      "fieldDescription": "אורך תאור מוצר",
+      "fieldDataType": "number",
+      "isKey": false
+    },
+    {
+      "tableName": "olist_products_dataset",
+      "tableType": "Dimension",
+      "fieldName": "product_photos_qty",
+      "fieldDescription": "כמות תמונות של מוצר",
+      "fieldDataType": "number",
+      "isKey": false
+    },
+    {
+      "tableName": "olist_products_dataset",
+      "tableType": "Dimension",
+      "fieldName": "product_weight_g",
+      "fieldDescription": "משקל מוצר (בגרם)",
+      "fieldDataType": "number",
+      "isKey": false
+    },
+    {
+      "tableName": "olist_products_dataset",
+      "tableType": "Dimension",
+      "fieldName": "product_length_cm",
+      "fieldDescription": "אורך מוצר (בסנטימטר)",
+      "fieldDataType": "number",
+      "isKey": false
+    },
+    {
+      "tableName": "olist_products_dataset",
+      "tableType": "Dimension",
+      "fieldName": "product_height_cm",
+      "fieldDescription": "גובה מוצר (בסנטימטר)",
+      "fieldDataType": "number",
+      "isKey": false
+    },
+    {
+      "tableName": "olist_products_dataset",
+      "tableType": "Dimension",
+      "fieldName": "product_width_cm",
+      "fieldDescription": "רוחב מוצר (בסנטימטר)",
+      "fieldDataType": "number",
+      "isKey": false
+    },
+    {
+      "tableName": "olist_sellers_dataset",
+      "tableType": "Dimension",
+      "fieldName": "seller_id",
+      "fieldDescription": "מפתח ראשי - מזהה מוכר",
+      "fieldDataType": "string",
+      "isKey": true
+    },
+    {
+      "tableName": "olist_sellers_dataset",
+      "tableType": "Dimension",
+      "fieldName": "seller_city",
+      "fieldDescription": "עיר של מוכר",
+      "fieldDataType": "string",
+      "isKey": false
+    },
+    {
+      "tableName": "olist_sellers_dataset",
+      "tableType": "Dimension",
+      "fieldName": "seller_state",
+      "fieldDescription": "מדינה של מוכר",
+      "fieldDataType": "string",
+      "isKey": false
+    },
+    {
+      "tableName": "olist_sellers_dataset",
+      "tableType": "Dimension",
+      "fieldName": "seller_zip_code_prefix",
+      "fieldDescription": "קידומת מיקוד של מוכר",
+      "fieldDataType": "string",
+      "isKey": false
+    },
+    {
+      "tableName": "olist_order_payments_dataset",
+      "tableType": "Fact",
+      "fieldName": "order_id",
+      "fieldDescription": "מפתח זר - מזהה הזמנה",
+      "fieldDataType": "string",
+      "isKey": true
+    },
+    {
+      "tableName": "olist_order_payments_dataset",
+      "tableType": "Fact",
+      "fieldName": "payment_type",
+      "fieldDescription": "אמצעי תשלום",
+      "fieldDataType": "string",
+      "isKey": false
+    },
+    {
+      "tableName": "olist_order_payments_dataset",
+      "tableType": "Fact",
+      "fieldName": "payment_installments",
+      "fieldDescription": "מספר תשלומים",
+      "fieldDataType": "number",
+      "isKey": false
+    },
+    {
+      "tableName": "olist_order_payments_dataset",
+      "tableType": "Fact",
+      "fieldName": "payment_value",
+      "fieldDescription": "סכום תשלום",
+      "fieldDataType": "number",
+      "isKey": false
+    },
+    {
+      "tableName": "olist_order_reviews_dataset",
+      "tableType": "Fact",
+      "fieldName": "review_id",
+      "fieldDescription": "מזהה ביקורת",
+      "fieldDataType": "string",
+      "isKey": true
+    },
+    {
+      "tableName": "olist_order_reviews_dataset",
+      "tableType": "Fact",
+      "fieldName": "order_id",
+      "fieldDescription": "מפתח זר - מזהה הזמנה",
+      "fieldDataType": "string",
+      "isKey": false
+    },
+    {
+      "tableName": "olist_order_reviews_dataset",
+      "tableType": "Fact",
+      "fieldName": "review_score",
+      "fieldDescription": "דירוג (1-5)",
+      "fieldDataType": "number",
+      "isKey": false
+    },
+    {
+      "tableName": "olist_order_reviews_dataset",
+      "tableType": "Fact",
+      "fieldName": "review_comment_message",
+      "fieldDescription": "תוכן הביקורת",
+      "fieldDataType": "string",
+      "isKey": false
+    },
+    {
+      "tableName": "olist_order_reviews_dataset",
+      "tableType": "Fact",
+      "fieldName": "review_creation_date",
+      "fieldDescription": "תאריך יצירת ביקורת",
+      "fieldDataType": "date",
+      "isKey": false
+    },
+    {
+      "tableName": "olist_order_reviews_dataset",
+      "tableType": "Fact",
+      "fieldName": "review_answer_timestamp",
+      "fieldDescription": "תאריך מענה לביקורת",
+      "fieldDataType": "date",
+      "isKey": false
+    },
+    {
+      "tableName": "olist_geolocation_dataset",
+      "tableType": "Dimension",
+      "fieldName": "geolocation_zip_code_prefix",
+      "fieldDescription": "קידומת מיקוד גיאוגרפי",
+      "fieldDataType": "string",
+      "isKey": true
+    },
+    {
+      "tableName": "olist_geolocation_dataset",
+      "tableType": "Dimension",
+      "fieldName": "geolocation_lat",
+      "fieldDescription": "קו רוחב",
+      "fieldDataType": "number",
+      "isKey": false
+    },
+    {
+      "tableName": "olist_geolocation_dataset",
+      "tableType": "Dimension",
+      "fieldName": "geolocation_lng",
+      "fieldDescription": "קו אורך",
+      "fieldDataType": "number",
+      "isKey": false
+    },
+    {
+      "tableName": "olist_geolocation_dataset",
+      "tableType": "Dimension",
+      "fieldName": "geolocation_city",
+      "fieldDescription": "עיר",
+      "fieldDataType": "string",
+      "isKey": false
+    },
+    {
+      "tableName": "olist_geolocation_dataset",
+      "tableType": "Dimension",
+      "fieldName": "geolocation_state",
+      "fieldDescription": "מדינה",
+      "fieldDataType": "string",
+      "isKey": false
+    },
+    {
+      "tableName": "product_category_translation",
+      "tableType": "Dimension",
+      "fieldName": "product_category_name",
+      "fieldDescription": "שם קטגוריה (פורטוגזית)",
+      "fieldDataType": "string",
+      "isKey": true
+    },
+    {
+      "tableName": "product_category_translation",
+      "tableType": "Dimension",
+      "fieldName": "product_category_name_english",
+      "fieldDescription": "שם קטגוריה (אנגלית)",
+      "fieldDataType": "string",
+      "isKey": false
+    },
+    {
+      "tableName": "DIM_Date",
+      "tableType": "Dimension",
+      "fieldName": "date",
+      "fieldDescription": "תאריך",
+      "fieldDataType": "date",
+      "isKey": true
+    },
+    {
+      "tableName": "DIM_Date",
+      "tableType": "Dimension",
+      "fieldName": "day",
+      "fieldDescription": "יום",
+      "fieldDataType": "number",
+      "isKey": false
+    },
+    {
+      "tableName": "DIM_Date",
+      "tableType": "Dimension",
+      "fieldName": "week",
+      "fieldDescription": "שבוע",
+      "fieldDataType": "number",
+      "isKey": false
+    },
+    {
+      "tableName": "DIM_Date",
+      "tableType": "Dimension",
+      "fieldName": "month",
+      "fieldDescription": "חודש",
+      "fieldDataType": "number",
+      "isKey": false
+    },
+    {
+      "tableName": "DIM_Date",
+      "tableType": "Dimension",
+      "fieldName": "quarter",
+      "fieldDescription": "רבעון",
+      "fieldDataType": "number",
+      "isKey": false
+    },
+    {
+      "tableName": "DIM_Date",
+      "tableType": "Dimension",
+      "fieldName": "year",
+      "fieldDescription": "שנה",
+      "fieldDataType": "number",
+      "isKey": false
+    }
+  ],
+  "statistics": {
+    "totalTables": 10,
+    "totalFields": 53,
+    "totalRelationships": 7,
+    "factTables": 4,
+    "dimensionTables": 6
+  }
+}

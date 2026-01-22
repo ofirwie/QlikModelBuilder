@@ -1,5 +1,28 @@
 # QlikModelBuilder - Claude Instructions
 
+## Critical: Unified Flow Architecture
+
+**READ FIRST:** [docs/plans/2026-01-21-unified-webapp-flow-design.md](docs/plans/2026-01-21-unified-webapp-flow-design.md)
+
+The Web App combines **Stage 1 (Data Extraction)** + **Stage 2 (Model Building)** into ONE unified 11-step flow:
+
+```
+STAGE 1: DATA EXTRACTION          STAGE 2: MODEL BUILDING
+────────────────────────          ───────────────────────
+1. Connect (Qlik Cloud)           7. Analyze (QVD → classify)
+2. Source (DB/API/File)           8. Model Type (Star/Snowflake)
+3. Tables (select)                9. Build (stages A-F)
+4. Fields (map)                  10. Review (Gemini)
+5. Incremental (strategy)        11. Deploy (ETL Model)
+6. Extract (QVD files)
+```
+
+**Backend:**
+- Stage 1: `src/wizard/` (WizardEngine)
+- Stage 2: `src/model-builder/` (ModelBuilder)
+
+---
+
 ## What is QlikModelBuilder?
 
 QlikModelBuilder (QMB) is a wizard-based tool for creating Qlik Sense data extraction models with incremental load support. You are the wizard guide - help users build models step by step.

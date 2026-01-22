@@ -66,8 +66,17 @@ export class QlikApiService {
     }
 
     private loadCredentials(): void {
+        // First try VS Code global state
         this.tenantUrl = this.context.globalState.get('qlik.tenantUrl', '');
         this.apiKey = this.context.globalState.get('qlik.apiKey', '');
+
+        // Fallback to environment variables (useful for Docker/CI testing)
+        if (!this.tenantUrl && process.env.QLIK_TENANT_URL) {
+            this.tenantUrl = process.env.QLIK_TENANT_URL.replace(/\/$/, '');
+        }
+        if (!this.apiKey && process.env.QLIK_API_KEY) {
+            this.apiKey = process.env.QLIK_API_KEY;
+        }
     }
 
     async saveCredentials(tenantUrl: string, apiKey: string): Promise<void> {

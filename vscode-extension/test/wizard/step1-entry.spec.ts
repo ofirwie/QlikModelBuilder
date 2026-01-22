@@ -80,4 +80,53 @@ test.describe('Step 1: Entry Point', () => {
     expect(state.entryPoint).toBe('scratch');
   });
 
+  test('upload section is hidden initially', async ({ page }) => {
+    const uploadSection = page.locator('#spec-upload-section');
+    await expect(uploadSection).toBeHidden();
+  });
+
+  test('upload section appears when spec entry is selected', async ({ page }) => {
+    // Select spec entry
+    await page.locator('[data-entry="spec"]').click();
+    await page.waitForTimeout(200);
+
+    // Upload section should be visible
+    const uploadSection = page.locator('#spec-upload-section');
+    await expect(uploadSection).toBeVisible();
+
+    // Upload button should exist
+    const uploadButton = page.locator('#btn-upload-spec');
+    await expect(uploadButton).toBeVisible();
+  });
+
+  test('upload section hides when other entry is selected', async ({ page }) => {
+    // First select spec
+    await page.locator('[data-entry="spec"]').click();
+    await page.waitForTimeout(200);
+
+    // Upload section should be visible
+    await expect(page.locator('#spec-upload-section')).toBeVisible();
+
+    // Select scratch
+    await page.locator('[data-entry="scratch"]').click();
+    await page.waitForTimeout(200);
+
+    // Upload section should be hidden
+    await expect(page.locator('#spec-upload-section')).toBeHidden();
+  });
+
+  test('upload button sends uploadSpec message', async ({ page }) => {
+    // Select spec entry
+    await page.locator('[data-entry="spec"]').click();
+    await page.waitForTimeout(200);
+
+    // Click upload button
+    await page.locator('#btn-upload-spec').click();
+    await page.waitForTimeout(100);
+
+    // Check that message was sent
+    const lastMessage = await page.evaluate(() => (window as any).lastMessage);
+    expect(lastMessage?.type).toBe('uploadSpec');
+  });
+
 });

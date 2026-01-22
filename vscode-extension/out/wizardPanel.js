@@ -1386,7 +1386,7 @@ JSON OUTPUT:`;
         const webview = this._panel.webview;
         const nonce = getNonce();
         return `<!DOCTYPE html>
-<html lang="he" dir="rtl">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">

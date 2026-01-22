@@ -1,0 +1,11 @@
+{
+  "contents": [{
+    "parts": [{
+      "text": "Review this implementation plan v3.5.\n\nsanitizeForReview() uses regex to redact: connectionstring, password, lib paths.\n\nCI/CD flow: security-gate (npm audit, snyk) -> test (lint, typecheck, unit, e2e) -> build (vite, lighthouse) -> deploy (preview/staging/production).\n\nE2E scenarios: spec parsing (9 tables, 52 fields), full 11-step wizard, GUI tests (sidebar, forms, modals), user simulations (refresh, slow connection, API errors), accessibility (axe-core).\n\nComplete plan: 3800 lines, feature-based architecture, 3 Zustand stores with persist, Build Stages A-F, Gemini AI with consent and fallback, OWASP security, per-step performance budgets, data lineage export, disaster recovery.\n\nProvide JSON: {score: 0-100, summary: string, issues: [], strengths: [], approved: boolean}"
+    }]
+  }],
+  "generationConfig": {
+    "temperature": 0.2,
+    "maxOutputTokens": 1000
+  }
+}

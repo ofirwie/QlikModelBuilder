@@ -1,0 +1,122 @@
+TableName,FieldName,Include,KeyType,Description
+FactSales,SalesKey,yes,PK,Surrogate key
+FactSales,OrderID,yes,BK,Business key from source
+FactSales,CustomerKey,yes,FK,Link to DimCustomer
+FactSales,ProductKey,yes,FK,Link to DimProduct
+FactSales,DateKey,yes,FK,Link to DimDate
+FactSales,StoreKey,yes,FK,Link to DimStore
+FactSales,EmployeeKey,yes,FK,Link to DimEmployee
+FactSales,PromotionKey,yes,FK,Link to DimPromotion
+FactSales,CurrencyKey,yes,FK,Link to DimCurrency
+FactSales,Quantity,yes,,Number of units sold
+FactSales,UnitPrice,yes,,Price per unit
+FactSales,UnitCost,yes,,Cost per unit
+FactSales,ExtendedAmount,yes,,Quantity * UnitPrice
+FactSales,DiscountAmount,yes,,Discount applied
+FactSales,TaxAmount,yes,,Tax amount
+FactSales,FreightAmount,yes,,Shipping cost
+FactSales,TotalAmount,yes,,Final amount after all
+FactSales,GrossProfit,yes,,Revenue minus cost
+FactSales,LoadDate,yes,,ETL load timestamp
+FactSales,SourceSystem,yes,,Origin system code
+DimCustomer,CustomerKey,yes,PK,Surrogate key
+DimCustomer,CustomerID,yes,BK,Business key
+DimCustomer,CustomerName,yes,,Full name
+DimCustomer,FirstName,yes,,First name
+DimCustomer,LastName,yes,,Last name
+DimCustomer,Email,yes,,Email address
+DimCustomer,Phone,yes,,Phone number
+DimCustomer,AddressLine1,yes,,Street address
+DimCustomer,AddressLine2,yes,,Apt/Suite
+DimCustomer,City,yes,,City name
+DimCustomer,State,yes,,State/Province
+DimCustomer,PostalCode,yes,,ZIP code
+DimCustomer,Country,yes,,Country name
+DimCustomer,BirthDate,yes,,Date of birth
+DimCustomer,Gender,yes,,M/F/Other
+DimCustomer,MaritalStatus,yes,,Single/Married
+DimCustomer,CustomerSegment,yes,,Gold/Silver/Bronze
+DimCustomer,RegistrationDate,yes,,First registration
+DimCustomer,IsActive,yes,,Active flag
+DimCustomer,LoadDate,yes,,ETL timestamp
+DimProduct,ProductKey,yes,PK,Surrogate key
+DimProduct,ProductID,yes,BK,Business key
+DimProduct,ProductName,yes,,Product title
+DimProduct,ProductDescription,yes,,Full description
+DimProduct,Brand,yes,,Brand name
+DimProduct,Category,yes,,Main category
+DimProduct,SubCategory,yes,,Sub category
+DimProduct,SKU,yes,,Stock keeping unit
+DimProduct,UPC,yes,,Universal product code
+DimProduct,StandardCost,yes,,Manufacturing cost
+DimProduct,ListPrice,yes,,MSRP
+DimProduct,Size,yes,,Product size
+DimProduct,Color,yes,,Product color
+DimProduct,Weight,yes,,Weight in kg
+DimProduct,IsActive,yes,,Active flag
+DimProduct,StartDate,yes,,SCD2 start
+DimProduct,EndDate,yes,,SCD2 end
+DimProduct,IsCurrent,yes,,Current version flag
+DimDate,DateKey,yes,PK,YYYYMMDD format
+DimDate,FullDate,yes,,Full date
+DimDate,DayOfWeek,yes,,1-7
+DimDate,DayName,yes,,Monday-Sunday
+DimDate,DayOfMonth,yes,,1-31
+DimDate,DayOfYear,yes,,1-366
+DimDate,WeekOfYear,yes,,1-53
+DimDate,MonthNumber,yes,,1-12
+DimDate,MonthName,yes,,January-December
+DimDate,Quarter,yes,,Q1-Q4
+DimDate,Year,yes,,YYYY
+DimDate,IsWeekend,yes,,Weekend flag
+DimDate,IsHoliday,yes,,Holiday flag
+DimDate,FiscalYear,yes,,Fiscal year
+DimDate,FiscalQuarter,yes,,Fiscal quarter
+DimStore,StoreKey,yes,PK,Surrogate key
+DimStore,StoreID,yes,BK,Business key
+DimStore,StoreName,yes,,Store name
+DimStore,StoreType,yes,,Retail/Online/Warehouse
+DimStore,AddressLine1,yes,,Street address
+DimStore,City,yes,,City
+DimStore,State,yes,,State
+DimStore,Country,yes,,Country
+DimStore,PostalCode,yes,,ZIP
+DimStore,Region,yes,,Sales region
+DimStore,ManagerName,yes,,Store manager
+DimStore,OpenDate,yes,,Opening date
+DimStore,CloseDate,yes,,Closing date
+DimStore,SquareFootage,yes,,Store size
+DimStore,IsActive,yes,,Active flag
+DimEmployee,EmployeeKey,yes,PK,Surrogate key
+DimEmployee,EmployeeID,yes,BK,Business key
+DimEmployee,EmployeeName,yes,,Full name
+DimEmployee,FirstName,yes,,First name
+DimEmployee,LastName,yes,,Last name
+DimEmployee,Title,yes,,Job title
+DimEmployee,Department,yes,,Department name
+DimEmployee,HireDate,yes,,Date hired
+DimEmployee,TerminationDate,yes,,Date terminated
+DimEmployee,ManagerKey,yes,FK,Link to manager
+DimEmployee,Email,yes,,Email address
+DimEmployee,Phone,yes,,Phone number
+DimEmployee,IsActive,yes,,Active flag
+DimEmployee,LoadDate,yes,,ETL timestamp
+DimPromotion,PromotionKey,yes,PK,Surrogate key
+DimPromotion,PromotionID,yes,BK,Business key
+DimPromotion,PromotionName,yes,,Promotion title
+DimPromotion,PromotionType,yes,,Discount/BOGO/etc
+DimPromotion,DiscountPercent,yes,,Discount percentage
+DimPromotion,StartDate,yes,,Promotion start
+DimPromotion,EndDate,yes,,Promotion end
+DimPromotion,MinQuantity,yes,,Minimum qty
+DimPromotion,MaxQuantity,yes,,Maximum qty
+DimPromotion,IsActive,yes,,Active flag
+DimPromotion,LoadDate,yes,,ETL timestamp
+DimCurrency,CurrencyKey,yes,PK,Surrogate key
+DimCurrency,CurrencyCode,yes,BK,ISO currency code
+DimCurrency,CurrencyName,yes,,Full name
+DimCurrency,Symbol,yes,,Currency symbol
+DimCurrency,ExchangeRate,yes,,Rate to base
+DimCurrency,IsBaseCurrency,yes,,Base flag
+DimCurrency,IsActive,yes,,Active flag
+DimCurrency,LoadDate,yes,,ETL timestamp

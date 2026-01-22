@@ -27,7 +27,17 @@ const config: PlaywrightTestConfig = {
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+        launchOptions: {
+          args: [
+            '--ignore-certificate-errors',
+            '--unsafely-treat-insecure-origin-as-secure=https://vscode-test:8080',
+            '--disable-web-security',
+            '--allow-running-insecure-content',
+          ],
+        },
+      },
     },
   ],
   outputDir: 'test-results/',

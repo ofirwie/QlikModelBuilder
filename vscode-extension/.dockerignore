@@ -1,0 +1,9 @@
+node_modules
+out
+dist
+.vscode-test
+test-results
+*.vsix
+.git
+.gitignore
+*.md

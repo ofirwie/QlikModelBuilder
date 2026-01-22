@@ -18,6 +18,9 @@
 
 import { TestRunner, CheckpointManager } from './runner';
 import layer0Tests from './specs/layer0.spec';
+import layer1Tests from './specs/layer1.spec';
+import layer2Tests from './specs/layer2.spec';
+import layer3Tests from './specs/layer3.spec';
 
 // Parse command line arguments
 const args = process.argv.slice(2);
@@ -61,7 +64,9 @@ async function main(): Promise<void> {
   // Define all layers
   const allLayers = [
     { layer: 0, tests: layer0Tests },
-    // TODO: Add layer1Tests, layer2Tests, layer3Tests when implemented
+    { layer: 1, tests: layer1Tests },
+    { layer: 2, tests: layer2Tests },
+    { layer: 3, tests: layer3Tests },
   ];
 
   // Filter by layer if specified

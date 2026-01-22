@@ -1,0 +1,7 @@
+{
+  "contents": [{
+    "parts": [{
+      "text": "Rate this implementation plan on a scale of 1-10 for each criteria. Return ONLY a JSON object with scores, no explanation.\n\nCriteria:\n1. completeness - Are all wizard steps (3-7) covered?\n2. codeQuality - Is the code structure clean?\n3. tdd - Is TDD (test first) approach used?\n4. errorHandling - Are all error scenarios handled?\n\nPLAN SUMMARY:\n- 6 Phases covering Steps 3-7 plus Integration Tests\n- 35 total tasks (vs 20 in v1)\n- TDD RED-GREEN cycle for every task\n- 5 typed errors: auth, network, server, validation, unknown\n- Enhanced error handling with correlation IDs, logging, and auto-hide\n- 7 integration test scenarios\n- XSS protection with escapeHtml\n- State management for each step\n- Event listeners with validation\n- Extension handlers with proper error typing\n\nReturn JSON like: {\"completeness\": 9, \"codeQuality\": 9, \"tdd\": 10, \"errorHandling\": 10}"
+    }]
+  }]
+}
