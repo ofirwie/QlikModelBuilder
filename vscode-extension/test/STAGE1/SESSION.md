@@ -1,7 +1,30 @@
 # STAGE1 Session State
 
-> **כדי לחזור למשימה הזו, פשוט תגיד ל-Claude:**
+## 🔄 איך לחזור למשימה הזו
+
+### אפשרות 1: עבודה על בדיקות
+```bash
+git checkout stage1-testing
+```
+**ואז תגיד ל-Claude:**
 > "תקרא את הקובץ `vscode-extension/test/STAGE1/SESSION.md` ותמשיך מאיפה שעצרת"
+
+### אפשרות 2: עבודה על Wizard
+```bash
+git checkout develop
+```
+**ואז תגיד ל-Claude:**
+> "אני רוצה לעבוד על ה-VS Code Extension Wizard"
+
+---
+
+## 🌿 Git Branches
+
+| Branch | Purpose | Status |
+|--------|---------|--------|
+| `main` | Stable releases | 58 commits ahead of origin |
+| `develop` | Active wizard development | ✅ Current work |
+| `stage1-testing` | STAGE1 test infrastructure | ✅ Current branch |
 
 ---
 
