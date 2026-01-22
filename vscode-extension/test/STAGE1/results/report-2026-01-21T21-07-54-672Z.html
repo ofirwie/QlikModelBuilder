@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>STAGE1 Test Report - 2026-01-21T21:07:54.672Z</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 20px; background: #1e1e1e; color: #ccc; }
+    h1 { color: #fff; }
+    .summary { display: flex; gap: 20px; margin: 20px 0; }
+    .stat { padding: 20px; border-radius: 8px; min-width: 120px; text-align: center; }
+    .stat-passed { background: #1b4332; }
+    .stat-failed { background: #7f1d1d; }
+    .stat-skipped { background: #374151; }
+    .stat-total { background: #1e3a5f; }
+    .stat h2 { margin: 0; font-size: 36px; }
+    .stat p { margin: 5px 0 0; opacity: 0.8; }
+    .layer { margin: 20px 0; border: 1px solid #444; border-radius: 8px; overflow: hidden; }
+    .layer-header { background: #2d2d30; padding: 15px; display: flex; justify-content: space-between; }
+    .layer-header.blocked { background: #7f1d1d; }
+    .test { padding: 10px 15px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; }
+    .test:last-child { border-bottom: none; }
+    .test.passed { border-left: 4px solid #22c55e; }
+    .test.failed { border-left: 4px solid #ef4444; }
+    .test.skipped { border-left: 4px solid #6b7280; }
+    .test-id { font-family: monospace; color: #888; }
+    .test-time { color: #666; }
+    .error { color: #ef4444; font-size: 12px; margin-top: 5px; font-family: monospace; }
+  </style>
+</head>
+<body>
+  <h1>STAGE1 Test Report</h1>
+  <p>Generated: 2026-01-21T21:07:54.672Z</p>
+  <p>Duration: 1.63s</p>
+
+  <div class="summary">
+    <div class="stat stat-total"><h2>128</h2><p>Total</p></div>
+    <div class="stat stat-passed"><h2>128</h2><p>Passed</p></div>
+    <div class="stat stat-failed"><h2>0</h2><p>Failed</p></div>
+    <div class="stat stat-skipped"><h2>0</h2><p>Skipped</p></div>
+  </div>
+
+  <div class="layer">
+    <div class="layer-header ">
+      <span><strong>Layer 0</strong> - 15 tests</span>
+      <span>15 passed, 0 failed, 0 skipped (0.16s)</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L0-001</span>
+        <span>Extension activates without errors</span>
+        
+      </div>
+      <span class="test-time">8ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L0-002</span>
+        <span>Command "QMB: Open Wizard" exists and executes</span>
+        
+      </div>
+      <span class="test-time">15ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L0-003</span>
+        <span>Webview panel opens</span>
+        
+      </div>
+      <span class="test-time">6ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L0-004</span>
+        <span>HTML renders (not empty)</span>
+        
+      </div>
+      <span class="test-time">7ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L0-005</span>
+        <span>No JavaScript console errors on load</span>
+        
+      </div>
+      <span class="test-time">9ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L0-006</span>
+        <span>CSS variables resolve (not undefined)</span>
+        
+      </div>
+      <span class="test-time">8ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L0-007</span>
+        <span>Progress bar element exists</span>
+        
+      </div>
+      <span class="test-time">14ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L0-008</span>
+        <span>All 7 step buttons exist</span>
+        
+      </div>
+      <span class="test-time">7ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L0-009</span>
+        <span>Step 1 is active by default</span>
+        
+      </div>
+      <span class="test-time">17ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L0-010</span>
+        <span>VS Code API works (postMessage)</span>
+        
+      </div>
+      <span class="test-time">10ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L0-011</span>
+        <span>State persistence works (setState/getState)</span>
+        
+      </div>
+      <span class="test-time">9ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L0-012</span>
+        <span>Panel survives hide/show cycle</span>
+        
+      </div>
+      <span class="test-time">9ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L0-013</span>
+        <span>Panel closes cleanly (no orphan processes)</span>
+        
+      </div>
+      <span class="test-time">6ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L0-014</span>
+        <span>Memory usage under 100MB after load</span>
+        
+      </div>
+      <span class="test-time">10ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L0-015</span>
+        <span>Load time under 3 seconds</span>
+        
+      </div>
+      <span class="test-time">11ms</span>
+    </div>
+  </div>
+
+  <div class="layer">
+    <div class="layer-header ">
+      <span><strong>Layer 1</strong> - 28 tests</span>
+      <span>28 passed, 0 failed, 0 skipped (0.33s)</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L1-001</span>
+        <span>Click step 1 (Entry) - content displays</span>
+        
+      </div>
+      <span class="test-time">15ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L1-002</span>
+        <span>Click step 2 (Space) - content displays</span>
+        
+      </div>
+      <span class="test-time">15ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L1-003</span>
+        <span>Click step 3 (Source) - content displays</span>
+        
+      </div>
+      <span class="test-time">16ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L1-004</span>
+        <span>Click step 4 (Tables) - content displays</span>
+        
+      </div>
+      <span class="test-time">19ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L1-005</span>
+        <span>Click step 5 (Fields) - content displays</span>
+        
+      </div>
+      <span class="test-time">19ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L1-006</span>
+        <span>Click step 6 (Incremental) - content displays</span>
+        
+      </div>
+      <span class="test-time">15ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L1-007</span>
+        <span>Click step 7 (Deploy) - content displays</span>
+        
+      </div>
+      <span class="test-time">19ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L1-008</span>
+        <span>Step 1 (Entry) content area updates correctly</span>
+        
+      </div>
+      <span class="test-time">10ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L1-009</span>
+        <span>Step 2 (Space) content area updates correctly</span>
+        
+      </div>
+      <span class="test-time">7ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L1-010</span>
+        <span>Step 3 (Source) content area updates correctly</span>
+        
+      </div>
+      <span class="test-time">10ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L1-011</span>
+        <span>Step 4 (Tables) content area updates correctly</span>
+        
+      </div>
+      <span class="test-time">7ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L1-012</span>
+        <span>Step 5 (Fields) content area updates correctly</span>
+        
+      </div>
+      <span class="test-time">8ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L1-013</span>
+        <span>Step 6 (Incremental) content area updates correctly</span>
+        
+      </div>
+      <span class="test-time">8ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L1-014</span>
+        <span>Step 7 (Deploy) content area updates correctly</span>
+        
+      </div>
+      <span class="test-time">11ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L1-015</span>
+        <span>Progress bar step 1 visual position correct</span>
+        
+      </div>
+      <span class="test-time">10ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L1-016</span>
+        <span>Progress bar step 2 visual position correct</span>
+        
+      </div>
+      <span class="test-time">8ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L1-017</span>
+        <span>Progress bar step 3 visual position correct</span>
+        
+      </div>
+      <span class="test-time">8ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L1-018</span>
+        <span>Progress bar step 4 visual position correct</span>
+        
+      </div>
+      <span class="test-time">9ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L1-019</span>
+        <span>Progress bar step 5 visual position correct</span>
+        
+      </div>
+      <span class="test-time">8ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L1-020</span>
+        <span>Progress bar step 6 visual position correct</span>
+        
+      </div>
+      <span class="test-time">8ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L1-021</span>
+        <span>Progress bar step 7 visual position correct</span>
+        
+      </div>
+      <span class="test-time">9ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L1-022</span>
+        <span>Skip prevention - Cannot skip to Step 7 without prior steps</span>
+        
+      </div>
+      <span class="test-time">8ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L1-023</span>
+        <span>Back button returns to previous step</span>
+        
+      </div>
+      <span class="test-time">21ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L1-024</span>
+        <span>Next button disabled when step incomplete</span>
+        
+      </div>
+      <span class="test-time">8ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L1-025</span>
+        <span>Next button enabled when step complete</span>
+        
+      </div>
+      <span class="test-time">7ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L1-026</span>
+        <span>Keyboard navigation - Tab and Enter work</span>
+        
+      </div>
+      <span class="test-time">8ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L1-027</span>
+        <span>State persistence - Step state survives hide/show</span>
+        
+      </div>
+      <span class="test-time">5ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L1-028</span>
+        <span>Validation messages appear correctly</span>
+        
+      </div>
+      <span class="test-time">10ms</span>
+    </div>
+  </div>
+
+  <div class="layer">
+    <div class="layer-header ">
+      <span><strong>Layer 2</strong> - 45 tests</span>
+      <span>45 passed, 0 failed, 0 skipped (0.53s)</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-001</span>
+        <span>CSV file accepted</span>
+        
+      </div>
+      <span class="test-time">10ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-002</span>
+        <span>XLSX file accepted</span>
+        
+      </div>
+      <span class="test-time">9ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-003</span>
+        <span>File picker dialog - VS Code showOpenDialog</span>
+        
+      </div>
+      <span class="test-time">10ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-004</span>
+        <span>File selection feedback - file path shown</span>
+        
+      </div>
+      <span class="test-time">8ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-005</span>
+        <span>Spec file parsing - CSV/XLSX/DOCX support</span>
+        
+      </div>
+      <span class="test-time">8ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-006</span>
+        <span>AI-based spec extraction - Gemini/Anthropic</span>
+        
+      </div>
+      <span class="test-time">9ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-007</span>
+        <span>Invalid file type - error message shown</span>
+        
+      </div>
+      <span class="test-time">10ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-008</span>
+        <span>Small file (1KB) - upload succeeds</span>
+        
+      </div>
+      <span class="test-time">13ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-009</span>
+        <span>Medium file (10MB) - upload succeeds</span>
+        
+      </div>
+      <span class="test-time">12ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-010</span>
+        <span>Large file (100MB) - warning/handling</span>
+        
+      </div>
+      <span class="test-time">10ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-011</span>
+        <span>Cancel upload - clean state restored</span>
+        
+      </div>
+      <span class="test-time">10ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-012</span>
+        <span>Multiple files - correct handling</span>
+        
+      </div>
+      <span class="test-time">6ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-013</span>
+        <span>File preview - first 5 rows shown</span>
+        
+      </div>
+      <span class="test-time">10ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-014</span>
+        <span>Headers detected - columns identified</span>
+        
+      </div>
+      <span class="test-time">8ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-015</span>
+        <span>Empty file - error message</span>
+        
+      </div>
+      <span class="test-time">11ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-016</span>
+        <span>Local File option - selectable</span>
+        
+      </div>
+      <span class="test-time">9ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-017</span>
+        <span>Qlik Cloud option - selectable</span>
+        
+      </div>
+      <span class="test-time">8ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-018</span>
+        <span>Database option - selectable</span>
+        
+      </div>
+      <span class="test-time">9ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-019</span>
+        <span>Data source selection persists after navigation</span>
+        
+      </div>
+      <span class="test-time">6ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-020</span>
+        <span>Visual indicator - selected option highlighted</span>
+        
+      </div>
+      <span class="test-time">10ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-021</span>
+        <span>Columns populated from uploaded file</span>
+        
+      </div>
+      <span class="test-time">6ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-022</span>
+        <span>Data type dropdown works for each column</span>
+        
+      </div>
+      <span class="test-time">10ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-023</span>
+        <span>Primary key checkbox toggles correctly</span>
+        
+      </div>
+      <span class="test-time">8ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-024</span>
+        <span>Column rename input works</span>
+        
+      </div>
+      <span class="test-time">10ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-025</span>
+        <span>Column exclude toggle works</span>
+        
+      </div>
+      <span class="test-time">10ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-026</span>
+        <span>Auto-detect data types - correct detection</span>
+        
+      </div>
+      <span class="test-time">110ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-027</span>
+        <span>Manual type override works</span>
+        
+      </div>
+      <span class="test-time">8ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-028</span>
+        <span>Required field validation - error on missing</span>
+        
+      </div>
+      <span class="test-time">8ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-029</span>
+        <span>Preview updates to reflect changes</span>
+        
+      </div>
+      <span class="test-time">8ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-030</span>
+        <span>Reset button returns to auto-detect</span>
+        
+      </div>
+      <span class="test-time">8ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-031</span>
+        <span>Step 4 (Tables) - Table list displays</span>
+        
+      </div>
+      <span class="test-time">10ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-032</span>
+        <span>Step 4 - Table selection works</span>
+        
+      </div>
+      <span class="test-time">11ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-033</span>
+        <span>Step 4 - Multi-table selection works</span>
+        
+      </div>
+      <span class="test-time">8ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-034</span>
+        <span>Step 5 (Fields) - Field list displays</span>
+        
+      </div>
+      <span class="test-time">6ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-035</span>
+        <span>Step 5 - Field configuration works</span>
+        
+      </div>
+      <span class="test-time">9ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-036</span>
+        <span>Step 6 (Incremental) - Options display</span>
+        
+      </div>
+      <span class="test-time">8ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-037</span>
+        <span>Step 6 - Incremental field selection</span>
+        
+      </div>
+      <span class="test-time">7ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-038</span>
+        <span>Step 6 - Strategy selection works</span>
+        
+      </div>
+      <span class="test-time">6ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-039</span>
+        <span>Step 7 (Deploy) - Summary displays</span>
+        
+      </div>
+      <span class="test-time">8ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-040</span>
+        <span>Step 7 - Deploy button exists</span>
+        
+      </div>
+      <span class="test-time">5ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-041</span>
+        <span>Step 7 - Progress indicator during deploy</span>
+        
+      </div>
+      <span class="test-time">8ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-042</span>
+        <span>Step 7 - Success message on completion</span>
+        
+      </div>
+      <span class="test-time">10ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-043</span>
+        <span>Step 7 - Error handling on failure</span>
+        
+      </div>
+      <span class="test-time">11ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-044</span>
+        <span>Word document spec parsing works</span>
+        
+      </div>
+      <span class="test-time">9ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L2-045</span>
+        <span>AI spec parsing with Gemini/Anthropic</span>
+        
+      </div>
+      <span class="test-time">9ms</span>
+    </div>
+  </div>
+
+  <div class="layer">
+    <div class="layer-header ">
+      <span><strong>Layer 3</strong> - 40 tests</span>
+      <span>40 passed, 0 failed, 0 skipped (0.59s)</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-001</span>
+        <span>Complete CSV flow - end-to-end success</span>
+        
+      </div>
+      <span class="test-time">10ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-002</span>
+        <span>Complete XLSX flow - end-to-end success</span>
+        
+      </div>
+      <span class="test-time">9ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-003</span>
+        <span>Qlik Cloud flow - real API connection</span>
+        
+      </div>
+      <span class="test-time">12ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-004</span>
+        <span>All options modified - complex flow works</span>
+        
+      </div>
+      <span class="test-time">8ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-005</span>
+        <span>Interrupt and resume - state preserved</span>
+        
+      </div>
+      <span class="test-time">10ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-006</span>
+        <span>Network disconnect - recovery message</span>
+        
+      </div>
+      <span class="test-time">15ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-007</span>
+        <span>File read error - meaningful error</span>
+        
+      </div>
+      <span class="test-time">8ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-008</span>
+        <span>Invalid credentials - re-prompt shown</span>
+        
+      </div>
+      <span class="test-time">15ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-009</span>
+        <span>Timeout handling - retry option</span>
+        
+      </div>
+      <span class="test-time">12ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-010</span>
+        <span>Partial completion - can continue</span>
+        
+      </div>
+      <span class="test-time">10ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-011</span>
+        <span>Browser refresh simulation - state restored</span>
+        
+      </div>
+      <span class="test-time">10ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-012</span>
+        <span>Panel reopen - state restored</span>
+        
+      </div>
+      <span class="test-time">9ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-013</span>
+        <span>Multiple instances - isolated state</span>
+        
+      </div>
+      <span class="test-time">7ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-014</span>
+        <span>Completion cleanup - state cleared</span>
+        
+      </div>
+      <span class="test-time">8ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-015</span>
+        <span>Cancel cleanup - state cleared</span>
+        
+      </div>
+      <span class="test-time">113ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-016</span>
+        <span>Visual regression - screenshot 1 infrastructure</span>
+        
+      </div>
+      <span class="test-time">15ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-017</span>
+        <span>Visual regression - screenshot 2 infrastructure</span>
+        
+      </div>
+      <span class="test-time">14ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-018</span>
+        <span>Visual regression - screenshot 3 infrastructure</span>
+        
+      </div>
+      <span class="test-time">11ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-019</span>
+        <span>Visual regression - screenshot 4 infrastructure</span>
+        
+      </div>
+      <span class="test-time">13ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-020</span>
+        <span>Visual regression - screenshot 5 infrastructure</span>
+        
+      </div>
+      <span class="test-time">10ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-021</span>
+        <span>Visual regression - screenshot 6 infrastructure</span>
+        
+      </div>
+      <span class="test-time">11ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-022</span>
+        <span>Visual regression - screenshot 7 infrastructure</span>
+        
+      </div>
+      <span class="test-time">13ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-023</span>
+        <span>Visual regression - screenshot 8 infrastructure</span>
+        
+      </div>
+      <span class="test-time">12ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-024</span>
+        <span>Visual regression - screenshot 9 infrastructure</span>
+        
+      </div>
+      <span class="test-time">11ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-025</span>
+        <span>Visual regression - screenshot 10 infrastructure</span>
+        
+      </div>
+      <span class="test-time">14ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-026</span>
+        <span>Visual regression - screenshot 11 infrastructure</span>
+        
+      </div>
+      <span class="test-time">13ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-027</span>
+        <span>Visual regression - screenshot 12 infrastructure</span>
+        
+      </div>
+      <span class="test-time">11ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-028</span>
+        <span>Visual regression - screenshot 13 infrastructure</span>
+        
+      </div>
+      <span class="test-time">12ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-029</span>
+        <span>Visual regression - screenshot 14 infrastructure</span>
+        
+      </div>
+      <span class="test-time">12ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-030</span>
+        <span>Visual regression - screenshot 15 infrastructure</span>
+        
+      </div>
+      <span class="test-time">11ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-031</span>
+        <span>Visual regression - screenshot 16 infrastructure</span>
+        
+      </div>
+      <span class="test-time">11ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-032</span>
+        <span>Visual regression - screenshot 17 infrastructure</span>
+        
+      </div>
+      <span class="test-time">12ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-033</span>
+        <span>Visual regression - screenshot 18 infrastructure</span>
+        
+      </div>
+      <span class="test-time">12ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-034</span>
+        <span>Visual regression - screenshot 19 infrastructure</span>
+        
+      </div>
+      <span class="test-time">11ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-035</span>
+        <span>Visual regression - screenshot 20 infrastructure</span>
+        
+      </div>
+      <span class="test-time">13ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-036</span>
+        <span>Connect to tenant - API responds</span>
+        
+      </div>
+      <span class="test-time">12ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-037</span>
+        <span>List apps - apps returned</span>
+        
+      </div>
+      <span class="test-time">13ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-038</span>
+        <span>Select app - app data loaded</span>
+        
+      </div>
+      <span class="test-time">14ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-039</span>
+        <span>Get fields - fields returned</span>
+        
+      </div>
+      <span class="test-time">13ms</span>
+    </div>
+
+    <div class="test passed">
+      <div>
+        <span class="test-id">L3-040</span>
+        <span>Full model creation - model created in Qlik</span>
+        
+      </div>
+      <span class="test-time">15ms</span>
+    </div>
+  </div>
+</body></html>

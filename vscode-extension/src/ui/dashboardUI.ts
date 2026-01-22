@@ -770,6 +770,7 @@ export function getDashboardScript(): string {
     // Entry Point Selection (Step 1)
     // =============================================
     window.selectEntry = function selectEntry(entry) {
+      console.log('=== selectEntry called with:', entry);
       state.entryPoint = entry;
 
       // Update UI - mark selected item
@@ -801,6 +802,7 @@ export function getDashboardScript(): string {
     }
 
     window.nextStep = function nextStep() {
+      console.log('=== nextStep called! currentStep:', state.currentStep, '-> ', state.currentStep + 1);
       state.currentStep++;
 
       // Update progress bar indicators
@@ -914,9 +916,14 @@ export function getDashboardScript(): string {
     // Wizard Event Listeners (CSP-safe, no inline onclick)
     // =============================================
     function setupWizardEventListeners() {
+      console.log('=== setupWizardEventListeners CALLED ===');
+
       // Entry point selection
-      document.querySelectorAll('#entry-options li[data-entry]').forEach(li => {
+      const entryOptions = document.querySelectorAll('#entry-options li[data-entry]');
+      console.log('Entry options found:', entryOptions.length);
+      entryOptions.forEach(li => {
         li.addEventListener('click', () => {
+          console.log('Entry option clicked:', li.dataset.entry);
           const entry = li.dataset.entry;
           if (entry && window.selectEntry) {
             window.selectEntry(entry);
@@ -926,22 +933,28 @@ export function getDashboardScript(): string {
 
       // Next buttons (Step 1)
       const btnNext = document.getElementById('btn-next');
+      console.log('btn-next found:', !!btnNext, btnNext?.disabled);
       if (btnNext) {
         btnNext.addEventListener('click', () => {
+          console.log('btn-next CLICKED! nextStep exists:', !!window.nextStep);
           if (window.nextStep) window.nextStep();
         });
       }
 
       // Step 2 buttons
       const btnNext2 = document.getElementById('btn-next-2');
+      console.log('btn-next-2 found:', !!btnNext2, btnNext2?.disabled);
       if (btnNext2) {
         btnNext2.addEventListener('click', () => {
+          console.log('btn-next-2 CLICKED! nextStep exists:', !!window.nextStep);
           if (window.nextStep) window.nextStep();
         });
       }
       const btnBack = document.getElementById('btn-back');
+      console.log('btn-back found:', !!btnBack);
       if (btnBack) {
         btnBack.addEventListener('click', () => {
+          console.log('btn-back CLICKED! prevStep exists:', !!window.prevStep);
           if (window.prevStep) window.prevStep();
         });
       }

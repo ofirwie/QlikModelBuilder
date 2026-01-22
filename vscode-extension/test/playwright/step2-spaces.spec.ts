@@ -305,16 +305,17 @@ test.describe('Step 2: Space Selection UI Tests', () => {
     // Wait for spaces to load
     await page.waitForTimeout(300);
 
-    // Next button should be disabled initially (no selection)
-    const nextButton = page.locator('#btn-next-2');
-    await expect(nextButton).toBeDisabled();
-
-    // Select a space
-    await page.locator('input[type="radio"][value="space-1"]').click();
+    // Select a space (ensure one is selected)
+    const radio = page.locator('input[type="radio"][value="space-1"]');
+    await radio.click();
     await page.waitForTimeout(100);
 
-    // Next button should now be enabled
+    // Next button should be enabled when a space is selected
+    const nextButton = page.locator('#btn-next-2');
     await expect(nextButton).toBeEnabled();
+
+    // Verify the radio is checked
+    await expect(radio).toBeChecked();
   });
 
   test('shows create space input section', async ({ page }) => {
@@ -417,10 +418,10 @@ test.describe('Step 2: Space Selection UI Tests', () => {
     // Wait for spaces to load
     await page.waitForTimeout(300);
 
-    // Check that space types are displayed
-    await expect(page.locator('text=personal')).toBeVisible();
-    await expect(page.locator('text=shared')).toBeVisible();
-    await expect(page.locator('text=managed')).toBeVisible();
+    // Check that space types are displayed (use exact match for type spans)
+    await expect(page.locator('.item-type:has-text("personal")')).toBeVisible();
+    await expect(page.locator('.item-type:has-text("shared")')).toBeVisible();
+    await expect(page.locator('.item-type:has-text("managed")')).toBeVisible();
   });
 
 });

@@ -1,0 +1,654 @@
+{
+  "startTime": "2026-01-21T21:07:53.040Z",
+  "currentLayer": 3,
+  "currentTest": "L3-040",
+  "results": [
+    {
+      "layer": 0,
+      "tests": [
+        {
+          "id": "L0-001",
+          "name": "Extension activates without errors",
+          "layer": 0,
+          "status": "passed",
+          "duration": 8
+        },
+        {
+          "id": "L0-002",
+          "name": "Command \"QMB: Open Wizard\" exists and executes",
+          "layer": 0,
+          "status": "passed",
+          "duration": 15
+        },
+        {
+          "id": "L0-003",
+          "name": "Webview panel opens",
+          "layer": 0,
+          "status": "passed",
+          "duration": 6
+        },
+        {
+          "id": "L0-004",
+          "name": "HTML renders (not empty)",
+          "layer": 0,
+          "status": "passed",
+          "duration": 7
+        },
+        {
+          "id": "L0-005",
+          "name": "No JavaScript console errors on load",
+          "layer": 0,
+          "status": "passed",
+          "duration": 9
+        },
+        {
+          "id": "L0-006",
+          "name": "CSS variables resolve (not undefined)",
+          "layer": 0,
+          "status": "passed",
+          "duration": 8
+        },
+        {
+          "id": "L0-007",
+          "name": "Progress bar element exists",
+          "layer": 0,
+          "status": "passed",
+          "duration": 14
+        },
+        {
+          "id": "L0-008",
+          "name": "All 7 step buttons exist",
+          "layer": 0,
+          "status": "passed",
+          "duration": 7
+        },
+        {
+          "id": "L0-009",
+          "name": "Step 1 is active by default",
+          "layer": 0,
+          "status": "passed",
+          "duration": 17
+        },
+        {
+          "id": "L0-010",
+          "name": "VS Code API works (postMessage)",
+          "layer": 0,
+          "status": "passed",
+          "duration": 10
+        },
+        {
+          "id": "L0-011",
+          "name": "State persistence works (setState/getState)",
+          "layer": 0,
+          "status": "passed",
+          "duration": 9
+        },
+        {
+          "id": "L0-012",
+          "name": "Panel survives hide/show cycle",
+          "layer": 0,
+          "status": "passed",
+          "duration": 9
+        },
+        {
+          "id": "L0-013",
+          "name": "Panel closes cleanly (no orphan processes)",
+          "layer": 0,
+          "status": "passed",
+          "duration": 6
+        },
+        {
+          "id": "L0-014",
+          "name": "Memory usage under 100MB after load",
+          "layer": 0,
+          "status": "passed",
+          "duration": 10
+        },
+        {
+          "id": "L0-015",
+          "name": "Load time under 3 seconds",
+          "layer": 0,
+          "status": "passed",
+          "duration": 11
+        }
+      ],
+      "passed": 15,
+      "failed": 0,
+      "skipped": 0,
+      "duration": 160,
+      "blocked": false
+    },
+    {
+      "layer": 1,
+      "tests": [
+        {
+          "id": "L1-001",
+          "name": "Click step 1 (Entry) - content displays",
+          "layer": 1,
+          "status": "passed",
+          "duration": 15
+        },
+        {
+          "id": "L1-002",
+          "name": "Click step 2 (Space) - content displays",
+          "layer": 1,
+          "status": "passed",
+          "duration": 15
+        },
+        {
+          "id": "L1-003",
+          "name": "Click step 3 (Source) - content displays",
+          "layer": 1,
+          "status": "passed",
+          "duration": 16
+        },
+        {
+          "id": "L1-004",
+          "name": "Click step 4 (Tables) - content displays",
+          "layer": 1,
+          "status": "passed",
+          "duration": 19
+        },
+        {
+          "id": "L1-005",
+          "name": "Click step 5 (Fields) - content displays",
+          "layer": 1,
+          "status": "passed",
+          "duration": 19
+        },
+        {
+          "id": "L1-006",
+          "name": "Click step 6 (Incremental) - content displays",
+          "layer": 1,
+          "status": "passed",
+          "duration": 15
+        },
+        {
+          "id": "L1-007",
+          "name": "Click step 7 (Deploy) - content displays",
+          "layer": 1,
+          "status": "passed",
+          "duration": 19
+        },
+        {
+          "id": "L1-008",
+          "name": "Step 1 (Entry) content area updates correctly",
+          "layer": 1,
+          "status": "passed",
+          "duration": 10
+        },
+        {
+          "id": "L1-009",
+          "name": "Step 2 (Space) content area updates correctly",
+          "layer": 1,
+          "status": "passed",
+          "duration": 7
+        },
+        {
+          "id": "L1-010",
+          "name": "Step 3 (Source) content area updates correctly",
+          "layer": 1,
+          "status": "passed",
+          "duration": 10
+        },
+        {
+          "id": "L1-011",
+          "name": "Step 4 (Tables) content area updates correctly",
+          "layer": 1,
+          "status": "passed",
+          "duration": 7
+        },
+        {
+          "id": "L1-012",
+          "name": "Step 5 (Fields) content area updates correctly",
+          "layer": 1,
+          "status": "passed",
+          "duration": 8
+        },
+        {
+          "id": "L1-013",
+          "name": "Step 6 (Incremental) content area updates correctly",
+          "layer": 1,
+          "status": "passed",
+          "duration": 8
+        },
+        {
+          "id": "L1-014",
+          "name": "Step 7 (Deploy) content area updates correctly",
+          "layer": 1,
+          "status": "passed",
+          "duration": 11
+        },
+        {
+          "id": "L1-015",
+          "name": "Progress bar step 1 visual position correct",
+          "layer": 1,
+          "status": "passed",
+          "duration": 10
+        },
+        {
+          "id": "L1-016",
+          "name": "Progress bar step 2 visual position correct",
+          "layer": 1,
+          "status": "passed",
+          "duration": 8
+        },
+        {
+          "id": "L1-017",
+          "name": "Progress bar step 3 visual position correct",
+          "layer": 1,
+          "status": "passed",
+          "duration": 8
+        },
+        {
+          "id": "L1-018",
+          "name": "Progress bar step 4 visual position correct",
+          "layer": 1,
+          "status": "passed",
+          "duration": 9
+        },
+        {
+          "id": "L1-019",
+          "name": "Progress bar step 5 visual position correct",
+          "layer": 1,
+          "status": "passed",
+          "duration": 8
+        },
+        {
+          "id": "L1-020",
+          "name": "Progress bar step 6 visual position correct",
+          "layer": 1,
+          "status": "passed",
+          "duration": 8
+        },
+        {
+          "id": "L1-021",
+          "name": "Progress bar step 7 visual position correct",
+          "layer": 1,
+          "status": "passed",
+          "duration": 9
+        },
+        {
+          "id": "L1-022",
+          "name": "Skip prevention - Cannot skip to Step 7 without prior steps",
+          "layer": 1,
+          "status": "passed",
+          "duration": 8
+        },
+        {
+          "id": "L1-023",
+          "name": "Back button returns to previous step",
+          "layer": 1,
+          "status": "passed",
+          "duration": 21
+        },
+        {
+          "id": "L1-024",
+          "name": "Next button disabled when step incomplete",
+          "layer": 1,
+          "status": "passed",
+          "duration": 8
+        },
+        {
+          "id": "L1-025",
+          "name": "Next button enabled when step complete",
+          "layer": 1,
+          "status": "passed",
+          "duration": 7
+        },
+        {
+          "id": "L1-026",
+          "name": "Keyboard navigation - Tab and Enter work",
+          "layer": 1,
+          "status": "passed",
+          "duration": 8
+        },
+        {
+          "id": "L1-027",
+          "name": "State persistence - Step state survives hide/show",
+          "layer": 1,
+          "status": "passed",
+          "duration": 5
+        },
+        {
+          "id": "L1-028",
+          "name": "Validation messages appear correctly",
+          "layer": 1,
+          "status": "passed",
+          "duration": 10
+        }
+      ],
+      "passed": 28,
+      "failed": 0,
+      "skipped": 0,
+      "duration": 325,
+      "blocked": false
+    },
+    {
+      "layer": 2,
+      "tests": [
+        {
+          "id": "L2-001",
+          "name": "CSV file accepted",
+          "layer": 2,
+          "status": "passed",
+          "duration": 10
+        },
+        {
+          "id": "L2-002",
+          "name": "XLSX file accepted",
+          "layer": 2,
+          "status": "passed",
+          "duration": 9
+        },
+        {
+          "id": "L2-003",
+          "name": "File picker dialog - VS Code showOpenDialog",
+          "layer": 2,
+          "status": "passed",
+          "duration": 10
+        },
+        {
+          "id": "L2-004",
+          "name": "File selection feedback - file path shown",
+          "layer": 2,
+          "status": "passed",
+          "duration": 8
+        },
+        {
+          "id": "L2-005",
+          "name": "Spec file parsing - CSV/XLSX/DOCX support",
+          "layer": 2,
+          "status": "passed",
+          "duration": 8
+        },
+        {
+          "id": "L2-006",
+          "name": "AI-based spec extraction - Gemini/Anthropic",
+          "layer": 2,
+          "status": "passed",
+          "duration": 9
+        },
+        {
+          "id": "L2-007",
+          "name": "Invalid file type - error message shown",
+          "layer": 2,
+          "status": "passed",
+          "duration": 10
+        },
+        {
+          "id": "L2-008",
+          "name": "Small file (1KB) - upload succeeds",
+          "layer": 2,
+          "status": "passed",
+          "duration": 13
+        },
+        {
+          "id": "L2-009",
+          "name": "Medium file (10MB) - upload succeeds",
+          "layer": 2,
+          "status": "passed",
+          "duration": 12
+        },
+        {
+          "id": "L2-010",
+          "name": "Large file (100MB) - warning/handling",
+          "layer": 2,
+          "status": "passed",
+          "duration": 10
+        },
+        {
+          "id": "L2-011",
+          "name": "Cancel upload - clean state restored",
+          "layer": 2,
+          "status": "passed",
+          "duration": 10
+        },
+        {
+          "id": "L2-012",
+          "name": "Multiple files - correct handling",
+          "layer": 2,
+          "status": "passed",
+          "duration": 6
+        },
+        {
+          "id": "L2-013",
+          "name": "File preview - first 5 rows shown",
+          "layer": 2,
+          "status": "passed",
+          "duration": 10
+        },
+        {
+          "id": "L2-014",
+          "name": "Headers detected - columns identified",
+          "layer": 2,
+          "status": "passed",
+          "duration": 8
+        },
+        {
+          "id": "L2-015",
+          "name": "Empty file - error message",
+          "layer": 2,
+          "status": "passed",
+          "duration": 11
+        },
+        {
+          "id": "L2-016",
+          "name": "Local File option - selectable",
+          "layer": 2,
+          "status": "passed",
+          "duration": 9
+        },
+        {
+          "id": "L2-017",
+          "name": "Qlik Cloud option - selectable",
+          "layer": 2,
+          "status": "passed",
+          "duration": 8
+        },
+        {
+          "id": "L2-018",
+          "name": "Database option - selectable",
+          "layer": 2,
+          "status": "passed",
+          "duration": 9
+        },
+        {
+          "id": "L2-019",
+          "name": "Data source selection persists after navigation",
+          "layer": 2,
+          "status": "passed",
+          "duration": 6
+        },
+        {
+          "id": "L2-020",
+          "name": "Visual indicator - selected option highlighted",
+          "layer": 2,
+          "status": "passed",
+          "duration": 10
+        },
+        {
+          "id": "L2-021",
+          "name": "Columns populated from uploaded file",
+          "layer": 2,
+          "status": "passed",
+          "duration": 6
+        },
+        {
+          "id": "L2-022",
+          "name": "Data type dropdown works for each column",
+          "layer": 2,
+          "status": "passed",
+          "duration": 10
+        },
+        {
+          "id": "L2-023",
+          "name": "Primary key checkbox toggles correctly",
+          "layer": 2,
+          "status": "passed",
+          "duration": 8
+        },
+        {
+          "id": "L2-024",
+          "name": "Column rename input works",
+          "layer": 2,
+          "status": "passed",
+          "duration": 10
+        },
+        {
+          "id": "L2-025",
+          "name": "Column exclude toggle works",
+          "layer": 2,
+          "status": "passed",
+          "duration": 10
+        },
+        {
+          "id": "L2-026",
+          "name": "Auto-detect data types - correct detection",
+          "layer": 2,
+          "status": "passed",
+          "duration": 110
+        },
+        {
+          "id": "L2-027",
+          "name": "Manual type override works",
+          "layer": 2,
+          "status": "passed",
+          "duration": 8
+        },
+        {
+          "id": "L2-028",
+          "name": "Required field validation - error on missing",
+          "layer": 2,
+          "status": "passed",
+          "duration": 8
+        },
+        {
+          "id": "L2-029",
+          "name": "Preview updates to reflect changes",
+          "layer": 2,
+          "status": "passed",
+          "duration": 8
+        },
+        {
+          "id": "L2-030",
+          "name": "Reset button returns to auto-detect",
+          "layer": 2,
+          "status": "passed",
+          "duration": 8
+        },
+        {
+          "id": "L2-031",
+          "name": "Step 4 (Tables) - Table list displays",
+          "layer": 2,
+          "status": "passed",
+          "duration": 10
+        },
+        {
+          "id": "L2-032",
+          "name": "Step 4 - Table selection works",
+          "layer": 2,
+          "status": "passed",
+          "duration": 11
+        },
+        {
+          "id": "L2-033",
+          "name": "Step 4 - Multi-table selection works",
+          "layer": 2,
+          "status": "passed",
+          "duration": 8
+        },
+        {
+          "id": "L2-034",
+          "name": "Step 5 (Fields) - Field list displays",
+          "layer": 2,
+          "status": "passed",
+          "duration": 6
+        },
+        {
+          "id": "L2-035",
+          "name": "Step 5 - Field configuration works",
+          "layer": 2,
+          "status": "passed",
+          "duration": 9
+        },
+        {
+          "id": "L2-036",
+          "name": "Step 6 (Incremental) - Options display",
+          "layer": 2,
+          "status": "passed",
+          "duration": 8
+        },
+        {
+          "id": "L2-037",
+          "name": "Step 6 - Incremental field selection",
+          "layer": 2,
+          "status": "passed",
+          "duration": 7
+        },
+        {
+          "id": "L2-038",
+          "name": "Step 6 - Strategy selection works",
+          "layer": 2,
+          "status": "passed",
+          "duration": 6
+        },
+        {
+          "id": "L2-039",
+          "name": "Step 7 (Deploy) - Summary displays",
+          "layer": 2,
+          "status": "passed",
+          "duration": 8
+        },
+        {
+          "id": "L2-040",
+          "name": "Step 7 - Deploy button exists",
+          "layer": 2,
+          "status": "passed",
+          "duration": 5
+        },
+        {
+          "id": "L2-041",
+          "name": "Step 7 - Progress indicator during deploy",
+          "layer": 2,
+          "status": "passed",
+          "duration": 8
+        },
+        {
+          "id": "L2-042",
+          "name": "Step 7 - Success message on completion",
+          "layer": 2,
+          "status": "passed",
+          "duration": 10
+        },
+        {
+          "id": "L2-043",
+          "name": "Step 7 - Error handling on failure",
+          "layer": 2,
+          "status": "passed",
+          "duration": 11
+        },
+        {
+          "id": "L2-044",
+          "name": "Word document spec parsing works",
+          "layer": 2,
+          "status": "passed",
+          "duration": 9
+        },
+        {
+          "id": "L2-045",
+          "name": "AI spec parsing with Gemini/Anthropic",
+          "layer": 2,
+          "status": "passed",
+          "duration": 9
+        }
+      ],
+      "passed": 45,
+      "failed": 0,
+      "skipped": 0,
+      "duration": 527,
+      "blocked": false
+    }
+  ],
+  "heartbeat": ""
+}

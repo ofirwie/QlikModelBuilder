@@ -160,19 +160,111 @@ async function qlikFetch(endpoint: string, options: { method?: string; body?: st
 // Types
 // ============================================
 
+interface FieldDef {
+  name: string;
+  description?: string;
+  dataType?: string;
+  isKey?: boolean;
+}
+
+interface TableDef {
+  name: string;
+  type: 'Fact' | 'Dimension' | 'Bridge';
+  fields: FieldDef[];
+  keyField?: string;
+  description?: string;
+}
+
+interface RelationshipDef {
+  source: string;
+  target: string;
+  sourceField: string;
+  targetField: string;
+  cardinality?: string;
+}
+
 interface ParsedSpec {
-  tables: {
-    name: string;
-    type: 'Fact' | 'Dimension' | 'Bridge';
-    fields: string[];
-    keyField?: string;
-  }[];
-  relationships: {
-    source: string;
-    target: string;
-    sourceField: string;
-    targetField: string;
-  }[];
+  tables: TableDef[];
+  relationships: RelationshipDef[];
+  metadata?: {
+    modelName: string;
+    parsedAt: string;
+    sourceFile: string;
+  };
+}
+
+// ============================================
+// Step 0: Wake up NEON Database
+// ============================================
+
+async function wakeUpNeon(): Promise<void> {
+  log('STEP-0', 'Wake up NEON database (serverless cold start)', 'START');
+
+  const maxRetries = 5;
+  const retryDelay = 3000;
+
+  // NEON HTTP endpoint: https://<hostname>/sql
+  // Use the same hostname as PostgreSQL connection
+  const neonHost = CONFIG.NEON_HOST;
+  log('STEP-0', `NEON HTTP endpoint: https://${neonHost}/sql`, 'INFO');
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      log('STEP-0', `Attempt ${attempt}/${maxRetries}: Pinging NEON...`, 'INFO');
+
+      const response = await new Promise<{ ok: boolean; status: number; data?: any; error?: string }>((resolve, reject) => {
+        const postData = JSON.stringify({ query: 'SELECT 1 as wake_up_test' });
+
+        const options: https.RequestOptions = {
+          hostname: neonHost,
+          path: '/sql',
+          method: 'POST',
+          headers: {
+            'Neon-Connection-String': `postgresql://${CONFIG.NEON_USER}:${CONFIG.NEON_PASSWORD}@${CONFIG.NEON_HOST}/${CONFIG.NEON_DATABASE}?sslmode=require`,
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(postData)
+          },
+          rejectUnauthorized: false
+        };
+
+        const req = https.request(options, (res) => {
+          let data = '';
+          res.on('data', chunk => data += chunk);
+          res.on('end', () => {
+            let parsedData = null;
+            try { parsedData = data ? JSON.parse(data) : null; } catch {}
+            resolve({
+              ok: res.statusCode! >= 200 && res.statusCode! < 300,
+              status: res.statusCode!,
+              data: parsedData,
+              error: data
+            });
+          });
+        });
+
+        req.on('error', reject);
+        req.write(postData);
+        req.end();
+      });
+
+      if (response.ok) {
+        log('STEP-0', `NEON is awake! Response: ${response.status}`, 'SUCCESS', response.data);
+        return;
+      }
+
+      log('STEP-0', `NEON returned ${response.status}: ${response.error?.substring(0, 200)}`, 'INFO');
+
+    } catch (err) {
+      log('STEP-0', `Attempt ${attempt} failed: ${String(err)}`, 'INFO');
+    }
+
+    if (attempt < maxRetries) {
+      await new Promise(resolve => setTimeout(resolve, retryDelay));
+    }
+  }
+
+  log('STEP-0', `NEON failed to wake up after ${maxRetries} attempts`, 'FAIL');
+  throw new Error(`NEON database not responding after ${maxRetries} attempts`);
 }
 
 // ============================================
@@ -192,16 +284,20 @@ async function parseSpecWithGemini(): Promise<ParsedSpec> {
 
   log('STEP-1', `Text extracted: ${documentText.length} chars`, 'INFO');
 
-  const prompt = `You are a data modeling expert. Analyze this document and extract the complete data model.
+  const prompt = `You are a data modeling expert. Analyze this document and extract the complete data model with FULL METADATA.
 
 DOCUMENT CONTENT:
 ${documentText}
 
 EXTRACT:
-1. ALL tables with their names and types (Fact/Dimension)
-2. ALL fields for each table
+1. ALL tables with their names, types (Fact/Dimension), and descriptions
+2. ALL fields for each table with:
+   - Field name
+   - Description (if available)
+   - Data type (if mentioned)
+   - Whether it's a key field
 3. Key fields (primary keys, foreign keys)
-4. Relationships between tables
+4. Relationships between tables with cardinality
 
 OUTPUT FORMAT (strict JSON):
 {
@@ -209,7 +305,15 @@ OUTPUT FORMAT (strict JSON):
     {
       "name": "table_name",
       "type": "Fact|Dimension|Bridge",
-      "fields": ["field1", "field2", ...],
+      "description": "table description",
+      "fields": [
+        {
+          "name": "field_name",
+          "description": "field description if available",
+          "dataType": "string|number|date|etc",
+          "isKey": true|false
+        }
+      ],
       "keyField": "pk_field_name"
     }
   ],
@@ -218,12 +322,14 @@ OUTPUT FORMAT (strict JSON):
       "source": "source_table",
       "target": "target_table",
       "sourceField": "fk_field",
-      "targetField": "pk_field"
+      "targetField": "pk_field",
+      "cardinality": "1:N|N:1|1:1|N:M"
     }
   ]
 }
 
-IMPORTANT: Return ONLY the JSON, no markdown, no explanation.`;
+IMPORTANT: Return ONLY the JSON, no markdown, no explanation.
+IMPORTANT: Include ALL fields from EVERY table, with descriptions where documented.`;
 
   try {
     const result = await model.generateContent(prompt);
@@ -240,8 +346,18 @@ IMPORTANT: Return ONLY the JSON, no markdown, no explanation.`;
 
     const parsed = JSON.parse(jsonStr) as ParsedSpec;
 
-    log('STEP-1', `Parsed ${parsed.tables.length} tables, ${parsed.relationships.length} relationships`, 'SUCCESS', {
-      tables: parsed.tables.map(t => t.name)
+    // Add metadata
+    parsed.metadata = {
+      modelName: 'Olist_Brazilian_Ecommerce',
+      parsedAt: new Date().toISOString(),
+      sourceFile: path.basename(CONFIG.SPEC_FILE)
+    };
+
+    // Count total fields
+    const totalFields = parsed.tables.reduce((sum, t) => sum + t.fields.length, 0);
+
+    log('STEP-1', `Parsed ${parsed.tables.length} tables, ${totalFields} fields, ${parsed.relationships.length} relationships`, 'SUCCESS', {
+      tables: parsed.tables.map(t => `${t.name} (${t.fields.length} fields)`)
     });
 
     return parsed;
@@ -302,54 +418,51 @@ async function getOrCreateSpace(): Promise<string> {
 // Step 3: Create NEON Connection
 // ============================================
 
-async function createNeonConnection(spaceId: string): Promise<string | null> {
+async function createNeonConnection(_spaceId: string): Promise<string> {
   log('STEP-3', 'Create NEON PostgreSQL connection', 'START');
 
-  // Build connection string for PostgreSQL
-  const connectionString = `postgresql://${CONFIG.NEON_USER}:${CONFIG.NEON_PASSWORD}@${CONFIG.NEON_HOST}/${CONFIG.NEON_DATABASE}?sslmode=require`;
+  log('STEP-3', `Connection: postgresql://${CONFIG.NEON_USER}:***@${CONFIG.NEON_HOST}/${CONFIG.NEON_DATABASE}`, 'INFO');
 
-  log('STEP-3', `Connection string: postgresql://${CONFIG.NEON_USER}:***@${CONFIG.NEON_HOST}/${CONFIG.NEON_DATABASE}`, 'INFO');
-
-  try {
-    // Check existing connections first
-    const listRes = await qlikFetch(`/api/v1/data-connections?spaceId=${spaceId}`);
-    if (listRes.ok) {
-      const connections = await listRes.json() as { data?: any[] };
-      const existing = (connections.data || []).find((c: any) => c.name === 'NEON_Olist');
-      if (existing) {
-        log('STEP-3', 'Using existing NEON_Olist connection', 'SUCCESS', { connectionId: existing.id });
-        return existing.id;
-      }
+  // Check existing connections in personal space (no spaceId filter)
+  const listRes = await qlikFetch('/api/v1/data-connections');
+  if (listRes.ok) {
+    const connections = await listRes.json() as { data?: any[] };
+    const existing = (connections.data || []).find((c: any) => c.qName === 'NEON_Olist');
+    if (existing) {
+      log('STEP-3', 'Using existing NEON_Olist connection', 'SUCCESS', { connectionId: existing.id });
+      return existing.id;
     }
-
-    // Create new connection - Qlik Cloud format
-    // Note: qConnectStatement format for PostgreSQL ODBC
-    const qConnectStatement = `CUSTOM CONNECT TO "Provider=PostgreSQL Unicode(x64);Server=${CONFIG.NEON_HOST};Port=5432;Database=${CONFIG.NEON_DATABASE};Uid=${CONFIG.NEON_USER};Pwd=${CONFIG.NEON_PASSWORD};sslmode=require"`;
-
-    const createRes = await qlikFetch('/api/v1/data-connections', {
-      method: 'POST',
-      body: JSON.stringify({
-        qName: 'NEON_Olist',
-        qConnectStatement: qConnectStatement,
-        qType: 'QvOdbcConnectorPackage.exe',
-        space: spaceId
-      })
-    });
-
-    if (createRes.ok) {
-      const conn = await createRes.json() as { id: string };
-      log('STEP-3', 'NEON connection created', 'SUCCESS', { connectionId: conn.id });
-      return conn.id;
-    } else {
-      const errorText = await createRes.text();
-      log('STEP-3', `Connection creation failed (will use DataFiles): ${createRes.status}`, 'INFO', { error: errorText });
-      return null;
-    }
-
-  } catch (err) {
-    log('STEP-3', 'Connection creation error (will use DataFiles)', 'INFO', { error: String(err) });
-    return null;
   }
+
+  // Create new connection in PERSONAL SPACE (no space parameter)
+  // This ensures the app (also in personal space) can access it
+  const createRes = await qlikFetch('/api/v1/data-connections', {
+    method: 'POST',
+    body: JSON.stringify({
+      dataSourceId: 'postgres',
+      qName: 'NEON_Olist',
+      // No 'space' parameter = personal space
+      connectionProperties: {
+        host: CONFIG.NEON_HOST,
+        port: '5432',
+        db: CONFIG.NEON_DATABASE,
+        username: CONFIG.NEON_USER,
+        password: CONFIG.NEON_PASSWORD,
+        SSLMode: 'require'
+      }
+    })
+  });
+
+  if (createRes.ok) {
+    const conn = await createRes.json() as { id: string };
+    log('STEP-3', 'NEON connection created in personal space', 'SUCCESS', { connectionId: conn.id });
+    return conn.id;
+  }
+
+  // NO FALLBACK - fail if connection cannot be created
+  const errorText = await createRes.text();
+  log('STEP-3', `NEON connection FAILED: ${createRes.status}`, 'FAIL', { error: errorText });
+  throw new Error(`NEON connection failed: ${createRes.status} - ${errorText}`);
 }
 
 // ============================================
@@ -406,21 +519,77 @@ async function createApp(spaceId: string, specName: string): Promise<string> {
 }
 
 // ============================================
+// Step 5a: Get Actual Column Names from NEON
+// ============================================
+
+async function getTableColumns(tableName: string): Promise<string[]> {
+  return new Promise((resolve, reject) => {
+    const query = `
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+      AND table_name = '${tableName}'
+      ORDER BY ordinal_position
+    `;
+    const postData = JSON.stringify({ query });
+
+    const options: https.RequestOptions = {
+      hostname: CONFIG.NEON_HOST,
+      path: '/sql',
+      method: 'POST',
+      headers: {
+        'Neon-Connection-String': `postgresql://${CONFIG.NEON_USER}:${CONFIG.NEON_PASSWORD}@${CONFIG.NEON_HOST}/${CONFIG.NEON_DATABASE}?sslmode=require`,
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(postData)
+      },
+      rejectUnauthorized: false
+    };
+
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          const result = JSON.parse(data);
+          if (result.rows && Array.isArray(result.rows)) {
+            const columns = result.rows.map((row: { column_name: string }) => row.column_name);
+            resolve(columns);
+          } else {
+            resolve([]);
+          }
+        } catch {
+          resolve([]);
+        }
+      });
+    });
+
+    req.on('error', () => resolve([]));
+    req.write(postData);
+    req.end();
+  });
+}
+
+// ============================================
 // Step 5: Generate QVS Script
 // ============================================
 
-function generateQVSScript(spec: ParsedSpec, connectionId: string | null): string {
+async function generateQVSScript(spec: ParsedSpec, connectionId: string): Promise<string> {
   log('STEP-5', 'Generate QVS script for all tables', 'START');
 
-  // Use INLINE data for E2E testing - no external files needed
-  const useInlineData = !connectionId;
-  const connectionName = connectionId ? 'NEON_Olist' : 'INLINE';
+  // NO FALLBACK - connectionId is required
+  if (!connectionId) {
+    log('STEP-5', 'No connection ID provided - cannot generate script', 'FAIL');
+    throw new Error('Cannot generate script without database connection');
+  }
+
+  const connectionName = 'NEON_Olist';
 
   let script = `// ============================================
 // QMB E2E Test - Auto Generated Script
 // Source: ${connectionName}
 // Tables: ${spec.tables.length}
 // Generated: ${new Date().toISOString()}
+// Pattern: LOAD -> STORE QVD -> DROP
 // ============================================
 
 SET ThousandSep=',';
@@ -428,58 +597,90 @@ SET DecimalSep='.';
 
 LET vReloadTime = Now();
 
-`;
-
-  // Add LIB CONNECT for PostgreSQL
-  if (connectionId) {
-    script += `// Connect to PostgreSQL
+// Connect to PostgreSQL
 LIB CONNECT TO '${connectionName}';
 
 `;
-  }
 
-  // Generate LOAD statement for each table
+  // Map model table names to actual PostgreSQL table names
+  // Handles both conceptual names (fact_*, dim_*) and Gemini-parsed names (*_dataset)
+  const tableNameMap: Record<string, string> = {
+    // Conceptual model names
+    'fact_orders': 'olist_orders',
+    'fact_order_items': 'olist_order_items',
+    'fact_payments': 'olist_order_payments',
+    'fact_reviews': 'olist_order_reviews',
+    'dim_customers': 'olist_customers',
+    'dim_products': 'olist_products',
+    'dim_categories': 'product_category_name_translation',
+    'dim_sellers': 'olist_sellers',
+    'dim_date': 'olist_orders',
+    'dim_geolocation': 'olist_geolocation',
+    // Gemini-parsed dataset names
+    'olist_orders_dataset': 'olist_orders',
+    'olist_order_items_dataset': 'olist_order_items',
+    'olist_order_payments_dataset': 'olist_order_payments',
+    'olist_order_reviews_dataset': 'olist_order_reviews',
+    'olist_customers_dataset': 'olist_customers',
+    'olist_products_dataset': 'olist_products',
+    'olist_sellers_dataset': 'olist_sellers',
+    'olist_geolocation_dataset': 'olist_geolocation',
+    'product_category_translation': 'product_category_name_translation'
+  };
+
+  // Generate LOAD -> STORE -> DROP for each table
+  // Use ACTUAL column names from database, not conceptual names from spec
+  let tablesProcessed = 0;
+  let tablesSkipped = 0;
+
   for (const table of spec.tables) {
-    const fields = table.fields.length > 0 ? table.fields : ['id', 'name', 'created_at'];
-    const pgTableName = table.name.toLowerCase().replace(/^(fact_|dim_)/, '');
+    const lookupKey = table.name.toLowerCase();
+    // Strip _dataset suffix for better matching
+    const normalizedName = lookupKey.replace(/_dataset$/, '');
+    // Try direct match, then normalized match, then fallback
+    const pgTableName = tableNameMap[lookupKey] || tableNameMap[normalizedName] || normalizedName;
+
+    // Get ACTUAL column names from NEON database
+    const actualColumns = await getTableColumns(pgTableName);
+
+    if (actualColumns.length === 0) {
+      // Table doesn't exist in database - skip (virtual/derived table)
+      log('STEP-5', `Skipping ${table.name} - table ${pgTableName} not found in database`, 'INFO');
+      tablesSkipped++;
+      continue;
+    }
+
+    // Build explicit field list from ACTUAL database columns
+    const fieldList = actualColumns.map(f => `"${f}"`).join(',\n       ');
+    const qvdFileName = `${table.name}.qvd`;
 
     script += `// ============================================
 // ${table.name} (${table.type})
 // Key: ${table.keyField || 'N/A'}
+// Fields: ${actualColumns.length} (from database)
 // ============================================
-`;
-
-    if (connectionId) {
-      // Load from PostgreSQL using SQL SELECT
-      const fieldList = fields.join(', ').replace(/\n/g, '');
-      script += `${table.name}:
+${table.name}:
 SQL SELECT ${fieldList}
 FROM public.${pgTableName};
 
-`;
-    } else {
-      // Use INLINE data for E2E testing (no external files needed)
-      script += `${table.name}:
-LOAD * INLINE [
-${fields.join(', ')}
-1, Test_${table.name}_1, 2026-01-17
-2, Test_${table.name}_2, 2026-01-17
-3, Test_${table.name}_3, 2026-01-17
-];
+// Store to QVD and free memory
+STORE ${table.name} INTO [lib://DataFiles/${qvdFileName}] (qvd);
+DROP TABLE ${table.name};
+TRACE Stored ${table.name} -> ${qvdFileName};
 
 `;
-    }
+    tablesProcessed++;
   }
 
   script += `// ============================================
 // Reload Complete
 // ============================================
-LET vTableCount = ${spec.tables.length};
+LET vTableCount = ${tablesProcessed};
 TRACE E2E Test Script completed at $(vReloadTime);
-TRACE Loaded $(vTableCount) tables;
+TRACE Loaded and stored $(vTableCount) tables to QVD;
 `;
 
-  log('STEP-5', `Script generated: ${script.length} chars, ${spec.tables.length} tables, source: ${connectionName}`, 'SUCCESS');
+  log('STEP-5', `Script generated: ${script.length} chars, ${tablesProcessed} tables (${tablesSkipped} skipped), source: ${connectionName}`, 'SUCCESS');
   return script;
 }
 
@@ -614,6 +815,67 @@ async function verifyResults(appId: string): Promise<void> {
 }
 
 // ============================================
+// Step 10: Save Metadata for Phase B
+// ============================================
+
+function saveMetadataForPhaseB(spec: ParsedSpec, appId: string): void {
+  log('STEP-10', 'Save metadata for Phase B', 'START');
+
+  try {
+    // Create metadata output directory
+    const outputDir = path.join(__dirname, 'metadata');
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    // Prepare comprehensive metadata
+    const metadata = {
+      ...spec,
+      appInfo: {
+        appId,
+        tenantUrl: CONFIG.QLIK_TENANT_URL,
+        createdAt: new Date().toISOString()
+      },
+      fieldCatalog: spec.tables.flatMap(table =>
+        table.fields.map(field => ({
+          tableName: table.name,
+          tableType: table.type,
+          fieldName: typeof field === 'string' ? field : field.name,
+          fieldDescription: typeof field === 'string' ? null : field.description,
+          fieldDataType: typeof field === 'string' ? null : field.dataType,
+          isKey: typeof field === 'string' ? false : (field.isKey || false)
+        }))
+      ),
+      statistics: {
+        totalTables: spec.tables.length,
+        totalFields: spec.tables.reduce((sum, t) => sum + t.fields.length, 0),
+        totalRelationships: spec.relationships.length,
+        factTables: spec.tables.filter(t => t.type === 'Fact').length,
+        dimensionTables: spec.tables.filter(t => t.type === 'Dimension').length
+      }
+    };
+
+    // Save main metadata file
+    const metadataPath = path.join(outputDir, `model-metadata-${Date.now()}.json`);
+    fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2));
+    log('STEP-10', `Metadata saved: ${metadataPath}`, 'SUCCESS', {
+      tables: metadata.statistics.totalTables,
+      fields: metadata.statistics.totalFields,
+      relationships: metadata.statistics.totalRelationships
+    });
+
+    // Also save a "latest" version for easy access
+    const latestPath = path.join(outputDir, 'model-metadata-latest.json');
+    fs.writeFileSync(latestPath, JSON.stringify(metadata, null, 2));
+    log('STEP-10', `Latest metadata: ${latestPath}`, 'INFO');
+
+  } catch (err) {
+    log('STEP-10', 'Metadata save failed', 'FAIL', { error: String(err) });
+    // Don't throw - metadata save is not critical for E2E test
+  }
+}
+
+// ============================================
 // Cleanup
 // ============================================
 
@@ -655,6 +917,9 @@ async function main(): Promise<void> {
   let appId: string | null = null;
 
   try {
+    // Step 0: Wake up NEON (serverless cold start)
+    await wakeUpNeon();
+
     // Step 1: Parse DOCX
     const spec = await parseSpecWithGemini();
 
@@ -667,8 +932,8 @@ async function main(): Promise<void> {
     // Step 4: Create App
     appId = await createApp(spaceId, 'Olist');
 
-    // Step 5: Generate Script
-    const script = generateQVSScript(spec, connectionId);
+    // Step 5: Generate Script (fetches actual column names from NEON)
+    const script = await generateQVSScript(spec, connectionId);
 
     // Step 6: Upload Script
     await uploadScript(appId, script);
@@ -683,6 +948,9 @@ async function main(): Promise<void> {
     if (success) {
       await verifyResults(appId);
     }
+
+    // Step 10: Save metadata for Phase B
+    saveMetadataForPhaseB(spec, appId);
 
     // Summary
     console.log('\n' + '='.repeat(60));

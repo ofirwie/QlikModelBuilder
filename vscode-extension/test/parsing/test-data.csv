@@ -1,0 +1,11 @@
+TableName,FieldName,Include,KeyType,Description
+Orders,order_id,yes,PK,Primary key for orders
+Orders,customer_id,yes,FK,Foreign key to customers
+Orders,order_date,yes,,Date of order
+Orders,total_amount,yes,,Total order amount
+Customers,customer_id,yes,PK,Primary key for customers
+Customers,customer_name,yes,,Full name
+Customers,email,yes,,Email address
+Products,product_id,yes,PK,Product identifier
+Products,product_name,yes,,Name of product
+Products,price,yes,,Unit price
